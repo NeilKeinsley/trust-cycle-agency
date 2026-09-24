@@ -12,7 +12,9 @@ export function Faq({ items }: { items: FaqItem[] }) {
               <span className="font-mono text-sm text-accent">
                 0{i + 1}
               </span>
-              <span className="flex-1 text-lg">{item.q}</span>
+              <h3 className="contents">
+                <span className="flex-1 text-lg">{item.q}</span>
+              </h3>
               <span className="faq-icon text-xl text-muted">+</span>
             </summary>
             <p className="pb-6 pl-10 pr-8 text-sm leading-relaxed text-muted">

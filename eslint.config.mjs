@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Third-party tooling installed per machine (Impeccable skill, its data).
+    ".claude/**",
+    ".impeccable/**",
   ]),
 ]);
 

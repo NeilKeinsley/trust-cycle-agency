@@ -15,7 +15,10 @@ function Dots() {
 
 export function BrowserMockup() {
   return (
-    <div className="flex h-full w-full min-h-0 flex-col overflow-hidden rounded-[var(--radius-card)] border border-on-dark-muted/20 bg-surface-dark">
+    <div
+      aria-hidden="true"
+      className="flex h-full w-full min-h-0 flex-col overflow-hidden rounded-[var(--radius-card)] bg-surface-dark"
+    >
       <div className="flex shrink-0 items-center gap-2 border-b border-on-dark-muted/15 px-3 py-2 sm:gap-3 sm:px-4 sm:py-3">
         <Dots />
         <div className="h-3.5 flex-1 rounded-full bg-on-dark-muted/10 sm:h-5" />
@@ -39,7 +42,10 @@ export function BrowserMockup() {
 
 export function LogoSheetMockup() {
   return (
-    <div className="grid h-full w-full min-h-0 grid-cols-3 grid-rows-3 gap-1.5 rounded-[var(--radius-card)] border border-on-dark-muted/20 bg-surface-dark p-2.5 sm:gap-2 sm:p-4">
+    <div
+      aria-hidden="true"
+      className="grid h-full w-full min-h-0 grid-cols-3 grid-rows-3 gap-1.5 rounded-[var(--radius-card)] bg-surface-dark p-2.5 sm:gap-2 sm:p-4"
+    >
       {Array.from({ length: 9 }).map((_, i) => (
         <div
           key={i}
@@ -66,7 +72,10 @@ export function LogoSheetMockup() {
 export function CampaignMockup() {
   const bars = [40, 65, 50, 80, 60, 95, 70];
   return (
-    <div className="flex h-full w-full min-h-0 flex-col gap-2 rounded-[var(--radius-card)] border border-on-dark-muted/20 bg-surface-dark p-3 sm:gap-4 sm:p-5">
+    <div
+      aria-hidden="true"
+      className="flex h-full w-full min-h-0 flex-col gap-2 rounded-[var(--radius-card)] bg-surface-dark p-3 sm:gap-4 sm:p-5"
+    >
       <div className="flex shrink-0 items-center justify-between">
         <div className="h-2.5 w-24 rounded-full bg-on-dark-muted/25 sm:h-3" />
         <div className="h-5 w-16 rounded-full bg-accent/30 sm:h-6" />
@@ -95,7 +104,10 @@ export function CampaignMockup() {
 
 export function SearchResultMockup() {
   return (
-    <div className="flex h-full w-full min-h-0 flex-col gap-2 rounded-[var(--radius-card)] border border-on-dark-muted/20 bg-surface-dark p-3 sm:gap-4 sm:p-5">
+    <div
+      aria-hidden="true"
+      className="flex h-full w-full min-h-0 flex-col gap-2 rounded-[var(--radius-card)] bg-surface-dark p-3 sm:gap-4 sm:p-5"
+    >
       <div className="flex shrink-0 items-center gap-2 rounded-full border border-on-dark-muted/20 px-3 py-2">
         <svg viewBox="0 0 20 20" aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-on-dark-muted">
           <circle cx="9" cy="9" r="6" fill="none" stroke="currentColor" strokeWidth="1.6" />

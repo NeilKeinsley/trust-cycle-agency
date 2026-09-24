@@ -1,0 +1,461 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-24T15:30:33.495Z",
+  "title": "Design System: Trust Cycle Agency",
+  "extensions": {
+    "colorMeta": {
+      "trust-teal": {
+        "role": "primary",
+        "displayName": "Trust Teal",
+        "canonical": "oklch(0.46 0.085 180)",
+        "tonalRamp": [
+          "oklch(0.15 0.085 180)",
+          "oklch(0.26 0.085 180)",
+          "oklch(0.37 0.085 180)",
+          "oklch(0.48 0.085 180)",
+          "oklch(0.59 0.085 180)",
+          "oklch(0.7 0.085 180)",
+          "oklch(0.82 0.085 180)",
+          "oklch(0.95 0.085 180)"
+        ]
+      },
+      "teal-wash": {
+        "role": "primary",
+        "displayName": "Teal Wash",
+        "canonical": "oklch(0.94 0.03 180)",
+        "tonalRamp": [
+          "oklch(0.15 0.03 180)",
+          "oklch(0.26 0.03 180)",
+          "oklch(0.37 0.03 180)",
+          "oklch(0.48 0.03 180)",
+          "oklch(0.59 0.03 180)",
+          "oklch(0.7 0.03 180)",
+          "oklch(0.82 0.03 180)",
+          "oklch(0.95 0.03 180)"
+        ]
+      },
+      "teal-ink": {
+        "role": "primary",
+        "displayName": "Teal Ink",
+        "canonical": "oklch(0.99 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.37 0 0)",
+          "oklch(0.48 0 0)",
+          "oklch(0.59 0 0)",
+          "oklch(0.7 0 0)",
+          "oklch(0.82 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "warm-paper": {
+        "role": "neutral",
+        "displayName": "Warm Paper",
+        "canonical": "oklch(0.985 0.004 95)",
+        "tonalRamp": [
+          "oklch(0.15 0.004 95)",
+          "oklch(0.26 0.004 95)",
+          "oklch(0.37 0.004 95)",
+          "oklch(0.48 0.004 95)",
+          "oklch(0.59 0.004 95)",
+          "oklch(0.7 0.004 95)",
+          "oklch(0.82 0.004 95)",
+          "oklch(0.95 0.004 95)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(0.2 0.01 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.01 250)",
+          "oklch(0.26 0.01 250)",
+          "oklch(0.37 0.01 250)",
+          "oklch(0.48 0.01 250)",
+          "oklch(0.59 0.01 250)",
+          "oklch(0.7 0.01 250)",
+          "oklch(0.82 0.01 250)",
+          "oklch(0.95 0.01 250)"
+        ]
+      },
+      "clean-sheet": {
+        "role": "neutral",
+        "displayName": "Clean Sheet",
+        "canonical": "oklch(1 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.26 0 0)",
+          "oklch(0.37 0 0)",
+          "oklch(0.48 0 0)",
+          "oklch(0.59 0 0)",
+          "oklch(0.7 0 0)",
+          "oklch(0.82 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "pencil-grey": {
+        "role": "neutral",
+        "displayName": "Pencil Grey",
+        "canonical": "oklch(0.52 0.012 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 250)",
+          "oklch(0.26 0.012 250)",
+          "oklch(0.37 0.012 250)",
+          "oklch(0.48 0.012 250)",
+          "oklch(0.59 0.012 250)",
+          "oklch(0.7 0.012 250)",
+          "oklch(0.82 0.012 250)",
+          "oklch(0.95 0.012 250)"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(0.2 0.01 250 / 0.1)",
+        "tonalRamp": [
+          "oklch(0.15 0.01 250)",
+          "oklch(0.26 0.01 250)",
+          "oklch(0.37 0.01 250)",
+          "oklch(0.48 0.01 250)",
+          "oklch(0.59 0.01 250)",
+          "oklch(0.7 0.01 250)",
+          "oklch(0.82 0.01 250)",
+          "oklch(0.95 0.01 250)"
+        ]
+      },
+      "hairline-strong": {
+        "role": "neutral",
+        "displayName": "Hairline Strong",
+        "canonical": "oklch(0.2 0.01 250 / 0.25)",
+        "tonalRamp": [
+          "oklch(0.15 0.01 250)",
+          "oklch(0.26 0.01 250)",
+          "oklch(0.37 0.01 250)",
+          "oklch(0.48 0.01 250)",
+          "oklch(0.59 0.01 250)",
+          "oklch(0.7 0.01 250)",
+          "oklch(0.82 0.01 250)",
+          "oklch(0.95 0.01 250)"
+        ]
+      },
+      "studio-night": {
+        "role": "neutral",
+        "displayName": "Studio Night",
+        "canonical": "oklch(0.19 0.012 200)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 200)",
+          "oklch(0.26 0.012 200)",
+          "oklch(0.37 0.012 200)",
+          "oklch(0.48 0.012 200)",
+          "oklch(0.59 0.012 200)",
+          "oklch(0.7 0.012 200)",
+          "oklch(0.82 0.012 200)",
+          "oklch(0.95 0.012 200)"
+        ]
+      },
+      "night-paper": {
+        "role": "neutral",
+        "displayName": "Night Paper",
+        "canonical": "oklch(0.97 0.005 95)",
+        "tonalRamp": [
+          "oklch(0.15 0.005 95)",
+          "oklch(0.26 0.005 95)",
+          "oklch(0.37 0.005 95)",
+          "oklch(0.48 0.005 95)",
+          "oklch(0.59 0.005 95)",
+          "oklch(0.7 0.005 95)",
+          "oklch(0.82 0.005 95)",
+          "oklch(0.95 0.005 95)"
+        ]
+      },
+      "night-grey": {
+        "role": "neutral",
+        "displayName": "Night Grey",
+        "canonical": "oklch(0.75 0.01 200)",
+        "tonalRamp": [
+          "oklch(0.15 0.01 200)",
+          "oklch(0.26 0.01 200)",
+          "oklch(0.37 0.01 200)",
+          "oklch(0.48 0.01 200)",
+          "oklch(0.59 0.01 200)",
+          "oklch(0.7 0.01 200)",
+          "oklch(0.82 0.01 200)",
+          "oklch(0.95 0.01 200)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero headline only; capped at 13svh on the pinned hero."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section H2s via SectionHead."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "H3s on process cards, bento tiles and step cards."
+      },
+      "lead": {
+        "displayName": "Lead",
+        "purpose": "Paragraph beside a section headline, max 34ch, muted."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text and form inputs."
+      },
+      "nav": {
+        "displayName": "Nav",
+        "purpose": "Header links, small buttons, chips."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Form labels, helper/error text, small button size, intake summary meta rows. Same 0.8125rem step as Nav, no tracking."
+      },
+      "body-sm": {
+        "displayName": "Body-sm",
+        "purpose": "Secondary paragraph copy (text-sm): engagement blurbs, process bullets, chip text, summary values. Most-reused step outside Body."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "Mono process stage numbers; FAQ indices at 0.875rem in Trust Teal."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Mono uppercase 12px readability floor: Eyebrow component, page-hero/services-stage eyebrows, footer column headings, project-summary micro text."
+      },
+      "tag": {
+        "displayName": "Tag",
+        "purpose": "Mono uppercase data captions at 0.625rem: client rail service line, services tab names."
+      }
+    },
+    "shadows": [
+      {
+        "name": "cover",
+        "value": "0 -18px 36px -20px var(--line-strong)",
+        "purpose": "Top edge of each locked panel that slides over the previous one."
+      },
+      {
+        "name": "lift",
+        "value": "0 16px 32px -18px var(--line-strong)",
+        "purpose": "Bento tile hover and focus-within, with a 2px rise. Motion-safe only."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-spring",
+        "value": "cubic-bezier(0.23, 1, 0.32, 1)",
+        "purpose": "Default easing for every state change and entrance."
+      },
+      {
+        "name": "state",
+        "value": "300ms var(--ease-spring)",
+        "purpose": "Hover, focus, selection and border transitions."
+      },
+      {
+        "name": "appear",
+        "value": "0.7s var(--ease-spring); from translateY(22px), blur(5px), opacity 0",
+        "purpose": "Scroll reveal entrance, staggered about 90ms per item. Instant under reduced motion."
+      },
+      {
+        "name": "quiz-step",
+        "value": "0.35s var(--ease-spring); from translateY(8px), opacity 0",
+        "purpose": "Lead quiz step crossfade. None under reduced motion."
+      },
+      {
+        "name": "link-line",
+        "value": "transform 0.35s var(--ease-spring)",
+        "purpose": "Underline drawing left to right on hover. No transition under reduced motion."
+      },
+      {
+        "name": "scene-crossfade",
+        "value": "700ms opacity and scale(1.03 to 1), var(--ease-spring)",
+        "purpose": "Services stage scene change. Instant under reduced motion."
+      },
+      {
+        "name": "panel-dim",
+        "value": "scale(0.97) brightness(0.92), scroll-driven over the view() exit range",
+        "purpose": "Covered lock-stack panel receding. md+, 600px+ tall, no-preference only."
+      },
+      {
+        "name": "ticker",
+        "value": "40s linear infinite, translateX(0 to -50%)",
+        "purpose": "Client rail loop; pauses on hover and focus-within; swipeable strip under reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "2xl",
+        "value": "1536px"
+      },
+      {
+        "name": "lock",
+        "value": "(min-width: 768px) and (min-height: 600px)"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Default call to action on light panels and in the header.",
+      "html": "<button class=\"ds-btn-primary\">Start a project</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;height:2.75rem;padding:0 1.5rem;border-radius:9999px;font:500 .875rem/1 var(--font-geist-sans),system-ui,sans-serif;cursor:pointer;transition:all .3s cubic-bezier(.23,1,.32,1);border:0;background:var(--foreground);color:var(--background)}.ds-btn-primary:hover{opacity:.9;transform:translateY(-2px)}.ds-btn-primary:focus-visible{outline:none;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--accent)}"
+    },
+    {
+      "name": "Accent Button",
+      "kind": "button",
+      "refersTo": "button-accent",
+      "description": "The teal call to action, for the moment that most needs the signal.",
+      "html": "<button class=\"ds-btn-accent\">Send brief</button>",
+      "css": ".ds-btn-accent{display:inline-flex;align-items:center;justify-content:center;height:2.75rem;padding:0 1.5rem;border-radius:9999px;font:500 .875rem/1 var(--font-geist-sans),system-ui,sans-serif;cursor:pointer;transition:all .3s cubic-bezier(.23,1,.32,1);border:0;background:var(--accent);color:var(--accent-foreground)}.ds-btn-accent:hover{opacity:.9;transform:translateY(-2px)}.ds-btn-accent:focus-visible{outline:none;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--accent)}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary action with a hairline border.",
+      "html": "<button class=\"ds-btn-ghost\">See our work</button>",
+      "css": ".ds-btn-ghost{display:inline-flex;align-items:center;justify-content:center;height:2.75rem;padding:0 1.5rem;border-radius:9999px;font:500 .875rem/1 var(--font-geist-sans),system-ui,sans-serif;cursor:pointer;transition:all .3s cubic-bezier(.23,1,.32,1);border:1px solid var(--line);background:transparent;color:var(--foreground)}.ds-btn-ghost:hover{border-color:var(--line-strong);transform:translateY(-2px)}.ds-btn-ghost:focus-visible{outline:none;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--accent)}"
+    },
+    {
+      "name": "On-dark Button",
+      "kind": "button",
+      "refersTo": "button-on-dark",
+      "description": "Primary action on Studio Night surfaces.",
+      "html": "<div class=\"ds-night\"><button class=\"ds-btn-ondark\">Start a project</button></div>",
+      "css": ".ds-night{background:var(--surface-dark);padding:1.5rem;border-radius:28px}.ds-btn-ondark{display:inline-flex;align-items:center;justify-content:center;height:2.75rem;padding:0 1.5rem;border-radius:9999px;font:500 .875rem/1 var(--font-geist-sans),system-ui,sans-serif;cursor:pointer;transition:all .3s cubic-bezier(.23,1,.32,1);border:0;background:var(--on-dark);color:var(--surface-dark)}.ds-btn-ondark:hover{opacity:.9;transform:translateY(-2px)}.ds-btn-ondark:focus-visible{outline:none;box-shadow:0 0 0 2px var(--surface-dark),0 0 0 4px var(--accent)}"
+    },
+    {
+      "name": "Pill Chip Selector",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Intake choice pills; selected fills Trust Teal.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip\" aria-pressed=\"true\">Brand</button><button class=\"ds-chip\" aria-pressed=\"false\">Website</button><button class=\"ds-chip\" aria-pressed=\"false\">SEO</button></div>",
+      "css": ".ds-chips{display:flex;flex-wrap:wrap;gap:.5rem}.ds-chip{border-radius:9999px;border:1px solid var(--line);background:transparent;color:var(--foreground);padding:.625rem 1rem;font:400 .875rem/1 var(--font-geist-sans),system-ui,sans-serif;cursor:pointer;transition:all .3s cubic-bezier(.23,1,.32,1)}.ds-chip:hover{border-color:var(--line-strong)}.ds-chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-foreground)}.ds-chip:focus-visible{outline:none;box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--accent)}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Intake form field; the border turns teal on focus.",
+      "html": "<input class=\"ds-input\" placeholder=\"Your name\" />",
+      "css": ".ds-input{width:100%;max-width:22rem;border-radius:14px;border:1px solid var(--line);background:var(--background);color:var(--foreground);padding:.75rem 1rem;font:400 1rem/1.5 var(--font-geist-sans),system-ui,sans-serif;outline:none;transition:border-color .3s}.ds-input::placeholder{color:var(--muted)}.ds-input:focus{border-color:var(--accent)}"
+    },
+    {
+      "name": "Header Nav",
+      "kind": "nav",
+      "refersTo": "",
+      "description": "Sticky header: wordmark, muted links with a draw-in underline, small primary CTA.",
+      "html": "<nav class=\"ds-nav\"><span class=\"ds-nav-brand\">Trust Cycle <span>Agency</span></span><div class=\"ds-nav-links\"><a href=\"#services\">Services</a><a href=\"#work\">Work</a><a href=\"#process\">Process</a></div><button class=\"ds-nav-cta\">Start a project</button></nav>",
+      "css": ".ds-nav{display:flex;align-items:center;justify-content:space-between;gap:1.5rem;height:4rem;padding:0 2rem;background:color-mix(in oklch,var(--background) 95%,transparent);border-bottom:1px solid var(--line);font-family:var(--font-geist-sans),system-ui,sans-serif}.ds-nav-brand{font-size:1.0625rem;font-weight:500;letter-spacing:-.025em;color:var(--foreground)}.ds-nav-brand span{color:var(--muted)}.ds-nav-links{display:flex;gap:1.75rem}.ds-nav-links a{position:relative;font-size:.8125rem;letter-spacing:.04em;color:var(--muted);text-decoration:none;transition:color .3s}.ds-nav-links a::after{content:\"\";position:absolute;left:0;bottom:-3px;height:1px;width:100%;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .35s cubic-bezier(.23,1,.32,1)}.ds-nav-links a:hover{color:var(--foreground)}.ds-nav-links a:hover::after{transform:scaleX(1)}.ds-nav-cta{height:2.25rem;padding:0 1rem;border-radius:9999px;border:0;background:var(--foreground);color:var(--background);font:500 .8125rem/1 var(--font-geist-sans),system-ui,sans-serif;cursor:pointer}.ds-nav-cta:focus-visible,.ds-nav-links a:focus-visible{outline:none;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--accent)}"
+    },
+    {
+      "name": "Tone-Progression Cards",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Four ordered stages walking the palette from light to Studio Night.",
+      "html": "<div class=\"ds-prog\"><div class=\"ds-pc ds-pc1\"><b>01</b><h3>Discover</h3><p>Learn the business.</p></div><div class=\"ds-pc ds-pc2\"><b>02</b><h3>Plan</h3><p>Scope the work.</p></div><div class=\"ds-pc ds-pc3\"><b>03</b><h3>Build</h3><p>Make it in the open.</p></div><div class=\"ds-pc ds-pc4\"><b>04</b><h3>Grow</h3><p>Measure and iterate.</p></div></div>",
+      "css": ".ds-prog{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1.5rem;font-family:var(--font-geist-sans),system-ui,sans-serif}.ds-pc{border-radius:28px;padding:1.75rem;min-height:14rem;display:flex;flex-direction:column}.ds-pc b{font:500 2.25rem/1 var(--font-geist-mono),ui-monospace,monospace}.ds-pc h3{margin:1.5rem 0 0;font-size:1.5rem;font-weight:500;letter-spacing:-.03em}.ds-pc p{margin:.75rem 0 0;font-size:.875rem;line-height:1.6}.ds-pc1{background:var(--card);border:1px solid var(--line);color:var(--foreground)}.ds-pc1 p,.ds-pc2 p{color:var(--muted)}.ds-pc2{background:var(--accent-soft);color:var(--foreground)}.ds-pc3{background:var(--accent);color:var(--accent-foreground)}.ds-pc3 p{opacity:.8}.ds-pc4{background:var(--surface-dark);color:var(--on-dark)}.ds-pc4 p{color:var(--on-dark-muted)}"
+    },
+    {
+      "name": "Services Progress Tabs",
+      "kind": "custom",
+      "refersTo": "",
+      "description": "Bottom progress tabs of the pinned services stage.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\"><button role=\"tab\" aria-selected=\"true\"><span class=\"bar\"></span><span class=\"lbl\">Brand</span></button><button role=\"tab\" aria-selected=\"false\"><span class=\"bar\"></span><span class=\"lbl\">Web</span></button><button role=\"tab\" aria-selected=\"false\"><span class=\"bar\"></span><span class=\"lbl\">Marketing</span></button><button role=\"tab\" aria-selected=\"false\"><span class=\"bar\"></span><span class=\"lbl\">SEO</span></button></div>",
+      "css": ".ds-tabs{display:flex;gap:1.5rem;padding:1.5rem 2rem;background:var(--surface-dark)}.ds-tabs button{flex:1;display:flex;flex-direction:column;gap:.5rem;align-items:flex-start;background:none;border:0;padding:.25rem 0;cursor:pointer}.ds-tabs button:focus-visible{outline:none;box-shadow:0 0 0 2px var(--accent)}.ds-tabs .bar{display:block;width:100%;height:3px;border-radius:9999px;background:var(--on-dark-muted);opacity:.4;transition:all .5s cubic-bezier(.23,1,.32,1)}.ds-tabs .lbl{font:400 .625rem/1 var(--font-geist-sans),system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--on-dark-muted);transition:color .3s}.ds-tabs [aria-selected=true] .bar{background:var(--accent);opacity:1}.ds-tabs [aria-selected=true] .lbl{color:var(--on-dark)}"
+    },
+    {
+      "name": "Client Rail Cell",
+      "kind": "custom",
+      "refersTo": "",
+      "description": "Cells of the hero client rail: teal mark, client name, mono service caption.",
+      "html": "<div class=\"ds-rail\"><a class=\"ds-cell\" href=\"#work\"><svg viewBox=\"0 0 32 32\" width=\"20\" height=\"20\" aria-hidden=\"true\"><circle cx=\"16\" cy=\"16\" r=\"11\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\"/></svg><span><b>Northwind</b><i>Brand identity</i></span></a><a class=\"ds-cell\" href=\"#work\"><svg viewBox=\"0 0 32 32\" width=\"20\" height=\"20\" aria-hidden=\"true\"><path d=\"M16 4 28 16 16 28 4 16Z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/></svg><span><b>Halcyon</b><i>Website</i></span></a></div>",
+      "css": ".ds-rail{display:flex;background:var(--surface-dark);border-top:1px solid color-mix(in oklch,var(--on-dark-muted) 15%,transparent)}.ds-cell{display:flex;align-items:center;gap:.625rem;height:3.5rem;padding:0 1.25rem;border-right:1px solid color-mix(in oklch,var(--on-dark-muted) 15%,transparent);color:var(--accent);text-decoration:none;transition:background .3s}.ds-cell:hover{background:color-mix(in oklch,var(--on-dark) 5%,transparent)}.ds-cell span{display:flex;flex-direction:column;line-height:1.2}.ds-cell b{font:500 .875rem var(--font-geist-sans),system-ui,sans-serif;color:var(--on-dark)}.ds-cell i{font:normal 400 .625rem var(--font-geist-mono),ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--on-dark-muted)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Working Studio",
+    "overview": "Warm paper, dark ink, systems left visible. The site behaves like a studio that shows its work and how it gets done: honest, hands-on, never glossy. Surfaces are flat sheets separated by hairlines, the type is a single confident sans at medium weight, and the one colour with a voice is a deep teal used as a signal, not a decoration.\n\nStructure is shown rather than hidden. Numbered stages, indexed questions, progress bars, step badges that lock and unlock, a services stage with visible progress tabs: the machinery of the process is part of the look. Depth comes from how panels physically stack over each other as you move through the page, not from ornament.\n\nDensity is generous on the home page (full-viewport panels at desktop, one idea per view) and compact and form-like in the intake flows, where cards, pills and fields do the work. Light theme only; the dark Studio Night surface is a fixed ground for the hero, the services stage, the quiz and the closing call to action.",
+    "keyCharacteristics": [
+      "Warm off-white paper and near-black ink, with one deep teal signal.",
+      "Flat, hairline-bordered surfaces; depth by stacking, not by shadow.",
+      "Three radii only: generous cards, softer fields, full pills.",
+      "Geist Sans at weight 500 for every heading; Geist Mono for numbers and data.",
+      "Process machinery (numbers, progress, locked states) left visible on purpose.",
+      "Motion is spring-eased and always has a reduced-motion fallback."
+    ],
+    "rules": [
+      {
+        "name": "The Signal Rule",
+        "body": "Trust Teal marks selection, focus and the single point of emphasis in a composition. At most one teal-filled surface per view; everything else is paper, ink or night.",
+        "section": "colors"
+      },
+      {
+        "name": "The Fixed Night Rule",
+        "body": "Studio Night is a ground, not a theme. Anything placed on it uses Night Paper, Night Grey and Night Grey hairlines only, never the light-surface tokens.",
+        "section": "colors"
+      },
+      {
+        "name": "The Token-Only Rule",
+        "body": "Every colour, including shadows, SVG strokes and illustration fills, comes from a token (`var(--color-*)` or a Tailwind token utility with opacity). No hex, rgb or oklch literal appears in a component.",
+        "section": "colors"
+      },
+      {
+        "name": "The Medium Weight Rule",
+        "body": "Headings are weight 500 with -0.03em tracking. Nothing on the site is bold or semibold; hierarchy comes from size and tracking.",
+        "section": "typography"
+      },
+      {
+        "name": "The Mono-Is-Data Rule",
+        "body": "Geist Mono sets numbers, indices and data captions. It never sets a headline, a paragraph or a button.",
+        "section": "typography"
+      },
+      {
+        "name": "The Stacking Rule",
+        "body": "Surfaces are flat at rest. Depth comes from panels stacking over each other (the cover shadow) and from state (the lift shadow). No ambient card shadows, no black shadows.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Three Radii Rule",
+        "body": "Card (28px), field (14px), pill (full). A new surface picks one of these; it does not invent a fourth.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do take every colour from the tokens, including shadows (`var(--line-strong)`) and SVG strokes (`var(--color-accent)`).",
+      "Do keep small text at 4.5:1 contrast or better (WCAG 2.2 AA); Trust Teal was darkened to `oklch(0.46 0.085 180)` for exactly this reason. Check any new token pairing before shipping it.",
+      "Do give every animation a `prefers-reduced-motion` fallback: reveals appear instantly, transitions drop to none, the rail becomes a swipeable strip.",
+      "Do ease motion with the spring curve (`cubic-bezier(0.23, 1, 0.32, 1)`) at 300ms for state changes and 700ms for entrances.",
+      "Do set every heading at weight 500 with -0.03em tracking.",
+      "Do use pill chips for choices in intake flows, with Trust Teal as the selected state.",
+      "Do keep outer containers at a 1rem side gutter minimum and free of horizontal scroll at 320px."
+    ],
+    "donts": [
+      "Don't hardcode a hex, rgb or oklch value in a component.",
+      "Don't use em-dashes in visible copy.",
+      "Don't present invented statistics, client counts, outcomes or testimonial metrics as fact; placeholder content reads as honestly generic.",
+      "Don't add a second marquee. The client rail is the one sanctioned marquee because it carries real content, pauses on hover and focus, and falls back under reduced motion.",
+      "Don't add gradient text, shimmer sweeps or decorative scrolling text.",
+      "Don't put ambient or black shadows on cards at rest; depth comes from stacking and state.",
+      "Don't introduce a radius outside card, field and pill.",
+      "Don't use bold or semibold weights."
+    ]
+  }
+}

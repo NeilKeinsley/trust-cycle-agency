@@ -39,7 +39,7 @@ export function PageHero({
   lead,
   children,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   lead: string;
   children?: ReactNode;
@@ -51,13 +51,15 @@ export function PageHero({
 
         <div className="relative lg:grid lg:grid-cols-12 lg:items-end lg:gap-x-12">
           <div className="lg:col-span-8">
-            <Reveal immediate>
-              <span className="inline-flex w-fit items-center rounded-full border border-on-dark-muted/30 px-4 py-1.5 font-mono text-[0.6875rem] uppercase tracking-[0.22em] text-on-dark-muted">
-                {eyebrow}
-              </span>
-            </Reveal>
+            {eyebrow && (
+              <Reveal immediate>
+                <span className="inline-flex w-fit items-center rounded-full border border-on-dark-muted/30 px-4 py-1.5 font-mono text-[0.75rem] uppercase tracking-[0.12em] text-on-dark-muted">
+                  {eyebrow}
+                </span>
+              </Reveal>
+            )}
             <Reveal immediate delay={90}>
-              <h1 className="mt-6 text-[length:min(var(--fs-hero),13svh)] leading-[0.98]">
+              <h1 className={`text-[length:min(var(--fs-hero),13svh)] leading-[0.98] ${eyebrow ? "mt-6" : ""}`}>
                 {title}
               </h1>
             </Reveal>

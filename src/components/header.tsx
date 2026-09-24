@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Logo } from "./logo";
 import { QuizTrigger } from "./lead-quiz";
 import { NAV, LOGIN, CTA } from "@/lib/site";
@@ -9,6 +9,8 @@ import { NAV, LOGIN, CTA } from "@/lib/site";
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const toggleRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -16,6 +18,28 @@ export function Header() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  function closeMenu() {
+    setMenuOpen(false);
+    toggleRef.current?.focus();
+  }
+
+  // Opening moves focus to the panel's first link; Escape closes and
+  // returns focus to the toggle that opened it.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const first = panelRef.current?.querySelector<HTMLElement>("a, button");
+    first?.focus();
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeMenu();
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [menuOpen]);
 
   return (
     <header
@@ -35,7 +59,7 @@ export function Header() {
             <a
               key={item.label}
               href={item.href}
-              className="link-line text-[0.8125rem] tracking-[0.04em] text-muted hover:text-foreground transition-colors duration-300"
+              className="link-line inline-block -my-[6px] py-[6px] text-[0.8125rem] tracking-[0.04em] text-muted hover:text-foreground transition-colors duration-300"
             >
               {item.label}
             </a>
@@ -45,7 +69,7 @@ export function Header() {
         <div className="hidden sm:flex items-center gap-3">
           <Link
             href={LOGIN.href}
-            className="link-line text-[0.8125rem] text-muted hover:text-foreground transition-colors duration-300"
+            className="link-line inline-block -my-[6px] py-[6px] text-[0.8125rem] text-muted hover:text-foreground transition-colors duration-300"
           >
             {LOGIN.label}
           </Link>
@@ -56,9 +80,11 @@ export function Header() {
 
         {/* mobile menu toggle */}
         <button
+          ref={toggleRef}
           type="button"
           aria-label={menuOpen ? "Close menu" : "Open menu"}
           aria-expanded={menuOpen}
+          aria-controls="mobile-nav-panel"
           onClick={() => setMenuOpen((v) => !v)}
           className="flex h-9 w-9 items-center justify-center rounded-full border border-line md:hidden cursor-pointer"
         >
@@ -79,8 +105,12 @@ export function Header() {
         </button>
       </div>
 
-      {/* mobile nav panel */}
+      {/* mobile nav panel: inert (not focusable, hidden from assistive tech)
+          whenever it's closed, regardless of the collapse transition. */}
       <div
+        id="mobile-nav-panel"
+        ref={panelRef}
+        inert={!menuOpen}
         className={`md:hidden overflow-hidden border-line transition-all duration-300 [transition-timing-function:var(--ease-spring)] ${
           menuOpen ? "max-h-96 border-t" : "max-h-0"
         }`}
@@ -90,20 +120,20 @@ export function Header() {
             <a
               key={item.label}
               href={item.href}
-              onClick={() => setMenuOpen(false)}
-              className="border-b border-line py-3 text-[0.8125rem] tracking-[0.04em] text-muted last:border-b-0"
+              onClick={closeMenu}
+              className="flex min-h-11 items-center border-b border-line text-[0.8125rem] tracking-[0.04em] text-muted last:border-b-0"
             >
               {item.label}
             </a>
           ))}
           <Link
             href={LOGIN.href}
-            onClick={() => setMenuOpen(false)}
-            className="py-3 text-[0.8125rem] tracking-[0.04em] text-muted"
+            onClick={closeMenu}
+            className="flex min-h-11 items-center text-[0.8125rem] tracking-[0.04em] text-muted"
           >
             {LOGIN.label}
           </Link>
-          <div onClick={() => setMenuOpen(false)}>
+          <div onClick={closeMenu}>
             <QuizTrigger variant="primary" size="sm" className="my-3 w-full">
               {CTA.label}
             </QuizTrigger>

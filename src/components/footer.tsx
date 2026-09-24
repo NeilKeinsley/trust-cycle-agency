@@ -75,30 +75,33 @@ export function Footer() {
             )}
           </div>
         </Reveal>
-        {COLS.map((col, i) => (
-          <Reveal key={col.title} delay={120 + i * 100}>
-            <div>
-              <h3 className="mb-4 text-[0.6875rem] tracking-[0.22em] uppercase text-muted">
-                {col.title}
-              </h3>
-              <ul className="space-y-2.5">
-                {col.links.map((l) => (
-                  <li key={l.label}>
-                    <Link
-                      href={l.href}
-                      className="link-line text-sm text-foreground/80 hover:text-foreground"
-                    >
-                      {l.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Reveal>
-        ))}
+        <nav aria-label="Footer" className="contents">
+          <h2 className="sr-only">Site links</h2>
+          {COLS.map((col, i) => (
+            <Reveal key={col.title} delay={120 + i * 100}>
+              <div>
+                <h3 className="mb-4 text-[0.75rem] tracking-[0.1em] uppercase text-muted">
+                  {col.title}
+                </h3>
+                <ul className="space-y-2.5">
+                  {col.links.map((l) => (
+                    <li key={l.label}>
+                      <Link
+                        href={l.href}
+                        className="link-line inline-block -my-[5px] py-[5px] text-sm text-foreground/80 hover:text-foreground"
+                      >
+                        {l.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+          ))}
+        </nav>
       </div>
       <div className="border-t border-line">
-        <div className="mx-auto flex max-w-[1200px] flex-col gap-2 px-4 py-5 text-[0.6875rem] tracking-[0.08em] uppercase text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="mx-auto flex max-w-[1200px] flex-col gap-2 px-4 py-5 text-[0.75rem] tracking-[0.08em] uppercase text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p>
             &copy; {new Date().getFullYear()} Trust Cycle Agency &middot;{" "}
             <span className="text-accent">Created by Neil</span>
@@ -106,7 +109,10 @@ export function Footer() {
           <p className="normal-case tracking-normal">
             Portfolio concept. Trust Cycle Agency is fictional.
           </p>
-          <a href={`mailto:${CONTACT_EMAIL}`} className="link-line normal-case tracking-normal">
+          <a
+            href={`mailto:${CONTACT_EMAIL}`}
+            className="link-line inline-block -my-[5px] py-[5px] normal-case tracking-normal"
+          >
             {CONTACT_EMAIL}
           </a>
         </div>

@@ -1,3 +1,4 @@
+import { Eyebrow } from "@/components/section";
 import type { Metadata } from "next";
 import { StartForm, type Draft } from "@/components/start/start-form";
 import {
@@ -59,7 +60,7 @@ export default async function StartPage({
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-16 sm:px-6 lg:py-24">
       <div className="mb-12 max-w-2xl">
-        <p className="font-mono text-[0.6875rem] uppercase tracking-[0.22em] text-accent">Start a project</p>
+        <Eyebrow>Start a project</Eyebrow>
         <h1 className="mt-3 text-4xl font-medium sm:text-5xl">Tell us about your project.</h1>
         <p className="mt-4 text-muted">
           Five short steps. Skip around, edit anything, and send whenever you are ready.

@@ -32,6 +32,15 @@ import {
   type ServiceValue,
   type TimelineValue,
 } from "@/lib/intake";
+import { CONTACT_EMAIL } from "@/lib/site";
+
+const REAL_SERVICES = SERVICES.filter((s) => s.value !== "unsure");
+
+function submitErrorMessage(status: number): string {
+  if (status === 429) return "Too many tries in a short time. Wait a minute and send again.";
+  if (status === 400) return "Something in the form needs another look.";
+  return "Something went wrong on our end. Please try again.";
+}
 
 type QuizStep = 1 | 2 | 3 | 4 | 5;
 
@@ -159,6 +168,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
   const [honeypot, setHoneypot] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
   // Time trap: when the modal became interactive, and a stable id for this
   // submission attempt (reused across retries of the same attempt).
   const openedAtRef = useRef<number | null>(null);
@@ -180,6 +190,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
     setEmail("");
     setHoneypot("");
     setFieldErrors({});
+    setSubmitError(null);
     setSubmitting(false);
     setStep(preselected.length > 0 ? 2 : 1);
     setIsOpen(true);
@@ -280,6 +291,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
       return;
     }
     setFieldErrors({});
+    setSubmitError(null);
     setSubmitting(true);
 
     try {
@@ -288,16 +300,30 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(result.data),
       });
-      if (!res.ok) {
-        console.error("[lead-quiz] /api/lead responded with", res.status);
+      // The API returns { ok: true } even when n8n forwarding failed, so any
+      // 2xx here is a genuine success from the visitor's point of view.
+      if (res.ok) {
+        setSubmitting(false);
+        setStep(5);
+        return;
       }
-    } catch (err) {
-      // n8n may be offline in demos: submission still succeeds from the
-      // visitor's point of view, this is only logged for us.
-      console.error("[lead-quiz] submit failed", err);
-    } finally {
+      console.error("[lead-quiz] /api/lead responded with", res.status);
+      setSubmitError(submitErrorMessage(res.status));
+      if (res.status === 400) {
+        try {
+          const body: { fieldErrors?: FieldErrors } = await res.json();
+          if (body.fieldErrors) {
+            setFieldErrors({ name: body.fieldErrors.name, email: body.fieldErrors.email });
+          }
+        } catch {
+          // Body wasn't JSON — keep the generic message.
+        }
+      }
       setSubmitting(false);
-      setStep(5);
+    } catch (err) {
+      console.error("[lead-quiz] submit failed", err);
+      setSubmitError("We couldn't reach the server. Check your connection and try again.");
+      setSubmitting(false);
     }
   }
 
@@ -426,7 +452,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
                     </h2>
                     <p className="mt-2 text-on-dark-muted">Pick everything that applies.</p>
                     <div className="mt-8 flex flex-col gap-3" role="group" aria-label="Services">
-                      {SERVICES.map((s) => {
+                      {REAL_SERVICES.map((s) => {
                         const active = selectedServices.includes(s.value);
                         return (
                           <button
@@ -444,6 +470,20 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
                           </button>
                         );
                       })}
+                    </div>
+                    <div className="mt-4">
+                      <button
+                        type="button"
+                        aria-pressed={selectedServices.includes("unsure")}
+                        onClick={() => toggleService("unsure")}
+                        className={`inline-flex min-h-11 cursor-pointer items-center text-base underline underline-offset-4 transition-colors duration-300 ${
+                          selectedServices.includes("unsure")
+                            ? "text-accent-soft"
+                            : "text-on-dark-muted hover:text-on-dark"
+                        }`}
+                      >
+                        Not sure yet
+                      </button>
                     </div>
                     <div className="mt-8">
                       <Button
@@ -559,7 +599,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
                           className="w-full rounded-[var(--radius-field)] border border-on-dark-muted/25 bg-on-dark/[0.04] px-4 py-3 text-base text-on-dark outline-none transition-colors duration-300 placeholder:text-on-dark-muted/60 focus:border-accent"
                         />
                         {fieldErrors.name && (
-                          <p id="quiz-name-error" className="mt-1.5 text-[0.8125rem] text-accent">
+                          <p id="quiz-name-error" className="mt-1.5 text-[0.8125rem] text-accent-soft">
                             {fieldErrors.name[0]}
                           </p>
                         )}
@@ -582,7 +622,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
                           className="w-full rounded-[var(--radius-field)] border border-on-dark-muted/25 bg-on-dark/[0.04] px-4 py-3 text-base text-on-dark outline-none transition-colors duration-300 placeholder:text-on-dark-muted/60 focus:border-accent"
                         />
                         {fieldErrors.email && (
-                          <p id="quiz-email-error" className="mt-1.5 text-[0.8125rem] text-accent">
+                          <p id="quiz-email-error" className="mt-1.5 text-[0.8125rem] text-accent-soft">
                             {fieldErrors.email[0]}
                           </p>
                         )}
@@ -608,6 +648,15 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
                       <Button type="submit" variant="on-dark" size="md" disabled={submitting} className="mt-2 w-full">
                         {submitting ? "Sending…" : "Get my free consultation"}
                       </Button>
+                      {submitError && (
+                        <p role="alert" className="text-[0.8125rem] text-accent-soft">
+                          {submitError} Or email us at{" "}
+                          <a href={`mailto:${CONTACT_EMAIL}`} className="link-line text-on-dark">
+                            {CONTACT_EMAIL}
+                          </a>
+                          .
+                        </p>
+                      )}
                       <p className="text-xs text-on-dark-muted">
                         We use these details only to reply about your project. This is a portfolio demo, so please use test info.
                       </p>

@@ -59,7 +59,7 @@ function Tags({ tags, tone = "light" }: { tags: string[]; tone?: "light" | "dark
       {tags.map((tag) => (
         <span
           key={tag}
-          className={`rounded-full px-2.5 py-1 text-[0.625rem] tracking-[0.04em] ${
+          className={`rounded-full px-2.5 py-1 text-[0.75rem] tracking-[0.04em] ${
             tone === "dark" ? "bg-on-dark-muted/15 text-on-dark" : "bg-accent-soft text-accent"
           }`}
         >
@@ -81,7 +81,6 @@ export function Work() {
     <Panel id="work" tone="card" center={false} padClassName="py-10 lg:py-12">
       <Reveal>
         <SectionHead
-          eyebrow="Selected work"
           title="A few recent engagements."
           lead="A sample of the brand, web and campaign work we have shipped for clients like these."
           action={
@@ -176,7 +175,7 @@ export function Work() {
         >
           <Tile tone="dark" className="h-full">
             <div className="flex h-full flex-col justify-center gap-2 p-3 lg:p-4">
-              <p className="text-[0.6875rem] tracking-[0.04em] text-on-dark-muted">
+              <p className="text-[0.75rem] tracking-[0.04em] text-on-dark-muted">
                 Process, not just pixels
               </p>
               <div className="flex items-start gap-3">
@@ -187,7 +186,7 @@ export function Work() {
                     )}
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-on-dark">{step.label}</p>
-                      <p className="mt-0.5 truncate text-[0.6875rem] text-on-dark-muted">
+                      <p className="mt-0.5 truncate text-[0.75rem] text-on-dark-muted">
                         {step.detail}
                       </p>
                     </div>
@@ -211,7 +210,7 @@ export function Work() {
                   Tell us what you are building and we will take it from there.
                 </p>
               </div>
-              <QuizTrigger variant="on-dark" size="sm" className="shrink-0">
+              <QuizTrigger variant="on-dark" size="md" className="shrink-0">
                 Start a project
               </QuizTrigger>
             </div>

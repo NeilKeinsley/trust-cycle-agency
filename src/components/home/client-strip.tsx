@@ -81,7 +81,7 @@ function HeroTickerRow() {
                   <Mark mark={client.mark} />
                   <span className="flex flex-col text-left leading-tight whitespace-nowrap">
                     <span className="text-sm font-medium text-on-dark">{client.name}</span>
-                    <span className="mt-0.5 font-mono text-[0.5625rem] tracking-[0.14em] text-on-dark-muted uppercase">
+                    <span className="mt-0.5 font-mono text-[0.75rem] tracking-[0.12em] text-on-dark-muted uppercase">
                       {client.service}
                     </span>
                   </span>
@@ -104,7 +104,7 @@ export function HeroRail() {
   return (
     <div className="border-t border-on-dark-muted/15">
       <div className="flex items-center">
-        <p className="hidden shrink-0 whitespace-nowrap border-r border-on-dark-muted/15 px-5 font-mono text-[0.625rem] tracking-[0.22em] text-on-dark-muted uppercase lg:block">
+        <p className="hidden shrink-0 whitespace-nowrap border-r border-on-dark-muted/15 px-5 font-mono text-[0.75rem] tracking-[0.12em] text-on-dark-muted uppercase lg:block">
           Trusted by growing teams
         </p>
         <div className="min-w-0 flex-1 [mask-image:linear-gradient(to_right,transparent,black_3rem,black_calc(100%-3rem),transparent)]">

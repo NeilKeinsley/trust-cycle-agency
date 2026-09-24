@@ -43,7 +43,6 @@ export function Team() {
     <Panel tone="card">
       <Reveal>
         <SectionHead
-          eyebrow="Team"
           title="One team, every channel."
           lead="The people who plan, design and build your project, from strategy through launch."
         />
@@ -73,6 +72,15 @@ export function Team() {
                   <h3 className={`text-xl sm:text-2xl ${tone.name}`}>{member.name}</h3>
                   <p className={`mt-1 text-sm ${tone.sub}`}>{member.role}</p>
                   <p className={`mt-1 text-[0.8125rem] ${tone.sub}`}>{member.focus}</p>
+                  {i === TEAM.length - 1 ? (
+                    <p className={`mt-3 text-sm italic leading-snug ${tone.name}`}>
+                      {member.currentFocus}
+                    </p>
+                  ) : (
+                    <p className={`mt-3 text-[0.8125rem] ${tone.sub}`}>
+                      <span className={tone.name}>Current focus:</span> {member.currentFocus}
+                    </p>
+                  )}
                 </div>
               </div>
             </Reveal>

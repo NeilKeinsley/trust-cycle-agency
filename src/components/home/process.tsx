@@ -88,7 +88,6 @@ export function Process() {
     <Panel id="process" tone="card" raised>
       <Reveal>
         <SectionHead
-          eyebrow="How we work"
           title="A steady process, not a scramble."
           lead="Four stages, repeated for every project, so you always know what happens next."
         />

@@ -43,3 +43,10 @@ reference/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Impeccable (installed per machine with: npx impeccable install --project --providers=claude)
+.claude/skills/impeccable/
+.claude/agents/impeccable-*
+.claude/settings.local.json
+.impeccable/hook.cache.json
+.impeccable/live/

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Section, Eyebrow } from "@/components/section";
+import { Section } from "@/components/section";
 import { Reveal } from "@/components/reveal";
 import { ButtonLink } from "@/components/button";
 import { CONTACT_EMAIL } from "@/lib/site";
@@ -16,10 +16,7 @@ export default function ContactPage() {
   return (
     <Section className="flex min-h-[90svh] flex-col justify-center pt-16 lg:pt-20">
       <Reveal immediate>
-        <Eyebrow>Contact</Eyebrow>
-      </Reveal>
-      <Reveal immediate delay={60}>
-        <h1 className="mt-3 max-w-2xl text-[length:var(--fs-h2)] leading-[1.02]">
+        <h1 className="max-w-2xl text-[length:var(--fs-h2)] leading-[1.02]">
           Let&apos;s talk about your project.
         </h1>
       </Reveal>

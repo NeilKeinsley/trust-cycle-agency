@@ -64,11 +64,37 @@ export const CASE_STUDIES: {
   },
 ];
 
+/* `focus` is the specialty shown under the role; `currentFocus` is a
+   one-line, honestly generic note on what that person is working on right
+   now (see AGENTS.md — no invented stats or client specifics). Sam's reads
+   as a short first-person line rather than a label, so the dark card in
+   the tone progression carries its own composition instead of repeating
+   the other three (see team.tsx). */
 export const TEAM = [
-  { name: "Jordan Ames", role: "Strategy", focus: "Positioning and research" },
-  { name: "Priya Nair", role: "Design", focus: "Identity and interface" },
-  { name: "Marcus Cole", role: "Engineering", focus: "Build and performance" },
-  { name: "Sam Whitfield", role: "Growth", focus: "Campaigns and reporting" },
+  {
+    name: "Jordan Ames",
+    role: "Strategy",
+    focus: "Positioning and research",
+    currentFocus: "Positioning for a regional services brand",
+  },
+  {
+    name: "Priya Nair",
+    role: "Design",
+    focus: "Identity and interface",
+    currentFocus: "A visual identity refresh for a returning client",
+  },
+  {
+    name: "Marcus Cole",
+    role: "Engineering",
+    focus: "Build and performance",
+    currentFocus: "Rebuilding a site's performance from the ground up",
+  },
+  {
+    name: "Sam Whitfield",
+    role: "Growth",
+    focus: "Campaigns and reporting",
+    currentFocus: "“Reporting people actually read is half the job.”",
+  },
 ] as const;
 
 export const TESTIMONIALS = [

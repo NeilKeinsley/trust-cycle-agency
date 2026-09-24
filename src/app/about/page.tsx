@@ -32,7 +32,6 @@ export default function AboutPage() {
   return (
     <>
       <PageHero
-        eyebrow="About"
         title="A full-service agency, built like a partner."
         lead="Trust Cycle Agency brings brand, web and growth work under one roof so clients get a consistent story across every channel, instead of stitching it together across separate vendors."
       >

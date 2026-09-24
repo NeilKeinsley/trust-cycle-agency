@@ -7,6 +7,9 @@ import { QuizTrigger } from "@/components/lead-quiz";
 import { HeroRail } from "@/components/home/client-strip";
 import { SERVICES, type ServiceValue } from "@/lib/intake";
 
+const PICKER_SERVICES = SERVICES.filter((s) => s.value !== "unsure");
+const UNSURE = SERVICES.find((s) => s.value === "unsure")!;
+
 const TRUST_NOTES: { label: string; icon: React.ReactNode }[] = [
   {
     label: "Reply within 1 business day",
@@ -71,12 +74,6 @@ export function Hero() {
 
       <div className="relative flex flex-1 flex-col justify-center px-5 py-8 sm:px-10 sm:py-[clamp(1.5rem,4svh,2.75rem)] lg:px-16">
         <div className="flex flex-col gap-5 lg:grid lg:grid-cols-12 lg:content-center lg:gap-x-12 lg:gap-y-[clamp(1rem,3svh,2rem)]">
-          <Reveal immediate className="lg:col-span-12">
-            <span className="inline-flex w-fit items-center rounded-full border border-on-dark-muted/30 px-4 py-1.5 font-mono text-[0.6875rem] tracking-[0.22em] uppercase text-on-dark-muted">
-              Brand, web and growth
-            </span>
-          </Reveal>
-
           <Reveal immediate delay={90} className="lg:col-span-12">
             {/* Capped by viewport height too, so the pinned hero fits short laptop screens. */}
             <h1 className="max-w-6xl text-[length:min(var(--fs-hero),13svh)] leading-[0.98]">
@@ -97,7 +94,7 @@ export function Hero() {
                 What do you need help with?
               </p>
               <div className="flex flex-wrap gap-2" role="group" aria-label="Services you need help with">
-                {SERVICES.map((s) => {
+                {PICKER_SERVICES.map((s) => {
                   const active = selected.includes(s.value);
                   return (
                     <button
@@ -115,6 +112,20 @@ export function Hero() {
                     </button>
                   );
                 })}
+              </div>
+              <div className="mt-3">
+                <button
+                  type="button"
+                  aria-pressed={selected.includes(UNSURE.value)}
+                  onClick={() => toggle(UNSURE.value)}
+                  className={`flex min-h-11 cursor-pointer items-center text-[0.8125rem] underline underline-offset-4 transition-colors duration-300 ${
+                    selected.includes(UNSURE.value)
+                      ? "text-accent-soft decoration-accent-soft"
+                      : "text-on-dark-muted decoration-on-dark-muted/50 hover:text-on-dark"
+                  }`}
+                >
+                  {UNSURE.label}
+                </button>
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-4">
                 <QuizTrigger services={selected} variant="on-dark" size="md">

@@ -98,7 +98,7 @@ function BrandScene() {
 
       {/* Business card, slightly rotated */}
       <div
-        className="absolute flex flex-col justify-between rounded-[10px] border border-on-dark-muted/25 bg-on-dark p-[5%] shadow-2xl"
+        className="absolute flex flex-col justify-between rounded-[10px] border border-on-dark-muted/25 bg-on-dark p-[5%] shadow-[0_16px_32px_-18px_var(--line-strong)]"
         style={{ top: "67%", left: "15.7%", width: "52.6%", height: "22%", transform: "rotate(-6deg)" }}
       >
         <svg viewBox="0 0 32 32" aria-hidden="true" className="h-[24%] w-[24%]">
@@ -163,7 +163,7 @@ function WebsiteScene() {
 
       {/* Phone frame, overlapping the browser's bottom-right corner */}
       <div
-        className="absolute overflow-hidden rounded-[clamp(18px,2.4vw,32px)] border-[3px] border-on-dark-muted/30 bg-surface-dark shadow-2xl"
+        className="absolute overflow-hidden rounded-[clamp(18px,2.4vw,32px)] border-[3px] border-on-dark-muted/30 bg-surface-dark shadow-[0_16px_32px_-18px_var(--line-strong)]"
         style={{ top: "50%", left: "73.1%", width: "23.9%", height: "44%" }}
       >
         <div className="flex h-full flex-col gap-[8%] p-[8%]">
@@ -385,7 +385,7 @@ export function ServiceScene({
   active?: boolean;
 }) {
   return (
-    <div className="relative h-full w-full overflow-hidden bg-surface-dark">
+    <div aria-hidden="true" className="relative h-full w-full overflow-hidden bg-surface-dark">
       {kind === "brand" && <BrandScene />}
       {kind === "website" && <WebsiteScene />}
       {kind === "marketing" && <MarketingScene active={active} />}

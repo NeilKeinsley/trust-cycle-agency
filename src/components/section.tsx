@@ -21,19 +21,22 @@ export function Section({
 
 export function Eyebrow({ children }: { children: ReactNode }) {
   return (
-    <p className="font-mono text-[0.6875rem] tracking-[0.22em] uppercase text-accent">
+    <p className="font-mono text-[0.75rem] tracking-[0.12em] uppercase text-accent">
       {children}
     </p>
   );
 }
 
 /**
- * Standard section header: eyebrow + h2 on the left, an optional lead
- * paragraph and action on the right. At `lg` it splits into a 12-column
- * grid (col-span-7 / col-span-5, the right column pinned to `self-end` so
- * the lead sits on the h2's baseline instead of centered against it);
- * below `lg` it stacks. Carries its own tight bottom margin so callers
- * don't need to add spacing before their next block.
+ * Standard section header: an optional eyebrow + h2 on the left, an
+ * optional lead paragraph and action on the right. `eyebrow` is optional
+ * and renders nothing when omitted — only pass it when it carries
+ * information a plain heading doesn't (a counter, an index), not as a
+ * restated kicker. At `lg` it splits into a 12-column grid (col-span-7 /
+ * col-span-5, the right column pinned to `self-end` so the lead sits on
+ * the h2's baseline instead of centered against it); below `lg` it stacks.
+ * Carries its own tight bottom margin so callers don't need to add spacing
+ * before their next block.
  */
 export function SectionHead({
   eyebrow,
@@ -43,7 +46,7 @@ export function SectionHead({
   tone = "light",
   className = "",
 }: {
-  eyebrow: ReactNode;
+  eyebrow?: ReactNode;
   title: ReactNode;
   lead?: ReactNode;
   action?: ReactNode;
@@ -55,8 +58,8 @@ export function SectionHead({
   return (
     <div className={`mb-10 lg:mb-14 lg:grid lg:grid-cols-12 lg:gap-8 ${className}`.trim()}>
       <div className="lg:col-span-7">
-        <Eyebrow>{eyebrow}</Eyebrow>
-        <h2 className="mt-3 max-w-4xl text-[length:var(--fs-h2)] leading-[1.02]">{title}</h2>
+        {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+        <h2 className={`max-w-4xl text-[length:var(--fs-h2)] leading-[1.02] ${eyebrow ? "mt-3" : ""}`}>{title}</h2>
       </div>
       {(lead || action) && (
         <div className="mt-5 lg:col-span-5 lg:mt-0 lg:self-end">

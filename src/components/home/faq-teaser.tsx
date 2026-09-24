@@ -1,4 +1,4 @@
-import { Panel, Eyebrow } from "@/components/section";
+import { Panel } from "@/components/section";
 import { Reveal } from "@/components/reveal";
 import { ButtonLink } from "@/components/button";
 import { Faq } from "@/components/faq";
@@ -13,15 +13,12 @@ export function FaqTeaser() {
       <div className="grid items-stretch gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
         <div className="flex flex-col justify-center">
           <Reveal>
-            <Eyebrow>FAQs</Eyebrow>
-          </Reveal>
-          <Reveal delay={60}>
-            <h2 className="mt-3 text-[length:var(--fs-h2)] leading-[1.02]">
+            <h2 className="text-[length:var(--fs-h2)] leading-[1.02]">
               Common questions.
             </h2>
           </Reveal>
           <Reveal delay={100}>
-            <p className="mt-5 max-w-sm text-[0.9375rem] leading-relaxed text-muted">
+            <p className="mt-5 max-w-sm text-sm leading-relaxed text-muted">
               A few of the things people ask before starting a project.
               Everything else lives on the full FAQ page.
             </p>

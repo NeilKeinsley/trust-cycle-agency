@@ -70,16 +70,16 @@ function PillarText({ pillar, index }: { pillar: Pillar; index: number }) {
       key={pillar.value}
       className="motion-safe:animate-appear motion-reduce:opacity-100"
     >
-      <p className="font-mono text-[0.6875rem] tracking-[0.22em] uppercase text-accent-soft">
+      <p className="font-mono text-[0.75rem] tracking-[0.12em] uppercase text-accent-soft">
         {`Services 0${index + 1}/0${TOTAL}`}
       </p>
       <h3
         className="mt-3 text-on-dark"
-        style={{ fontSize: "clamp(2.5rem,5vw,5.5rem)", lineHeight: 0.98, letterSpacing: "-0.02em" }}
+        style={{ fontSize: "var(--fs-h2)", lineHeight: 0.98, letterSpacing: "-0.02em" }}
       >
         {pillar.title}
       </h3>
-      <p className="mt-4 max-w-sm text-[0.9375rem] leading-relaxed text-on-dark-muted">
+      <p className="mt-4 max-w-sm text-sm leading-relaxed text-on-dark-muted">
         {pillar.description}
       </p>
       <ul className="mt-6 divide-y divide-on-dark-muted/15 border-t border-on-dark-muted/15">
@@ -196,7 +196,6 @@ export function ServicesStory() {
     <section id="services" className="relative bg-background">
       <div className="mx-auto max-w-[112rem] px-4 pb-10 pt-16 sm:px-8 lg:px-12 lg:pt-20 2xl:px-16">
         <SectionHead
-          eyebrow="Services"
           title="Four pillars, one team."
           lead="Brand, web, marketing and SEO, handled by one team instead of four vendors."
         />
@@ -264,7 +263,7 @@ export function ServicesStory() {
                 className="group flex min-w-0 flex-1 cursor-pointer flex-col-reverse items-start gap-2 rounded-sm py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <span
-                  className="block max-w-full truncate text-[0.625rem] uppercase tracking-[0.14em] transition-colors duration-300"
+                  className="block max-w-full truncate text-[0.75rem] uppercase tracking-[0.12em] transition-colors duration-300"
                   style={{ color: active === i ? "var(--color-on-dark)" : "var(--color-on-dark-muted)" }}
                 >
                   {pillar.short}
@@ -317,7 +316,7 @@ export function ServicesStory() {
               <ServiceScene kind={pillar.scene} active />
             </div>
             <div className="flex flex-1 flex-col justify-center gap-2 px-4 py-10 sm:px-6 landscape:py-6">
-              <p className="font-mono text-[0.6875rem] tracking-[0.22em] uppercase text-accent-soft">
+              <p className="font-mono text-[0.75rem] tracking-[0.12em] uppercase text-accent-soft">
                 {`Services 0${i + 1}/0${TOTAL}`}
               </p>
               <h3
@@ -326,7 +325,7 @@ export function ServicesStory() {
               >
                 {pillar.title}
               </h3>
-              <p className="mt-3 max-w-md text-[0.9375rem] leading-relaxed text-on-dark-muted">
+              <p className="mt-3 max-w-md text-sm leading-relaxed text-on-dark-muted">
                 {pillar.description}
               </p>
               <ul className="mt-5 divide-y divide-on-dark-muted/15 border-t border-on-dark-muted/15">

@@ -25,6 +25,28 @@ import {
   type TimelineValue,
   START_DRAFT_KEY,
 } from "@/lib/intake";
+import { CONTACT_EMAIL } from "@/lib/site";
+
+/** Which step card a given field belongs to, so a mapped server-side
+ * fieldError can jump the visitor back to the right card. */
+const STEP_FOR_FIELD: Record<string, number> = {
+  services: 1,
+  budget: 2,
+  timeline: 2,
+  goals: 3,
+  website: 3,
+  name: 4,
+  email: 4,
+  company: 4,
+  phone: 4,
+  consent: 5,
+};
+
+function submitErrorMessage(status: number): string {
+  if (status === 429) return "Too many tries in a short time. Wait a minute and send again.";
+  if (status === 400) return "Something in the form needs another look.";
+  return "Something went wrong on our end. Please try again.";
+}
 
 export type Draft = {
   services: ServiceValue[];
@@ -94,6 +116,7 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
   const [hydrated, setHydrated] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
 
   const stepRefs = useRef<Array<HTMLDivElement | null>>([null, null, null, null, null]);
@@ -265,6 +288,7 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
     }
 
     setErrors({});
+    setSubmitError(null);
     setStatus("submitting");
     try {
       const res = await fetch("/api/lead", {
@@ -272,13 +296,48 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(result.data),
       });
-      if (!res.ok) console.error("[start] /api/lead responded with", res.status);
+      // The API returns { ok: true } even when n8n forwarding failed, so any
+      // 2xx here is a genuine success from the visitor's point of view.
+      if (res.ok) {
+        setStatus("success");
+        clearDraftStorage();
+        return;
+      }
+      console.error("[start] /api/lead responded with", res.status);
+      setSubmitError(submitErrorMessage(res.status));
+      if (res.status === 400) {
+        try {
+          const body: { fieldErrors?: Record<string, string[] | undefined> } = await res.json();
+          if (body.fieldErrors) {
+            const mapped: Record<string, string> = {};
+            let firstStep: number | null = null;
+            Object.entries(body.fieldErrors).forEach(([field, msgs]) => {
+              if (!msgs?.[0]) return;
+              mapped[field] = msgs[0];
+              const step = STEP_FOR_FIELD[field];
+              if (step && (firstStep === null || step < firstStep)) firstStep = step;
+            });
+            setErrors((e) => ({ ...e, ...mapped }));
+            if (firstStep !== null) {
+              const stepIndex = firstStep;
+              setCompleted((c) => {
+                const copy = [...c];
+                copy[stepIndex - 1] = false;
+                return copy;
+              });
+              setExpandedStep(stepIndex);
+            }
+          }
+        } catch {
+          // Body wasn't JSON — keep the generic message.
+        }
+      }
+      setStatus("idle");
     } catch (err) {
-      // n8n may be offline in demos — the visitor still sees success.
+      // Network failure: nothing reached the server, so this is not success.
       console.error("[start] submit failed", err);
-    } finally {
-      setStatus("success");
-      clearDraftStorage();
+      setSubmitError("We couldn't reach the server. Check your connection and try again.");
+      setStatus("idle");
     }
   }
 
@@ -317,7 +376,7 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
   return (
     <div>
       <div className="mb-10 flex items-center gap-4">
-        <p className="font-mono text-[0.6875rem] uppercase tracking-[0.22em] text-accent">
+        <p className="font-mono text-[0.75rem] uppercase tracking-[0.1em] text-accent">
           Step {expandedStep} of 5
         </p>
         <div className="flex flex-1 items-center gap-1.5" aria-hidden="true">
@@ -736,6 +795,15 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
                         <Button type="button" size="md" onClick={handleSend} disabled={status === "submitting"}>
                           {status === "submitting" ? "Sending…" : "Send"}
                         </Button>
+                        {submitError && (
+                          <p role="alert" className="mt-3 text-[0.8125rem] text-accent">
+                            {submitError} Or email us at{" "}
+                            <a href={`mailto:${CONTACT_EMAIL}`} className="link-line text-accent">
+                              {CONTACT_EMAIL}
+                            </a>
+                            .
+                          </p>
+                        )}
                         <p className="mt-3 text-xs text-muted">
                           We use these details only to reply about your project. This is a portfolio demo, so please use test info.
                         </p>
@@ -751,7 +819,7 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
         {/* Desktop summary sidebar */}
         <div className="hidden lg:sticky lg:top-24 lg:block">
           <div className="rounded-[var(--radius-card)] border border-line bg-card p-6">
-            <p className="mb-5 text-[0.6875rem] uppercase tracking-[0.22em] text-muted">Your project</p>
+            <p className="mb-5 text-[0.75rem] uppercase tracking-[0.1em] text-muted">Your project</p>
             <ProjectSummary draft={draft} />
           </div>
         </div>

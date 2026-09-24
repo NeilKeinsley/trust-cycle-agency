@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Section, Eyebrow } from "@/components/section";
+import { Section } from "@/components/section";
 import { Reveal } from "@/components/reveal";
 import { Faq } from "@/components/faq";
 import { FAQS } from "@/lib/faqs";
@@ -18,10 +18,7 @@ export default function FaqPage() {
         <div className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr] lg:items-start lg:gap-20">
           <div className="lg:sticky lg:top-[calc(var(--header-h)+2.5rem)]">
             <Reveal immediate>
-              <Eyebrow>FAQs</Eyebrow>
-            </Reveal>
-            <Reveal immediate delay={60}>
-              <h1 className="mt-3 max-w-md text-[length:var(--fs-h2)] leading-[1.02]">
+              <h1 className="max-w-md text-[length:var(--fs-h2)] leading-[1.02]">
                 Questions we hear a lot.
               </h1>
             </Reveal>
@@ -33,6 +30,7 @@ export default function FaqPage() {
             </Reveal>
           </div>
 
+          <h2 className="sr-only">All questions</h2>
           <Faq items={FAQS} />
         </div>
       </Section>
