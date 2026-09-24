@@ -1,9 +1,9 @@
 # n8n lead pipeline: setup on Railway
 
-n8n runs in the same Railway project as the site, using the "n8n (w/ postgres)" template: the official `n8nio/n8n` image in regular mode, plus Postgres for workflows, credentials and executions.
+n8n runs in its own shared Railway project, **"n8n"**, so other projects can use it too. It comes from the "n8n (w/ postgres)" template: the official `n8nio/n8n` image in regular mode, plus Postgres for workflows, credentials and executions. The site lives in a separate Railway project, **"Trust Cycle Agency"**.
 
 - **Public editor:** https://n8n-production-93bcc.up.railway.app
-- **Private address the site uses:** `http://n8n.railway.internal:5678`. This goes over Railway's private network, so the site calls n8n directly instead of through the public internet. If the private call fails for any reason, you can use the public URL instead.
+- **How the site reaches it:** over n8n's **public HTTPS URL**. Railway's private network (`*.railway.internal`) only works between services in the same project. Every call is server-to-server and protected by the shared secret header.
 
 The workflow design and the scoring rubric are in `BACKEND_PLAN.md`. The importable workflows are in `n8n/`.
 
@@ -30,12 +30,19 @@ In n8n, go to **Credentials → Add credential** and create these:
 | Credential | Type | Values |
 |---|---|---|
 | `Trust Cycle webhook secret` | Header Auth | Name `x-webhook-secret`, Value = the secret from step 2 |
-| `Google Sheets` | Google Sheets OAuth2 | Sign in with Google (n8n shows the redirect URL to register) |
+| `Google Sheets` | Google Service Account API | `client_email` and `private_key` from the service account's JSON key (recommended; see step 4) |
 | `Resend API key` | Header Auth | Name `Authorization`, Value `Bearer re_...` (optional, see step 5) |
 
 Discord doesn't need a credential. Paste its webhook URL into the two Discord nodes: in Discord, go to **Server Settings → Integrations → Webhooks → New Webhook → Copy URL**.
 
 ## 4. Google Sheet (you)
+
+Use a Google **Service Account**, not OAuth, so there's no consent screen, no test users and no token expiry.
+
+1. In Google Cloud (project `strategic-hull-494501-q9`), enable the **Google Sheets API** and the **Google Drive API**.
+2. Go to **IAM & Admin → Service Accounts → Create** (for example `n8n-leads`), then **Keys → Add key → JSON**. Keep the file private.
+3. Share the sheet with the service account's email as **Editor**.
+4. In the workflow's **Save to Leads sheet** node, set **Authentication → Service Account**.
 
 Create a sheet with a tab named **Leads**, and put these column headers in row 1:
 
@@ -57,15 +64,13 @@ The workflow matches rows on `id` (the submission ID), so if the same submission
 4. In the lead workflow, open **Settings → Error workflow** and choose **Trust Cycle: pipeline errors**.
 5. **Save** both workflows, then toggle **Active** on the lead workflow.
 
-The production webhook is then:
-- public: `https://n8n-production-93bcc.up.railway.app/webhook/lead`
-- private: `http://n8n.railway.internal:5678/webhook/lead`
+The production webhook is then `https://n8n-production-93bcc.up.railway.app/webhook/lead`.
 
 ## 6. Point the site at n8n (Railway variables on the site service)
 
 | Variable | Value |
 |---|---|
-| `N8N_WEBHOOK_URL` | `http://n8n.railway.internal:5678/webhook/lead` |
+| `N8N_WEBHOOK_URL` | `https://n8n-production-93bcc.up.railway.app/webhook/lead` |
 | `N8N_WEBHOOK_SECRET` | the secret from step 2 |
 
 Railway redeploys the site automatically when variables change.
