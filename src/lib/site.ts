@@ -1,11 +1,24 @@
 /**
- * Site-wide identity constants. SITE_URL is a placeholder until the real
- * domain exists — it feeds metadataBase, canonical URLs, sitemap, and JSON-LD
- * so everything flips together at launch by editing this one file.
+ * Site-wide identity constants. SITE_URL feeds metadataBase, canonical URLs,
+ * the sitemap, robots and JSON-LD, so everything moves together.
+ *
+ * Resolution order:
+ * 1. NEXT_PUBLIC_SITE_URL: set this when a custom domain is attached.
+ * 2. RAILWAY_PUBLIC_DOMAIN: injected automatically by Railway at build time.
+ * 3. localhost for local development.
  */
 export const SITE_NAME = "Trust Cycle Agency";
 export const SITE_SHORT = "TCA";
-export const SITE_URL = "https://trustcycle.agency";
+
+function resolveSiteUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL;
+  if (explicit) return explicit.replace(/\/+$/, "");
+  const railway = process.env.RAILWAY_PUBLIC_DOMAIN;
+  if (railway) return `https://${railway}`;
+  return "http://localhost:3000";
+}
+
+export const SITE_URL = resolveSiteUrl();
 export const SITE_TAGLINE =
   "Brand, web and growth for teams that want a partner, not a vendor.";
 export const SITE_DESCRIPTION =
