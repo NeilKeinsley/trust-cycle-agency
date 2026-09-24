@@ -1,0 +1,33 @@
+{
+  "name": "Trust Cycle: pipeline errors",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b2d1e8c3-0001-4000-8000-000000000001",
+      "name": "On workflow error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "PASTE_YOUR_DISCORD_WEBHOOK_URL",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ content: `⚠️ **Lead pipeline failed**\\nWorkflow: ${$json.workflow.name}\\nNode: ${$json.execution.lastNodeExecuted}\\nError: ${$json.execution.error.message}\\nExecution: ${$json.execution.url ?? $json.execution.id}` }) }}",
+        "options": {}
+      },
+      "id": "b2d1e8c3-0002-4000-8000-000000000002",
+      "name": "Alert Discord",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [260, 300]
+    }
+  ],
+  "connections": {
+    "On workflow error": { "main": [[{ "node": "Alert Discord", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}
