@@ -1,0 +1,296 @@
+@import "tailwindcss";
+
+/*
+  Trust Cycle Agency design tokens.
+  Warm off-white + near-black ink, one deep teal "trust" accent.
+  Light only for v1; --surface-dark/--on-dark exist for the hero and closing
+  CTA cards, which are dark regardless of theme (structured so a future
+  site-wide dark mode can reuse the same names).
+*/
+:root {
+  --background: oklch(0.985 0.004 95);
+  --foreground: oklch(0.2 0.01 250);
+  --card: oklch(1 0 0);
+  --surface-dark: oklch(0.19 0.012 200);
+  --on-dark: oklch(0.97 0.005 95);
+  --on-dark-muted: oklch(0.75 0.01 200);
+  --muted: oklch(0.52 0.012 250);
+  --line: oklch(0.2 0.01 250 / 0.1);
+  --line-strong: oklch(0.2 0.01 250 / 0.25);
+  --accent: oklch(0.46 0.085 180);
+  --accent-soft: oklch(0.94 0.03 180);
+  --accent-foreground: oklch(0.99 0 0);
+
+  /* Layout: header height (the header sizes itself off this var so the two
+     never drift), plus fluid type scales used by the hero and section H2s. */
+  --header-h: 4rem;
+  --fs-hero: clamp(2.75rem, 6.2vw, 7.5rem);
+  --fs-h2: clamp(2.25rem, 4.5vw, 5rem);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-surface-dark: var(--surface-dark);
+  --color-on-dark: var(--on-dark);
+  --color-on-dark-muted: var(--on-dark-muted);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-foreground: var(--accent-foreground);
+  --radius-card: 28px;
+  --radius-field: 14px;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --ease-spring: cubic-bezier(0.23, 1, 0.32, 1);
+  --animate-appear: appear 0.7s var(--ease-spring) both;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Fluid root size: 16px up to ~1366px wide, growing to ~19px at 2560px.
+   Tailwind spacing and type are rem-based, so the whole layout scales with
+   the screen instead of floating small in the middle of big monitors. The
+   % floor keeps a visitor's own larger browser font setting. */
+html {
+  font-size: clamp(100%, 0.35vw + 0.625rem, 125%);
+  /* Scroll anchoring nudges scrollY whenever content above the viewport
+     changes size. The lock stack re-measures its cards (and briefly
+     unpins them in src/lib/stops.ts), which made anchoring drift the page
+     mid-step. Section navigation owns scroll position, so turn it off. */
+  overflow-anchor: none;
+}
+
+/* Section navigation (wheel/keyboard) now does the "snap to the next view"
+   job that CSS scroll-snap used to do. CSS snap was dropped: with the
+   closing CTA pinned as the last locked card, `scroll-snap-type: y
+   proximity` kept pulling the viewport back onto it and made the footer
+   unreachable by wheel. `section-keys.tsx` and each locked panel's own
+   sticky behaviour are enough to make the page feel snappy without that
+   trap, and native wheel/trackpad scrolling still works everywhere,
+   footer included. `scroll-padding-top` stays: anchor links (nav, footer)
+   still need to land below the sticky header. */
+@media (min-width: 1024px) {
+  html {
+    scroll-padding-top: var(--header-h);
+  }
+}
+
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: -0.03em;
+  font-weight: 500;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* --- Motion utilities --- */
+
+/* Scroll reveal: .reveal starts hidden; .is-visible plays the entrance. */
+.reveal {
+  opacity: 0;
+}
+.reveal.is-visible,
+.reveal-now {
+  animation: appear 0.7s var(--ease-spring) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+  }
+  .reveal.is-visible,
+  .reveal-now {
+    animation: none;
+  }
+}
+
+/* Link underline that draws itself left to right */
+.link-line {
+  position: relative;
+  text-decoration: none;
+}
+.link-line::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -3px;
+  height: 1px;
+  width: 100%;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s var(--ease-spring);
+}
+.link-line:hover::after {
+  transform: scaleX(1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .link-line::after {
+    transition: none;
+  }
+}
+
+/* LeadQuiz step transition: crossfade + slight slide, instant when reduced motion. */
+.quiz-step {
+  animation: quiz-step-in 0.35s var(--ease-spring) both;
+}
+@keyframes quiz-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .quiz-step {
+    animation: none;
+  }
+}
+
+/* Lock stack: every home panel after the hero is a "card" that pins in
+   place while the next one slides up over it. Generic version of the old
+   two-panel lock hack — works for any number of panels of any height.
+   `src/components/lock-stack.tsx` measures each card with a
+   ResizeObserver and writes `--lock-top` in px:
+     min(header height, 100svh - card height)
+   A card shorter than the viewport pins under the header (top = header
+   height). A card taller than the viewport gets a negative top, so it
+   keeps scrolling until its BOTTOM edge reaches the viewport bottom, then
+   pins there — nothing is ever unreachable, and reopening a `<details>`
+   (which changes the card's height) re-fires the ResizeObserver and the
+   top recomputes, replacing the old `:has(details[open])` release hack.
+   Scoped to md+ and viewports at least 600px tall — LockStack itself skips
+   the measuring work below that, and the page is plain document flow. */
+@media (min-width: 768px) and (min-height: 600px) {
+  .tc-lock-card {
+    position: sticky;
+    top: var(--lock-top, var(--header-h));
+  }
+}
+
+/* From the second card on: rounded top corners and a soft top shadow (built
+   from the hairline token, not a hardcoded color) so each card visibly
+   slides over the one before it. */
+.tc-lock-card[data-cover="true"] {
+  border-top-left-radius: var(--radius-card);
+  border-top-right-radius: var(--radius-card);
+  box-shadow: 0 -18px 36px -20px var(--line-strong);
+}
+/* The panel inside paints its own background, so it needs the same rounded
+   top or it squares off the wrapper's corners (the Services section did). */
+.tc-lock-card[data-cover="true"] > :first-child {
+  border-top-left-radius: var(--radius-card);
+  border-top-right-radius: var(--radius-card);
+}
+
+@media (min-width: 768px) and (min-height: 600px) and (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .tc-lock-card {
+      animation: tc-panel-dim linear both;
+      animation-timeline: view();
+      animation-range: exit;
+    }
+  }
+}
+
+/* The last card is never covered (the footer scrolls in normally), so it
+   shouldn't dim or shrink as it leaves. */
+.tc-lock-card:last-child {
+  animation: none;
+}
+
+/* Momentary measuring state (see src/lib/stops.ts): unpin every card for
+   one synchronous layout read so stop positions are static, not stuck. */
+html.tc-measure .tc-lock-card {
+  position: relative !important;
+  top: auto !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+@keyframes tc-panel-dim {
+  to {
+    transform: scale(0.97);
+    filter: brightness(0.92);
+  }
+}
+
+/* Client rail marquee — the one sanctioned marquee on this site (see
+   AGENTS.md). Ported from the Fine Lines product-ticker pattern: it is a
+   CONTENT rail (real client name + service caption per cell, each linking to
+   #work), not decorative scrolling text. Pauses on hover/focus-within, and
+   falls back to a plain swipeable strip under reduced motion. */
+.tc-ticker-viewport {
+  overflow: hidden;
+}
+.tc-ticker {
+  animation: tc-ticker-scroll 40s linear infinite;
+}
+.tc-ticker-reverse {
+  animation-direction: reverse;
+}
+.tc-ticker:hover,
+.tc-ticker:focus-within {
+  animation-play-state: paused;
+}
+@keyframes tc-ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tc-ticker {
+    animation: none;
+  }
+  .tc-ticker-viewport {
+    overflow-x: auto;
+  }
+}
+
+/* FAQ accordion */
+details.faq summary::-webkit-details-marker {
+  display: none;
+}
+details.faq[open] .faq-icon {
+  transform: rotate(45deg);
+}
+.faq-icon {
+  transition: transform 0.3s var(--ease-spring);
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq-icon {
+    transition: none;
+  }
+}

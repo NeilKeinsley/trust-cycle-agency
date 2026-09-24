@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Trust Cycle Agency">
+  <!-- TCA monogram drawn as strokes (no <text>) so it stays legible at 16px
+       without a system font. Off-white T and A, teal C as an open arc: the
+       "cycle" in Trust Cycle. Hardcoded colours so it renders anywhere. -->
+  <rect width="32" height="32" rx="7" fill="#14181a" />
+  <g fill="none" stroke="#f4f2ec" stroke-width="2.5" stroke-linecap="square">
+    <!-- T -->
+    <path d="M3.4 10.6h7.2M7 10.6V22" />
+    <!-- A -->
+    <path d="M20.8 22l3.8-11.4 3.8 11.4M22.3 18.2h4.6" />
+  </g>
+  <!-- C -->
+  <path d="M18.9 12.3a4.8 4.8 0 1 0 0 7.8" fill="none" stroke="#4f9d92" stroke-width="2.5" stroke-linecap="round" />
+</svg>
