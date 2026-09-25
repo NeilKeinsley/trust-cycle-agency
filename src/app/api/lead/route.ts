@@ -18,11 +18,11 @@ function normaliseWebsite(value: string | undefined): string | undefined {
   return /^https?:\/\//i.test(v) ? v : `https://${v}`;
 }
 
-const rateLimiter = new RateLimiter(5, 60_000);
+const rateLimiter = new RateLimiter(5, 60_000, "lead");
 
 export async function POST(request: Request) {
   const key = clientKey(request);
-  const { allowed, retryAfterSeconds } = rateLimiter.check(key);
+  const { allowed, retryAfterSeconds } = await rateLimiter.check(key);
   if (!allowed) {
     return Response.json(
       { ok: false, error: "Too many requests. Try again shortly." },
