@@ -102,7 +102,9 @@ function HeroTickerRow() {
    instead of as its own centered line above the rail. */
 export function HeroRail() {
   return (
-    <div className="border-t border-on-dark-muted/15">
+    // Own layer + ground: the hero's studio stack lingers down behind it as
+    // the hero scrolls away, and passes beneath the rail rather than over it.
+    <div className="relative z-10 border-t border-on-dark-muted/15 bg-surface-dark">
       <div className="flex items-center">
         <p className="hidden shrink-0 whitespace-nowrap border-r border-on-dark-muted/15 px-5 font-mono text-[0.75rem] tracking-[0.12em] text-on-dark-muted uppercase lg:block">
           Trusted by growing teams

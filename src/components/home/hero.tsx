@@ -5,6 +5,7 @@ import { Reveal } from "@/components/reveal";
 import { ButtonLink } from "@/components/button";
 import { QuizTrigger } from "@/components/lead-quiz";
 import { HeroRail } from "@/components/home/client-strip";
+import { StudioStack } from "@/components/home/studio-stack";
 import { SERVICES, type ServiceValue } from "@/lib/intake";
 
 const PICKER_SERVICES = SERVICES.filter((s) => s.value !== "unsure");
@@ -29,33 +30,6 @@ const TRUST_NOTES: { label: string; icon: React.ReactNode }[] = [
   },
 ];
 
-function ConcentricArcs() {
-  return (
-    <svg
-      viewBox="0 0 420 420"
-      aria-hidden="true"
-      className="pointer-events-none absolute -right-16 top-1/2 hidden h-[440px] w-[440px] -translate-y-1/2 md:block"
-    >
-      {[190, 150, 110, 70].map((r, i) => (
-        <circle
-          key={r}
-          cx="210"
-          cy="210"
-          r={r}
-          fill="none"
-          stroke={i === 1 ? "var(--color-accent)" : "var(--color-on-dark-muted)"}
-          strokeOpacity={i === 1 ? 0.6 : 0.18}
-          strokeWidth={i === 1 ? 1.5 : 1}
-          strokeDasharray={i % 2 === 0 ? "1 10" : undefined}
-          strokeLinecap="round"
-        />
-      ))}
-      <circle cx="210" cy="120" r="4" fill="var(--color-accent)" />
-      <circle cx="330" cy="230" r="3" fill="var(--color-on-dark-muted)" />
-    </svg>
-  );
-}
-
 export function Hero() {
   const [selected, setSelected] = useState<ServiceValue[]>([]);
 
@@ -68,28 +42,29 @@ export function Hero() {
   return (
     <div
       data-stop
-      className="relative flex min-h-[100svh] w-full flex-col overflow-hidden bg-surface-dark text-on-dark [@media(min-width:768px)_and_(min-height:600px)]:h-[calc(100svh-var(--header-h))] [@media(min-width:768px)_and_(min-height:600px)]:min-h-0"
+      className="tc-hero relative flex min-h-[100svh] w-full flex-col overflow-hidden bg-surface-dark text-on-dark [@media(min-width:768px)_and_(min-height:600px)]:h-[calc(100svh-var(--header-h))] [@media(min-width:768px)_and_(min-height:600px)]:min-h-0"
     >
-      <ConcentricArcs />
-
       <div className="relative flex flex-1 flex-col justify-center px-5 py-8 sm:px-10 sm:py-[clamp(1.5rem,4svh,2.75rem)] lg:px-16">
-        <div className="flex flex-col gap-5 lg:grid lg:grid-cols-12 lg:content-center lg:gap-x-12 lg:gap-y-[clamp(1rem,3svh,2rem)]">
-          <Reveal immediate delay={90} className="lg:col-span-12">
-            {/* Capped by viewport height too, so the pinned hero fits short laptop screens. */}
-            <h1 className="max-w-6xl text-[length:min(var(--fs-hero),13svh)] leading-[0.98]">
-              Marketing that earns trust, then keeps it.
-            </h1>
-          </Reveal>
+        <div className="flex flex-col gap-5 lg:grid lg:grid-cols-12 lg:items-center lg:gap-x-12">
+          {/* Words and the picker: left column at lg, first on phones. */}
+          <div className="flex flex-col gap-5 lg:col-span-7 lg:gap-[clamp(1rem,2.6svh,1.75rem)]">
+            <Reveal immediate delay={90}>
+              {/* Capped by viewport height too, so the hero fits short laptop
+                  screens; smaller at lg, where it shares the row with the image. */}
+              <h1 className="max-w-6xl text-[length:min(var(--fs-hero),13svh)] leading-[0.98] lg:text-[length:min(5.2vw,10.5svh)]">
+                Marketing that earns trust, then keeps it.
+              </h1>
+            </Reveal>
 
-          <Reveal immediate delay={160} className="lg:col-span-5 lg:self-end">
-            <p className="max-w-lg text-lg text-on-dark-muted lg:text-xl">
-              We plan, design and run the brand, website and campaigns that
-              turn first-time visitors into long-term customers.
-            </p>
-          </Reveal>
+            <Reveal immediate delay={160}>
+              <p className="max-w-lg text-lg text-on-dark-muted">
+                We plan, design and run the brand, website and campaigns that
+                turn first-time visitors into long-term customers.
+              </p>
+            </Reveal>
 
-          <Reveal immediate delay={230} className="lg:col-span-7 lg:justify-self-end">
-            <div className="max-w-xl rounded-[var(--radius-card)] border border-on-dark-muted/20 bg-surface-dark/70 p-4 backdrop-blur-md sm:p-5">
+            <Reveal immediate delay={230}>
+              <div className="max-w-xl rounded-[var(--radius-card)] border border-on-dark-muted/20 bg-surface-dark/70 p-4 backdrop-blur-md sm:p-5">
               <p className="mb-3 text-sm text-on-dark-muted">
                 What do you need help with?
               </p>
@@ -141,7 +116,13 @@ export function Hero() {
                 </ButtonLink>
               </div>
             </div>
-          </Reveal>
+            </Reveal>
+          </div>
+
+          {/* The image: right column at lg; after the picker on phones.
+              Hidden on mid-size tablets, where the pinned hero has a fixed
+              height with no room for it. */}
+          <StudioStack className="mx-auto mt-4 hidden aspect-[5/4] w-full max-w-md max-md:block lg:col-span-5 lg:mt-0 lg:block lg:aspect-auto lg:h-[min(34rem,58svh)] lg:max-w-none" />
         </div>
 
         <Reveal immediate delay={300}>

@@ -70,7 +70,7 @@ Around that core, the site also demonstrates front-end design craft (motion, loc
 
 - **No real clients, case studies, metrics, press or testimonials exist.**
 - Client names (Northwind, Halcyon, Brightline, Oakridge, Parallel, Meridian Co.), team members and testimonials are fictional placeholders in `src/lib/fixtures.ts`, written as honestly generic.
-- Case-study pages are marked "coming soon".
+- Case-study pages (`/work`) are live but illustrative: placeholder clients, reasoning and signals watched, no results claimed.
 - Future work must not fabricate numbers, awards, logos of real companies, or outcomes presented as real.
 - The genuine evidence is the working system itself: the intake flows, the API behaviour and (once built) the n8n workflow, lead sheet and error handling.
 - Research backing design and backend decisions: `docs/BACKEND_PLAN.md`.

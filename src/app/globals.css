@@ -285,6 +285,82 @@ html.tc-measure .tc-lock-card {
   }
 }
 
+/* Studio stack: the hero image (src/components/home/studio-stack.tsx).
+   Resting pose lives on the card itself (--x0/--y0/--r0), so without
+   scroll-driven animation support, or under reduced motion, the pile simply
+   rests. Two authored moments:
+   1. load: each card settles into the pile once (staggered via inline delay);
+   2. scroll: the hero is a named view timeline (--tc-hero); as it exits the
+      viewport the pile pulls apart to --x1/--y1/--r1 and the cycle ring turns.
+   Only translate/rotate/opacity animate, on five small layers. */
+.tc-stack-card {
+  translate: var(--x0) var(--y0);
+  rotate: var(--r0);
+}
+.tc-stack-settle {
+  animation: tc-stack-settle 0.8s var(--ease-spring) both;
+}
+@keyframes tc-stack-settle {
+  from {
+    opacity: 0;
+    transform: translateY(14%) scale(0.96);
+  }
+}
+@keyframes tc-stack-explode {
+  from {
+    translate: var(--x0) var(--y0);
+    rotate: var(--r0);
+  }
+  to {
+    translate: var(--x1) var(--y1);
+    rotate: var(--r1);
+  }
+}
+@keyframes tc-stack-linger {
+  to {
+    translate: 0 55%;
+  }
+}
+@keyframes tc-stack-ring {
+  to {
+    rotate: 55deg;
+    opacity: 0.4;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .tc-hero {
+      view-timeline: --tc-hero block;
+    }
+    .tc-stack-card {
+      animation: tc-stack-explode linear both;
+      animation-timeline: --tc-hero;
+      animation-range: exit 0% exit 75%;
+    }
+    /* Desktop: the pile lingers (drifts down against the scroll) so the
+       pull-apart plays in view until the next panel slides over it. Phones
+       skip the drift: there the hero is taller than the screen and the stack
+       sits low, so it would slide over the trust notes. */
+    @media (min-width: 1024px) {
+      .tc-stack {
+        animation: tc-stack-linger linear both;
+        animation-timeline: --tc-hero;
+        animation-range: exit 0% exit 100%;
+      }
+    }
+    .tc-stack-ring {
+      animation: tc-stack-ring linear both;
+      animation-timeline: --tc-hero;
+      animation-range: exit 0% exit 100%;
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tc-stack-settle {
+    animation: none;
+  }
+}
+
 /* Client rail marquee — the one sanctioned marquee on this site (see
    AGENTS.md). Ported from the Fine Lines product-ticker pattern: it is a
    CONTENT rail (real client name + service caption per cell, each linking to
