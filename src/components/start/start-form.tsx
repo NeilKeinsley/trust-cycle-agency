@@ -130,6 +130,7 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
   const startedAtRef = useRef<number | null>(null);
   const restoredDraftRef = useRef(false);
   const submissionIdRef = useRef<string | null>(null);
+  const continuesQuizRef = useRef(false);
 
   // Hydrate from sessionStorage (refresh recovery) or fall back to the
   // searchParams-derived draft the server passed in.
@@ -153,10 +154,8 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
     startedAtRef.current = Date.now();
     restoredDraftRef.current = restored;
     // Continuing a quiz: reuse its id so the brief upgrades that lead in place.
-    submissionIdRef.current =
-      typeof next.leadId === "string" && UUID_PATTERN.test(next.leadId)
-        ? next.leadId
-        : crypto.randomUUID();
+    continuesQuizRef.current = typeof next.leadId === "string" && UUID_PATTERN.test(next.leadId);
+    submissionIdRef.current = continuesQuizRef.current ? (next.leadId as string) : crypto.randomUUID();
     // Hydrating from sessionStorage (a client-only external store) after
     // mount, so the server-rendered defaults don't mismatch — this is the
     // one-time sync effect React's own docs describe, not derived state.
@@ -285,6 +284,7 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
       elapsedMs: startedAtRef.current !== null ? Date.now() - startedAtRef.current : undefined,
       submissionId: submissionIdRef.current ?? undefined,
       restored: restoredDraftRef.current || undefined,
+      continuesQuiz: continuesQuizRef.current || undefined,
     };
 
     const result = briefLeadSchema.safeParse(payload);

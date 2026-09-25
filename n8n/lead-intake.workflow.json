@@ -13,23 +13,34 @@
       "name": "Lead webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 300],
+      "position": [
+        0,
+        300
+      ],
       "webhookId": "trust-cycle-lead",
       "credentials": {
-        "httpHeaderAuth": { "id": "", "name": "Trust Cycle webhook secret" }
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Trust Cycle webhook secret"
+        }
       }
     },
     {
       "parameters": {
         "respondWith": "json",
         "responseBody": "={{ { \"received\": true, \"id\": $json.body.id } }}",
-        "options": { "responseCode": 200 }
+        "options": {
+          "responseCode": 200
+        }
       },
       "id": "a1c0f7b2-0002-4000-8000-000000000002",
       "name": "Acknowledge",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [240, 300]
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
@@ -39,33 +50,130 @@
       "name": "Normalise and score",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [480, 300]
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b7e1c2d3-0001-4000-8000-00000000c0a1",
+              "leftValue": "={{ $('Lead webhook').item.json.body.continuesQuiz === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1c0f7b2-0007-4000-8000-000000000007",
+      "name": "Continues a quiz?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        760,
+        120
+      ]
     },
     {
       "parameters": {
         "authentication": "serviceAccount",
         "operation": "appendOrUpdate",
-        "documentId": { "__rl": true, "mode": "url", "value": "PASTE_YOUR_GOOGLE_SHEET_URL" },
-        "sheetName": { "__rl": true, "mode": "name", "value": "Leads" },
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "PASTE_YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
         "columns": {
           "mappingMode": "autoMapInputData",
           "value": {},
-          "matchingColumns": ["id"],
+          "matchingColumns": [
+            "id"
+          ],
           "schema": []
         },
-        "options": { "cellFormat": "RAW" }
+        "options": {
+          "cellFormat": "RAW"
+        }
       },
       "id": "a1c0f7b2-0004-4000-8000-000000000004",
-      "name": "Save to Leads sheet",
+      "name": "Update quiz row",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000,
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
-      "position": [760, 120],
+      "position": [
+        1000,
+        40
+      ],
       "credentials": {
-        "googleApi": { "id": "", "name": "Google Sheets" }
+        "googleApi": {
+          "id": "",
+          "name": "Google Sheets"
+        }
       }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/PASTE_YOUR_GOOGLE_SHEET_ID/values/Leads!A1:append",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            },
+            {
+              "name": "insertDataOption",
+              "value": "INSERT_ROWS"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: [[$json.id, $json.receivedAt, $json.source, $json.name, $json.email, $json.company, $json.phone, $json.website, $json.services, $json.budget, $json.timeline, $json.goals, $json.score, $json.bucket, $json.consent]] }) }}",
+        "options": {}
+      },
+      "id": "a1c0f7b2-0008-4000-8000-000000000008",
+      "name": "Append new lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        220
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "",
+          "name": "Google Sheets"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
     },
     {
       "parameters": {
@@ -73,7 +181,7 @@
         "url": "PASTE_YOUR_DISCORD_WEBHOOK_URL",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ allowed_mentions: { parse: [] }, content: `${$json.bucket === 'Hot' ? '🔥 ' : ''}**New ${$json.bucket} lead** (score ${$json.score}/15)\\n**${$json.name}** <${$json.email}>\\nServices: ${$json.services}\\nBudget: ${$json.budget} · Timeline: ${$json.timeline}\\nSource: ${$json.source}` }) }}",
+        "jsonBody": "={{ JSON.stringify({ allowed_mentions: { parse: [] }, content: `${$json.bucket === 'Hot' ? '🔥 ' : ''}**${$('Lead webhook').item.json.body.continuesQuiz ? 'Brief added, now' : 'New'} ${$json.bucket} lead** (score ${$json.score}/15)\\n**${$json.name}** <${$json.email}>\\nServices: ${$json.services}\\nBudget: ${$json.budget} · Timeline: ${$json.timeline}\\nSource: ${$json.source}` }) }}",
         "options": {}
       },
       "id": "a1c0f7b2-0005-4000-8000-000000000005",
@@ -83,7 +191,10 @@
       "waitBetweenTries": 2000,
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [760, 300]
+      "position": [
+        760,
+        320
+      ]
     },
     {
       "parameters": {
@@ -100,24 +211,84 @@
       "name": "Auto-reply (Resend)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [760, 480],
+      "position": [
+        760,
+        480
+      ],
       "disabled": true,
       "credentials": {
-        "httpHeaderAuth": { "id": "", "name": "Resend API key" }
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Resend API key"
+        }
       }
     }
   ],
   "connections": {
-    "Lead webhook": { "main": [[{ "node": "Acknowledge", "type": "main", "index": 0 }]] },
-    "Acknowledge": { "main": [[{ "node": "Normalise and score", "type": "main", "index": 0 }]] },
+    "Lead webhook": {
+      "main": [
+        [
+          {
+            "node": "Acknowledge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Acknowledge": {
+      "main": [
+        [
+          {
+            "node": "Normalise and score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Normalise and score": {
-      "main": [[
-        { "node": "Save to Leads sheet", "type": "main", "index": 0 },
-        { "node": "Notify Discord", "type": "main", "index": 0 },
-        { "node": "Auto-reply (Resend)", "type": "main", "index": 0 }
-      ]]
+      "main": [
+        [
+          {
+            "node": "Continues a quiz?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify Discord",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Auto-reply (Resend)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Continues a quiz?": {
+      "main": [
+        [
+          {
+            "node": "Update quiz row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append new lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "settings": { "executionOrder": "v1" },
+  "settings": {
+    "executionOrder": "v1"
+  },
   "pinData": {}
 }

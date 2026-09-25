@@ -1,6 +1,6 @@
 import { after } from "next/server";
 import { leadSchema } from "@/lib/intake";
-import { drainOutbox, forwardLead, queueLead } from "@/lib/lead-outbox";
+import { drainOutbox, dropQueued, forwardLead, queueLead } from "@/lib/lead-outbox";
 import { RateLimiter, clientKey } from "@/lib/rate-limit";
 
 /**
@@ -68,8 +68,8 @@ export async function POST(request: Request) {
   /**
    * Contract forwarded to n8n:
    * { id, receivedAt, source, services, budget, timeline, name, email,
-   *   company?, phone?, website?, goals?, consent?, userAgent, referrer,
-   *   elapsedMs }
+   *   company?, phone?, website?, goals?, consent?, continuesQuiz?,
+   *   userAgent, referrer, elapsedMs }
    * The honeypot field is never forwarded.
    */
   const payload = {
@@ -90,8 +90,12 @@ export async function POST(request: Request) {
 
   const result = await forwardLead(payload);
   if (result.ok) {
-    // n8n is reachable again: send anything that queued up while it wasn't.
-    after(() => drainOutbox());
+    // n8n is reachable: drop any stale queued copy of this lead, then send
+    // anything else that queued up while it wasn't.
+    after(async () => {
+      await dropQueued(payload.id);
+      await drainOutbox();
+    });
     return Response.json({ ok: true, forwarded: true });
   }
 

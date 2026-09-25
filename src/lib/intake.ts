@@ -144,6 +144,9 @@ export const briefLeadSchema = z.object({
   /** True when this submission was hydrated from a sessionStorage draft
    * rather than typed live, so the time trap (elapsedMs) is skipped. */
   restored: z.boolean().optional(),
+  /** True when this brief continues a quiz and reuses its submission id, so
+   * n8n updates the quiz's row instead of appending a new one. */
+  continuesQuiz: z.boolean().optional(),
 });
 
 /** What /api/lead validates every POST body against. */

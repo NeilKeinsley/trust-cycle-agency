@@ -64,6 +64,17 @@ export async function queueLead(payload: LeadPayload, reason: string): Promise<b
   }
 }
 
+/**
+ * Forget a queued copy of a lead that has since been delivered. Same id means
+ * the same submission, or a brief that supersedes its quiz, so replaying the
+ * older copy would only overwrite newer data.
+ */
+export async function dropQueued(id: string): Promise<void> {
+  const dir = outboxDir();
+  if (!dir || !ID_PATTERN.test(id)) return;
+  await unlink(path.join(dir, `${id}.json`)).catch(() => {});
+}
+
 let draining: Promise<DrainResult> | null = null;
 
 export type DrainResult = { found: number; sent: number; remaining: number };

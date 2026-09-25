@@ -43,7 +43,7 @@ Use a Google **Service Account**, not OAuth, so there's no consent screen, no te
 1. In Google Cloud (project `strategic-hull-494501-q9`), enable the **Google Sheets API** and the **Google Drive API**.
 2. Go to **IAM & Admin → Service Accounts → Create** (for example `n8n-leads`), then **Keys → Add key → JSON**. Keep the file private.
 3. Share the sheet with the service account's email as **Editor**.
-4. The imported **Save to Leads sheet** node already uses **Authentication → Service Account**; just select the credential.
+4. In the n8n credential, turn on **Set up for use in HTTP Request node** and set **Scope(s)** to `https://www.googleapis.com/auth/spreadsheets`. The **Append new lead** node calls the Sheets API directly and needs this.
 
 Create a sheet with a tab named **Leads**, and put these column headers in row 1:
 
@@ -55,14 +55,17 @@ The workflow matches rows on `id` (the submission ID), so if the same submission
 
 `consent` is `yes` when the brief's email-and-text consent box was ticked (the brief can't be sent without it) and blank for quiz leads, which only asked for a reply.
 
-The node writes values as plain text (**Options → Cell Format: RAW**), so a name like `=1+1` or a phone like `+1 555…` is stored as typed instead of being run as a formula.
+Both sheet writes use plain text (RAW), so a name like `=1+1` or a phone like `+1 555…` is stored as typed instead of being run as a formula.
+
+**Why two sheet nodes.** n8n's Google Sheets node works out the target row itself, so two leads arriving within about a second can overwrite each other (tested: 5 simultaneous leads left 1 row). New leads therefore go through **Append new lead**, an HTTP Request to the Sheets API's `values.append`, which Google applies atomically. Only a brief that continues a quiz (`continuesQuiz: true`) goes through **Update quiz row** (append-or-update on `id`), because it has to rewrite an existing row. **Append new lead** writes columns by position, so keep the header order above if you change the sheet.
 
 ## 5. Import and wire the workflows
 
 1. In n8n, go to **Workflows → Import from File**. Import `n8n/lead-intake-errors.workflow.json` first, then `n8n/lead-intake.workflow.json`.
 2. In **Trust Cycle: lead intake**, open each node that shows a warning:
    - **Lead webhook:** select the `Trust Cycle webhook secret` credential.
-   - **Save to Leads sheet:** select the Google Sheets credential and paste your sheet URL.
+   - **Update quiz row:** select the Google Sheets credential and paste your sheet URL.
+   - **Append new lead:** select the same credential and replace `PASTE_YOUR_GOOGLE_SHEET_ID` in the URL with the ID from your sheet's URL (the part between `/d/` and `/edit`).
    - **Notify Discord:** paste the Discord webhook URL.
    - **Auto-reply (Resend):** this node is imported **disabled**. Resend's test sender (`onboarding@resend.dev`) only delivers to your own Resend account address. It can't email real visitors until you verify a sending domain (with SPF and DKIM). Enable the node only after that.
 3. In **Trust Cycle: pipeline errors**, paste the Discord webhook URL.
