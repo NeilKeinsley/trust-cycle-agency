@@ -157,7 +157,7 @@ export default async function CaseStudyPage({ params }: PageProps<"/work/[slug]"
               <ul className="mt-5 space-y-3">
                 {study.watched.map((item) => (
                   <li key={item} className="flex gap-3">
-                    <span aria-hidden="true" className="mt-2.5 h-px w-4 shrink-0 bg-accent-soft" />
+                    <span aria-hidden="true" className="mt-2.5 h-px w-4 shrink-0 bg-on-dark-accent" />
                     <span>{item}</span>
                   </li>
                 ))}

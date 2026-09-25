@@ -495,7 +495,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
                         onClick={() => toggleService("unsure")}
                         className={`inline-flex min-h-11 cursor-pointer items-center text-base underline underline-offset-4 transition-colors duration-300 ${
                           selectedServices.includes("unsure")
-                            ? "text-accent-soft"
+                            ? "text-on-dark-accent"
                             : "text-on-dark-muted hover:text-on-dark"
                         }`}
                       >
@@ -616,7 +616,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
                           className="w-full rounded-[var(--radius-field)] border border-on-dark-muted/25 bg-on-dark/[0.04] px-4 py-3 text-base text-on-dark outline-none transition-colors duration-300 placeholder:text-on-dark-muted/60 focus:border-accent"
                         />
                         {fieldErrors.name && (
-                          <p id="quiz-name-error" className="mt-1.5 text-[0.8125rem] text-accent-soft">
+                          <p id="quiz-name-error" className="mt-1.5 text-[0.8125rem] text-on-dark-accent">
                             {fieldErrors.name[0]}
                           </p>
                         )}
@@ -639,7 +639,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
                           className="w-full rounded-[var(--radius-field)] border border-on-dark-muted/25 bg-on-dark/[0.04] px-4 py-3 text-base text-on-dark outline-none transition-colors duration-300 placeholder:text-on-dark-muted/60 focus:border-accent"
                         />
                         {fieldErrors.email && (
-                          <p id="quiz-email-error" className="mt-1.5 text-[0.8125rem] text-accent-soft">
+                          <p id="quiz-email-error" className="mt-1.5 text-[0.8125rem] text-on-dark-accent">
                             {fieldErrors.email[0]}
                           </p>
                         )}
@@ -663,7 +663,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
                           </span>
                         </label>
                         {fieldErrors.consent && (
-                          <p id="quiz-consent-error" className="mt-1.5 text-[0.8125rem] text-accent-soft">
+                          <p id="quiz-consent-error" className="mt-1.5 text-[0.8125rem] text-on-dark-accent">
                             {fieldErrors.consent[0]}
                           </p>
                         )}
@@ -690,7 +690,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
                         {submitting ? "Sending…" : "Get my free consultation"}
                       </Button>
                       {submitError && (
-                        <p role="alert" className="text-[0.8125rem] text-accent-soft">
+                        <p role="alert" className="text-[0.8125rem] text-on-dark-accent">
                           {submitError} Or email us at{" "}
                           <a href={`mailto:${CONTACT_EMAIL}`} className="link-line text-on-dark">
                             {CONTACT_EMAIL}

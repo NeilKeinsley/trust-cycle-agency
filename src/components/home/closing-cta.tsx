@@ -72,7 +72,7 @@ export function ClosingCta({ locked = false }: { locked?: boolean }) {
                 key={step.n}
                 className="flex items-center justify-center gap-3 bg-surface-dark px-5 py-5 sm:flex-col sm:gap-2 sm:py-7 sm:text-center"
               >
-                <span className="font-mono text-sm text-accent-soft">{step.n}</span>
+                <span className="font-mono text-sm text-on-dark-accent">{step.n}</span>
                 <span className="text-sm text-on-dark-muted">{step.label}</span>
               </div>
             ))}

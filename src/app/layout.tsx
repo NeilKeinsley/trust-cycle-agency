@@ -32,8 +32,16 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#faf9f6",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#faf9f6" },
+    { media: "(prefers-color-scheme: dark)", color: "#101417" },
+  ],
 };
+
+/* Runs before first paint: applies a saved theme choice so a visitor who
+   picked a theme never sees the other one flash. Stays tiny and wrapped in
+   try/catch because storage can throw (private mode, blocked site data). */
+const themeScript = `try{var t=localStorage.getItem("tca-theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}`;
 
 const organizationJsonLd = {
   "@context": "https://schema.org",
@@ -49,8 +57,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      // The theme script sets data-theme before React hydrates.
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <script
           type="application/ld+json"

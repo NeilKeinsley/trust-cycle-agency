@@ -120,7 +120,7 @@ export function Hero() {
                   onClick={() => toggle(UNSURE.value)}
                   className={`flex min-h-11 cursor-pointer items-center text-[0.8125rem] underline underline-offset-4 transition-colors duration-300 ${
                     selected.includes(UNSURE.value)
-                      ? "text-accent-soft decoration-accent-soft"
+                      ? "text-on-dark-accent decoration-on-dark-accent"
                       : "text-on-dark-muted decoration-on-dark-muted/50 hover:text-on-dark"
                   }`}
                 >

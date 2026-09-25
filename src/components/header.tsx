@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Logo } from "./logo";
 import { QuizTrigger } from "./lead-quiz";
 import { NAV, LOGIN, CTA } from "@/lib/site";
+import { ThemeToggle } from "./theme-toggle";
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -66,43 +67,48 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="hidden sm:flex items-center gap-3">
-          <Link
-            href={LOGIN.href}
-            className="link-line inline-block -my-[6px] py-[6px] text-[0.8125rem] text-muted hover:text-foreground transition-colors duration-300"
-          >
-            {LOGIN.label}
-          </Link>
-          <QuizTrigger variant="primary" size="sm">
-            {CTA.label}
-          </QuizTrigger>
-        </div>
+        {/* Right cluster: theme toggle (all sizes), log in + CTA (sm+), menu
+            button (below md), grouped so justify-between keeps three slots. */}
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <div className="hidden sm:flex items-center gap-3">
+            <Link
+              href={LOGIN.href}
+              className="link-line inline-block -my-[6px] py-[6px] text-[0.8125rem] text-muted hover:text-foreground transition-colors duration-300"
+            >
+              {LOGIN.label}
+            </Link>
+            <QuizTrigger variant="primary" size="sm">
+              {CTA.label}
+            </QuizTrigger>
+          </div>
 
-        {/* mobile menu toggle */}
-        <button
-          ref={toggleRef}
-          type="button"
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
-          aria-expanded={menuOpen}
-          aria-controls="mobile-nav-panel"
-          onClick={() => setMenuOpen((v) => !v)}
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-line md:hidden cursor-pointer"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            className="h-4 w-4"
-            stroke="currentColor"
-            strokeWidth={1.5}
-            fill="none"
-            strokeLinecap="round"
+          {/* mobile menu toggle */}
+          <button
+            ref={toggleRef}
+            type="button"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-nav-panel"
+            onClick={() => setMenuOpen((v) => !v)}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-line md:hidden cursor-pointer"
           >
-            {menuOpen ? (
-              <path d="M6 6l12 12M18 6L6 18" />
-            ) : (
-              <path d="M4 8h16M4 16h16" />
-            )}
-          </svg>
-        </button>
+            <svg
+              viewBox="0 0 24 24"
+              className="h-4 w-4"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              fill="none"
+              strokeLinecap="round"
+            >
+              {menuOpen ? (
+                <path d="M6 6l12 12M18 6L6 18" />
+              ) : (
+                <path d="M4 8h16M4 16h16" />
+              )}
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* mobile nav panel: inert (not focusable, hidden from assistive tech)

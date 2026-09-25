@@ -22,13 +22,14 @@ Exposed as Tailwind utilities (`bg-background`, `text-muted`, etc.) via `@theme 
 - `--background`, `--foreground` — warm off-white / near-black base
 - `--card` — light surface (default cards)
 - `--surface-dark`, `--on-dark`, `--on-dark-muted` — the dark card used for the hero and closing CTA; always dark regardless of theme
+- `--on-dark-accent` — light teal for TEXT on those always-dark cards (identical in both themes). Don't use `--accent-soft` for text on dark cards: it's a tint that turns dark teal in the dark theme
 - `--muted` — secondary text
 - `--line`, `--line-strong` — hairline borders (foreground at low/higher opacity)
 - `--accent`, `--accent-soft`, `--accent-foreground` — the deep teal "trust" accent; use sparingly, as a signal not a decoration
 - `--radius-card` (28px), `--radius-field` (14px) — pills use full rounding, not a radius token
 - `--font-sans` / `--font-mono` — Geist Sans / Geist Mono via `next/font`
 
-Light theme only for v1. Token names are structured so a dark mode can be layered on later without renaming anything.
+Light and dark themes. Dark redefines the same token names in `globals.css`: it follows `prefers-color-scheme` unless the visitor uses the header toggle (`src/components/theme-toggle.tsx`), which writes `data-theme` on `<html>` and `localStorage["tca-theme"]`. An inline script in `layout.tsx` applies the saved choice before paint. Every new UI must pass WCAG AA contrast in BOTH themes: run Lighthouse with dark emulated too.
 
 ## Design rules (binding — adapted from Fine Lines' anti-slop standard)
 - Colors only from tokens above. Never hardcode a hex/oklch value in a component.

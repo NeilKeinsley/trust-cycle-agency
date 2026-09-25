@@ -70,7 +70,7 @@ function PillarText({ pillar, index }: { pillar: Pillar; index: number }) {
       key={pillar.value}
       className="motion-safe:animate-appear motion-reduce:opacity-100"
     >
-      <p className="font-mono text-[0.75rem] tracking-[0.12em] uppercase text-accent-soft">
+      <p className="font-mono text-[0.75rem] tracking-[0.12em] uppercase text-on-dark-accent">
         {`Services 0${index + 1}/0${TOTAL}`}
       </p>
       <h3
@@ -316,7 +316,7 @@ export function ServicesStory() {
               <ServiceScene kind={pillar.scene} active />
             </div>
             <div className="flex flex-1 flex-col justify-center gap-2 px-4 py-10 sm:px-6 landscape:py-6">
-              <p className="font-mono text-[0.75rem] tracking-[0.12em] uppercase text-accent-soft">
+              <p className="font-mono text-[0.75rem] tracking-[0.12em] uppercase text-on-dark-accent">
                 {`Services 0${i + 1}/0${TOTAL}`}
               </p>
               <h3

@@ -20,10 +20,10 @@ const CARD =
 function BrandScene() {
   const swatches: { name: string; bg: string; text: string }[] = [
     { name: "accent", bg: "var(--color-accent)", text: "var(--color-accent-foreground)" },
-    { name: "accent-soft", bg: "var(--color-accent-soft)", text: "var(--color-surface-dark)" },
+    { name: "accent-soft", bg: "var(--color-on-dark-accent)", text: "var(--color-surface-dark)" },
     { name: "on-dark", bg: "var(--color-on-dark)", text: "var(--color-surface-dark)" },
     { name: "on-dark-muted", bg: "var(--color-on-dark-muted)", text: "var(--color-surface-dark)" },
-    { name: "card", bg: "var(--color-card)", text: "var(--color-surface-dark)" },
+    { name: "card", bg: "var(--color-card)", text: "var(--color-foreground)" },
   ];
 
   return (
@@ -269,7 +269,7 @@ function MarketingScene({ active }: { active: boolean }) {
           className={`${CARD} flex flex-col gap-[8%] p-[6%]`}
           style={{ top: "68%", left: `${3 + i * 47.8}%`, width: "43%", height: "20%" }}
         >
-          <div className="h-[42%] w-full rounded-[10%]" style={{ background: i === 0 ? "var(--color-accent-soft)" : "var(--color-on-dark-muted)", opacity: i === 0 ? 1 : 0.2 }} />
+          <div className="h-[42%] w-full rounded-[10%]" style={{ background: i === 0 ? "var(--color-on-dark-accent)" : "var(--color-on-dark-muted)", opacity: i === 0 ? 1 : 0.2 }} />
           <div className="h-[10%] w-3/4 rounded-full bg-on-dark-muted/25" />
           <div className="h-[10%] w-1/2 rounded-full bg-on-dark-muted/15" />
         </div>

@@ -3,11 +3,14 @@
 /*
   Trust Cycle Agency design tokens.
   Warm off-white + near-black ink, one deep teal "trust" accent.
-  Light only for v1; --surface-dark/--on-dark exist for the hero and closing
-  CTA cards, which are dark regardless of theme (structured so a future
-  site-wide dark mode can reuse the same names).
+  Light by default; a dark theme redefines the same names below (system
+  preference, or the header toggle's data-theme override). --surface-dark /
+  --on-dark are the always-dark hero and CTA cards in BOTH themes, and
+  --on-dark-accent is the light teal used as text on them, so those cards
+  look identical whichever theme is active.
 */
 :root {
+  color-scheme: light;
   --background: oklch(0.985 0.004 95);
   --foreground: oklch(0.2 0.01 250);
   --card: oklch(1 0 0);
@@ -20,12 +23,49 @@
   --accent: oklch(0.46 0.085 180);
   --accent-soft: oklch(0.94 0.03 180);
   --accent-foreground: oklch(0.99 0 0);
+  --on-dark-accent: oklch(0.94 0.03 180);
 
   /* Layout: header height (the header sizes itself off this var so the two
      never drift), plus fluid type scales used by the hero and section H2s. */
   --header-h: 4rem;
   --fs-hero: clamp(2.75rem, 6.2vw, 7.5rem);
   --fs-h2: clamp(2.25rem, 4.5vw, 5rem);
+}
+
+/* Dark theme: follows the system unless the visitor picked light; the
+   header toggle writes data-theme="dark"|"light" (persisted in
+   localStorage, applied before paint by the inline script in layout.tsx). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --background: oklch(0.17 0.008 230);
+    --foreground: oklch(0.95 0.005 95);
+    --card: oklch(0.21 0.01 225);
+    /* Raised slightly above the page so the always-dark cards still read as
+       cards on a dark page. */
+    --surface-dark: oklch(0.235 0.013 200);
+    --muted: oklch(0.74 0.01 250);
+    --line: oklch(0.95 0.005 95 / 0.12);
+    --line-strong: oklch(0.95 0.005 95 / 0.28);
+    --accent: oklch(0.8 0.09 180);
+    --accent-soft: oklch(0.32 0.045 180);
+    --accent-foreground: oklch(0.17 0.008 230);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: oklch(0.17 0.008 230);
+  --foreground: oklch(0.95 0.005 95);
+  --card: oklch(0.21 0.01 225);
+  /* Raised slightly above the page so the always-dark cards still read as
+     cards on a dark page. */
+  --surface-dark: oklch(0.235 0.013 200);
+  --muted: oklch(0.74 0.01 250);
+  --line: oklch(0.95 0.005 95 / 0.12);
+  --line-strong: oklch(0.95 0.005 95 / 0.28);
+  --accent: oklch(0.8 0.09 180);
+  --accent-soft: oklch(0.32 0.045 180);
+  --accent-foreground: oklch(0.17 0.008 230);
 }
 
 @theme inline {
@@ -41,6 +81,7 @@
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-accent-foreground: var(--accent-foreground);
+  --color-on-dark-accent: var(--on-dark-accent);
   --radius-card: 28px;
   --radius-field: 14px;
   --font-sans: var(--font-geist-sans);
