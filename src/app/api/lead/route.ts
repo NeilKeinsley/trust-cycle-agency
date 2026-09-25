@@ -1,12 +1,22 @@
+import { after } from "next/server";
 import { leadSchema } from "@/lib/intake";
+import { drainOutbox, forwardLead, queueLead } from "@/lib/lead-outbox";
 import { RateLimiter, clientKey } from "@/lib/rate-limit";
 
 /**
  * Lead intake endpoint for both the LeadQuiz modal (source: "quiz") and the
- * /start brief (source: "brief"). n8n is phase 2 — see .env.example. Until
- * N8N_WEBHOOK_URL is configured (or if the call fails), the payload is just
- * logged so the demo keeps working without a live backend.
+ * /start brief (source: "brief"). Leads are forwarded to n8n (see
+ * docs/N8N_SETUP.md). If n8n can't take one, it goes to the durable outbox
+ * (src/lib/lead-outbox.ts) and is replayed later, so the visitor always gets
+ * a success response and no lead is dropped.
  */
+
+/** Bare domains ("example.com") get https:// so the sheet always holds a working link. */
+function normaliseWebsite(value: string | undefined): string | undefined {
+  const v = value?.trim();
+  if (!v) return v;
+  return /^https?:\/\//i.test(v) ? v : `https://${v}`;
+}
 
 const rateLimiter = new RateLimiter(5, 60_000);
 
@@ -66,40 +76,32 @@ export async function POST(request: Request) {
     id: submissionId ?? crypto.randomUUID(),
     receivedAt: new Date().toISOString(),
     ...fields,
+    ...(fields.source === "brief" ? { website: normaliseWebsite(fields.website) } : {}),
     email: fields.email.trim().toLowerCase(),
     userAgent: request.headers.get("user-agent") ?? "",
     referrer: request.headers.get("referer") ?? "",
     elapsedMs,
   };
 
-  const webhookUrl = process.env.N8N_WEBHOOK_URL;
-  if (!webhookUrl) {
+  if (!process.env.N8N_WEBHOOK_URL) {
     console.info("[lead] no N8N_WEBHOOK_URL configured, logging payload:", payload);
     return Response.json({ ok: true, forwarded: false });
   }
 
-  try {
-    const res = await fetch(webhookUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Idempotency-Key": payload.id,
-        ...(process.env.N8N_WEBHOOK_SECRET
-          ? { "x-webhook-secret": process.env.N8N_WEBHOOK_SECRET }
-          : {}),
-      },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(5000),
-    });
-
-    if (!res.ok) {
-      console.info("[lead] webhook responded with an error, logging payload:", payload);
-      return Response.json({ ok: true, forwarded: false });
-    }
-
+  const result = await forwardLead(payload);
+  if (result.ok) {
+    // n8n is reachable again: send anything that queued up while it wasn't.
+    after(() => drainOutbox());
     return Response.json({ ok: true, forwarded: true });
-  } catch (err) {
-    console.info("[lead] webhook call failed, logging payload:", payload, err);
-    return Response.json({ ok: true, forwarded: false });
   }
+
+  const reason = result.status ? `webhook responded ${result.status}` : "webhook unreachable";
+  const queued = await queueLead(payload, reason);
+  if (!queued) {
+    // No outbox configured: the Railway log is the only copy.
+    console.error(`[lead] ${reason}, not queued, logging payload:`, payload);
+  } else {
+    console.warn(`[lead] ${reason}, queued for replay`, { id: payload.id });
+  }
+  return Response.json({ ok: true, forwarded: false, queued });
 }

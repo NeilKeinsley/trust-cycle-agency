@@ -25,7 +25,7 @@ import {
   type TimelineValue,
   START_DRAFT_KEY,
 } from "@/lib/intake";
-import { CONTACT_EMAIL } from "@/lib/site";
+import { CONTACT_EMAIL, SITE_NAME } from "@/lib/site";
 
 /** Which step card a given field belongs to, so a mapped server-side
  * fieldError can jump the visitor back to the right card. */
@@ -60,9 +60,12 @@ export type Draft = {
   phone: string;
   consent: boolean;
   company_website: string;
+  /** Submission id of the quiz this brief continues, handed over by LeadQuiz. */
+  leadId?: string;
 };
 
 const STORAGE_KEY = START_DRAFT_KEY;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const STEP_TITLES = ["Services", "Project", "Details", "About you", "Review and send"];
 
 function computeCompleted(draft: Draft): boolean[] {
@@ -149,7 +152,11 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
     const firstIncomplete = completedArr.findIndex((c) => !c);
     startedAtRef.current = Date.now();
     restoredDraftRef.current = restored;
-    submissionIdRef.current = crypto.randomUUID();
+    // Continuing a quiz: reuse its id so the brief upgrades that lead in place.
+    submissionIdRef.current =
+      typeof next.leadId === "string" && UUID_PATTERN.test(next.leadId)
+        ? next.leadId
+        : crypto.randomUUID();
     // Hydrating from sessionStorage (a client-only external store) after
     // mount, so the server-rendered defaults don't mismatch — this is the
     // one-time sync effect React's own docs describe, not derived state.
@@ -639,7 +646,7 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
 
                   {!locked && expandedStep !== 4 && completed[3] && (
                     <p className="mt-3 text-sm text-muted">
-                      {draft.name} &middot; {draft.email}
+                      {[draft.name, draft.email, draft.company, draft.phone].filter(Boolean).join(" · ")}
                     </p>
                   )}
 
@@ -766,7 +773,10 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
                           className="mt-0.5 h-4 w-4 shrink-0 rounded border-line text-accent focus-visible:ring-2 focus-visible:ring-accent"
                         />
                         <span className="text-sm text-foreground/90">
-                          OK to contact me about this project
+                          I agree to receive emails and text messages from {SITE_NAME} about this
+                          project, sent to the email address and phone number I gave above. Message
+                          and data rates may apply. Reply STOP to any text or use the unsubscribe
+                          link in any email to opt out.
                         </span>
                       </label>
                       {errors.consent && (

@@ -48,10 +48,14 @@ Use a Google **Service Account**, not OAuth, so there's no consent screen, no te
 Create a sheet with a tab named **Leads**, and put these column headers in row 1:
 
 ```
-id | receivedAt | source | name | email | company | phone | website | services | budget | timeline | goals | score | bucket
+id | receivedAt | source | name | email | company | phone | website | services | budget | timeline | goals | score | bucket | consent
 ```
 
-The workflow matches rows on `id` (the submission ID), so if the same submission is sent twice, it updates the row instead of duplicating it.
+The workflow matches rows on `id` (the submission ID), so if the same submission is sent twice, it updates the row instead of duplicating it. A brief started from the quiz's "Add more detail" link reuses the quiz's ID, so the brief upgrades that lead's row in place.
+
+`consent` is `yes` when the brief's email-and-text consent box was ticked (the brief can't be sent without it) and blank for quiz leads, which only asked for a reply.
+
+The node writes values as plain text (**Options → Cell Format: RAW**), so a name like `=1+1` or a phone like `+1 555…` is stored as typed instead of being run as a formula.
 
 ## 5. Import and wire the workflows
 
@@ -73,6 +77,7 @@ The production webhook is then `https://n8n-production-93bcc.up.railway.app/webh
 |---|---|
 | `N8N_WEBHOOK_URL` | `https://n8n-production-93bcc.up.railway.app/webhook/lead` |
 | `N8N_WEBHOOK_SECRET` | the secret from step 2 |
+| `LEAD_OUTBOX_DIR` | `/data/lead-outbox`, with a Railway **volume** attached to the site service at `/data` |
 
 Railway redeploys the site automatically when variables change.
 
@@ -89,4 +94,11 @@ Submit the quiz on the live site using test details. Then check:
 - **Cost:** n8n and Postgres run on Railway usage billing (always on). Watch the project's **Usage** page for the first week.
 - **Updates:** the template pins `n8nio/n8n` (latest). Redeploying pulls newer versions, so check n8n's release notes before redeploying.
 - **Backups:** Postgres holds your credentials and executions. Enable Railway volume backups if the demo matters.
-- **Fallback:** `/api/lead` already answers visitors with success even when n8n is down. A durable fallback store for leads that fail to forward is still on the backend plan's to-do list.
+- **Fallback:** if n8n is down or rejects a lead, `/api/lead` still answers the visitor with success and writes the lead to the outbox (`LEAD_OUTBOX_DIR`, one JSON file per submission ID). The outbox drains automatically after the next lead that n8n accepts. To replay right away, for example after fixing n8n:
+
+  ```bash
+  curl -X POST https://trust-cycle-agency-production.up.railway.app/api/lead/replay -H "x-webhook-secret: <secret>"
+  ```
+
+  It answers `{"found":N,"sent":N,"remaining":N}`. Replays are safe because n8n upserts on `id`.
+- **Discord:** both Discord nodes send `allowed_mentions: { parse: [] }`, so a visitor who types `@everyone` as their name can't ping your server. The Sheets and Discord nodes retry 3 times, 2 seconds apart, before the error workflow fires.

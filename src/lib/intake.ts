@@ -101,7 +101,7 @@ export const phoneField = z
 
 export const consentField = z
   .boolean()
-  .refine((v) => v === true, "Confirm it's OK to contact you about this project");
+  .refine((v) => v === true, "Tick the box to agree to emails and texts about this project");
 
 /** Elapsed time between the form becoming interactive and submit, in ms.
  * Paired with the honeypot as a time-trap: real visitors can't finish in

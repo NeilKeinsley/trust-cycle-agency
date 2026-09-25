@@ -255,13 +255,23 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
 
   // Contact details go to /start through its sessionStorage draft, not the
   // URL, so they never land in server logs, analytics or referrer headers.
+  // leadId carries this quiz's submission id so the brief updates the same
+  // row in the lead sheet (n8n upserts on id) instead of adding a second one.
   function handOffToBrief() {
     try {
       const raw = sessionStorage.getItem(START_DRAFT_KEY);
       const saved = raw ? JSON.parse(raw) : {};
       sessionStorage.setItem(
         START_DRAFT_KEY,
-        JSON.stringify({ ...saved, services: selectedServices, budget, timeline, name, email })
+        JSON.stringify({
+          ...saved,
+          services: selectedServices,
+          budget,
+          timeline,
+          name,
+          email,
+          leadId: submissionIdRef.current ?? undefined,
+        })
       );
     } catch {
       // Storage unavailable: /start still gets the non-personal answers from the URL.

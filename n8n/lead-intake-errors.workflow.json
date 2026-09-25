@@ -15,7 +15,7 @@
         "url": "PASTE_YOUR_DISCORD_WEBHOOK_URL",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ content: `⚠️ **Lead pipeline failed**\\nWorkflow: ${$json.workflow.name}\\nNode: ${$json.execution.lastNodeExecuted}\\nError: ${$json.execution.error.message}\\nExecution: ${$json.execution.url ?? $json.execution.id}` }) }}",
+        "jsonBody": "={{ JSON.stringify({ allowed_mentions: { parse: [] }, content: `⚠️ **Lead pipeline failed**\\nWorkflow: ${$json.workflow.name}\\nNode: ${$json.execution.lastNodeExecuted}\\nError: ${$json.execution.error.message}\\nExecution: ${$json.execution.url ?? $json.execution.id}` }) }}",
         "options": {}
       },
       "id": "b2d1e8c3-0002-4000-8000-000000000002",
