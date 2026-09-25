@@ -30,7 +30,7 @@ The before snapshot was taken read-only just before any change. The after snapsh
 | Crawlable links to `/start` | 1 (from `/contact`) | Every page (footer) |
 | Headings | One `h1` per page, no skipped levels | Unchanged |
 | Internal links | All 200 | All 200 |
-| Lighthouse, mobile, home page | n/a | SEO 100, Agentic Browsing 100, Best Practices 100, Accessibility 96 → fixed (see below) |
+| Lighthouse, mobile, home page | n/a | SEO 100, Agentic Browsing 100, Best Practices 100, Accessibility 100 (was 96 before the contrast fix below); 54 passed, 0 failed |
 
 **Root cause of the canonical bug.** The root layout set `alternates.canonical: "/"` and `openGraph.url`. Next.js merges metadata *shallowly*, so every page without its own `alternates` inherited the homepage canonical. That told Google each subpage was a duplicate of the home page. The same mechanism later hid the generated `og:image` on any page that set its own `openGraph`. Both are fixed by one helper, `src/lib/seo.ts` (`pageMetadata`), which every page now uses.
 
