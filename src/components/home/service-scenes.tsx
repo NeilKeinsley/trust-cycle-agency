@@ -135,7 +135,7 @@ function WebsiteScene() {
             <span className="h-[7px] w-[7px] rounded-full bg-on-dark-muted/40" />
           </div>
           <div className="flex h-[1.6em] flex-1 items-center rounded-full bg-on-dark-muted/10 px-[2%]">
-            <span className="text-[0.625rem] text-on-dark-muted/70">trustcycle.agency</span>
+            <span className="text-[0.625rem] text-on-dark-muted">trustcycle.agency</span>
             <span className="ml-[2px] h-[1em] w-[1.5px] bg-accent motion-safe:animate-pulse motion-reduce:animate-none" />
           </div>
         </div>
