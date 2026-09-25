@@ -48,6 +48,9 @@ Light theme only for v1. Token names are structured so a dark mode can be layere
 - `src/app/robots.ts` — has a `PREVIEW` flag. Launched: it is `false` (crawlers allowed, sitemap advertised) since 2026-09-26. Set it back to `true` to hide the site from search engines again.
 - `next.config.ts` — carries the security header baseline (HSTS, CSP frame-ancestors, etc.). Don't remove it.
 
+## Knowledge bases (use the `seo-web-kb` skill)
+SEO and website-build knowledge lives in Neil's two KBs, and this project is recorded in both: **SEOBase** (`D:/Work Files/SEOBase`, hub record `clients/trust-cycle-agency/`) and **Web Integrations** (`D:/Work Files/Webs/Web Integrations`, hub record `clients/trust-cycle-agency/`). For any SEO, build or lead-pipeline work, run the `seo-web-kb` skill: sync, consult, baseline (`seo-snap`), fact-check, fix, verify at origin, then write findings back to the KBs and push. Don't let learnings stay only in this repo.
+
 ## Dev
 ```
 npm run dev    # http://localhost:3000
