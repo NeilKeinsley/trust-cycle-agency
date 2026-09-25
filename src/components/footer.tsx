@@ -23,6 +23,9 @@ const COLS: { title: string; links: { label: string; href: string }[] }[] = [
       { label: "About", href: "/about" },
       { label: "FAQs", href: "/faq" },
       { label: "Contact", href: "/contact" },
+      // A real link: every other "Start a project" CTA is a button that opens
+      // the quiz, which crawlers can't follow.
+      { label: "Start a project", href: "/start" },
     ],
   },
   {

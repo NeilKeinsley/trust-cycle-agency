@@ -1,5 +1,6 @@
 import { Eyebrow } from "@/components/section";
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { StartForm, type Draft } from "@/components/start/start-form";
 import {
   BUDGETS,
@@ -10,10 +11,12 @@ import {
   type TimelineValue,
 } from "@/lib/intake";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Start a project",
-  description: "Tell us about your project and we will get back to you within 1 business day.",
-};
+  description:
+    "Tell us about your project and we will get back to you within 1 business day.",
+  path: "/start",
+});
 
 const SERVICE_VALUES = new Set<string>(SERVICES.map((s) => s.value));
 const BUDGET_VALUES = new Set<string>(BUDGETS.map((b) => b.value));

@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { Section } from "@/components/section";
 import { Reveal } from "@/components/reveal";
 import { Faq } from "@/components/faq";
 import { FAQS } from "@/lib/faqs";
 import { ClosingCta } from "@/components/home/closing-cta";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "FAQs",
   description:
     "Answers to common questions about pricing, timelines, contracts, ownership and how to get started with Trust Cycle Agency.",
-};
+  path: "/faq",
+});
 
 export default function FaqPage() {
   return (

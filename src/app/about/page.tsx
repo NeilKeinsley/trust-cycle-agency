@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { Section } from "@/components/section";
 import { PageHero } from "@/components/page-hero";
 import { QuizTrigger } from "@/components/lead-quiz";
@@ -7,11 +8,12 @@ import { Reveal } from "@/components/reveal";
 import { Team } from "@/components/home/team";
 import { ClosingCta } from "@/components/home/closing-cta";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "About",
   description:
     "Trust Cycle Agency is a full-service digital agency built to be a long-term partner, not a rotating vendor.",
-};
+  path: "/about",
+});
 
 const VALUES = [
   {

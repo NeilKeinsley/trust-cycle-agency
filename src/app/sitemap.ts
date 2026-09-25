@@ -1,14 +1,12 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 
-/* Static routes for v1. Inert until the site is hosted on the real domain
-   (see src/lib/site.ts) and robots.ts's PREVIEW flag is flipped off. */
+/* Indexable static routes only (/login is a noindexed UI stub). No
+   changefreq/priority: Google ignores both. No lastmod: Google only uses it
+   when it is verifiably accurate, and static pages have no real per-page
+   update timestamp to report. */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const routes = ["", "/about", "/faq", "/contact", "/login", "/start"];
+  const routes = ["", "/about", "/faq", "/contact", "/start"];
 
-  return routes.map((route) => ({
-    url: `${SITE_URL}${route}`,
-    changeFrequency: "weekly" as const,
-    priority: route === "" ? 1 : 0.6,
-  }));
+  return routes.map((route) => ({ url: `${SITE_URL}${route}` }));
 }

@@ -18,21 +18,17 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+/* Site-wide defaults only. Canonical, og:url and social titles are per page
+   (src/lib/seo.ts): nested objects set here would be inherited whole by any
+   page that doesn't override them. */
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: {
-    default: "Trust Cycle Agency | Brand, Web and Growth",
-    template: "%s | Trust Cycle Agency",
-  },
+  title: `${SITE_NAME} - Brand, Web and Growth`,
   description: SITE_DESCRIPTION,
-  alternates: { canonical: "/" },
-  openGraph: {
-    siteName: SITE_NAME,
-    title: "Trust Cycle Agency | Brand, Web and Growth",
-    description: SITE_DESCRIPTION,
-    type: "website",
-    url: SITE_URL,
-  },
+  // Google Search Console HTML-tag verification. Inert until the env var is set.
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+    : {}),
 };
 
 export const viewport: Viewport = {
@@ -42,6 +38,7 @@ export const viewport: Viewport = {
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
+  "@id": `${SITE_URL}/#organization`,
   name: SITE_NAME,
   url: SITE_URL,
   description: SITE_DESCRIPTION,

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { Section } from "@/components/section";
 import { Reveal } from "@/components/reveal";
@@ -6,11 +7,12 @@ import { ButtonLink } from "@/components/button";
 import { CONTACT_EMAIL } from "@/lib/site";
 import { ContactForm } from "./contact-form";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Contact",
   description:
     "Get in touch with Trust Cycle Agency, or start a guided project brief.",
-};
+  path: "/contact",
+});
 
 export default function ContactPage() {
   return (

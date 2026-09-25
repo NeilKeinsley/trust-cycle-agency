@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { Reveal } from "@/components/reveal";
 import { QuizTrigger } from "@/components/lead-quiz";
 import { Logo } from "@/components/logo";
 import { Arcs } from "@/components/page-hero";
 import { LoginForm } from "./login-form";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Log in",
-  description: "Client portal log in for Trust Cycle Agency.",
-};
+  description:
+    "Client portal log in for Trust Cycle Agency.",
+  path: "/login", noindex: true,
+});
 
 /* Full-screen split: dark brand panel on the left (lg+), form on the right.
    Below lg only the form shows, at natural height. */
