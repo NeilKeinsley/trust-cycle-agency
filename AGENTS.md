@@ -44,7 +44,7 @@ Light theme only for v1. Token names are structured so a dark mode can be layere
 - `src/lib/site.ts` — single source of truth for site name, tagline, nav, CTA and contact info. Metadata, JSON-LD, header and footer all read from it.
 - `src/components/` — shared UI: `reveal.tsx` (scroll-entrance), `button.tsx` (`Button`/`ButtonLink`, variants `primary`/`accent`/`ghost`/`on-dark`), `logo.tsx`, `header.tsx`, `footer.tsx`, `section.tsx` (`Section`/`Eyebrow`/`Panel` — `Panel` is the full-bleed, full-viewport-at-`lg` building block with `tone`/`lock`/`raised`/`compact` props; see its doc comment and the "Locking views" comment block in `globals.css` for the sticky/cover stacking mechanism), `faq.tsx` (`Faq({items})`).
 - `src/app/icon.svg`, `src/app/apple-icon.tsx`, `src/app/manifest.ts` — TCA monogram tab/home-screen icons. Keep the three in visual sync if the mark changes.
-- `src/app/robots.ts` — has a `PREVIEW` flag; keep it `true` (blocks all crawlers) until an explicit launch go-ahead.
+- `src/app/robots.ts` — has a `PREVIEW` flag. Launched: it is `false` (crawlers allowed, sitemap advertised) since 2026-09-26. Set it back to `true` to hide the site from search engines again.
 - `next.config.ts` — carries the security header baseline (HSTS, CSP frame-ancestors, etc.). Don't remove it.
 
 ## Dev
