@@ -32,7 +32,7 @@ import {
   type ServiceValue,
   type TimelineValue,
 } from "@/lib/intake";
-import { CONTACT_EMAIL } from "@/lib/site";
+import { CONTACT_EMAIL, SITE_NAME } from "@/lib/site";
 
 const REAL_SERVICES = SERVICES.filter((s) => s.value !== "unsure");
 
@@ -147,7 +147,7 @@ function QuizArcs() {
   );
 }
 
-type FieldErrors = Partial<Record<"name" | "email", string[]>>;
+type FieldErrors = Partial<Record<"name" | "email" | "consent", string[]>>;
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -165,6 +165,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
   const [timeline, setTimeline] = useState<TimelineValue | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [consent, setConsent] = useState(false);
   const [honeypot, setHoneypot] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -188,6 +189,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
     setTimeline(null);
     setName("");
     setEmail("");
+    setConsent(false);
     setHoneypot("");
     setFieldErrors({});
     setSubmitError(null);
@@ -290,6 +292,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
       timeline,
       name,
       email,
+      consent,
       company_website: honeypot,
       elapsedMs: openedAtRef.current !== null ? Date.now() - openedAtRef.current : undefined,
       submissionId: submissionIdRef.current ?? undefined,
@@ -297,7 +300,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
 
     if (!result.success) {
       const flat = result.error.flatten().fieldErrors;
-      setFieldErrors({ name: flat.name, email: flat.email });
+      setFieldErrors({ name: flat.name, email: flat.email, consent: flat.consent });
       return;
     }
     setFieldErrors({});
@@ -323,7 +326,11 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
         try {
           const body: { fieldErrors?: FieldErrors } = await res.json();
           if (body.fieldErrors) {
-            setFieldErrors({ name: body.fieldErrors.name, email: body.fieldErrors.email });
+            setFieldErrors({
+              name: body.fieldErrors.name,
+              email: body.fieldErrors.email,
+              consent: body.fieldErrors.consent,
+            });
           }
         } catch {
           // Body wasn't JSON — keep the generic message.
@@ -634,6 +641,30 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
                         {fieldErrors.email && (
                           <p id="quiz-email-error" className="mt-1.5 text-[0.8125rem] text-accent-soft">
                             {fieldErrors.email[0]}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="flex cursor-pointer items-start gap-3">
+                          <input
+                            type="checkbox"
+                            id="quiz-consent"
+                            name="consent"
+                            checked={consent}
+                            onChange={(e) => setConsent(e.target.checked)}
+                            aria-invalid={fieldErrors.consent ? true : undefined}
+                            aria-describedby={fieldErrors.consent ? "quiz-consent-error" : undefined}
+                            className="mt-0.5 h-4 w-4 shrink-0 rounded border-on-dark-muted/40 accent-accent focus-visible:ring-2 focus-visible:ring-accent"
+                          />
+                          <span className="text-[0.8125rem] text-on-dark-muted">
+                            I agree to receive emails from {SITE_NAME} about this project, sent to the
+                            email address above. Use the unsubscribe link in any email to opt out.
+                          </span>
+                        </label>
+                        {fieldErrors.consent && (
+                          <p id="quiz-consent-error" className="mt-1.5 text-[0.8125rem] text-accent-soft">
+                            {fieldErrors.consent[0]}
                           </p>
                         )}
                       </div>

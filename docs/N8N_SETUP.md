@@ -53,7 +53,7 @@ id | receivedAt | source | name | email | company | phone | website | services |
 
 The workflow matches rows on `id` (the submission ID), so if the same submission is sent twice, it updates the row instead of duplicating it. A brief started from the quiz's "Add more detail" link reuses the quiz's ID, so the brief upgrades that lead's row in place.
 
-`consent` is `yes` when the brief's email-and-text consent box was ticked (the brief can't be sent without it) and blank for quiz leads, which only asked for a reply.
+`consent` records what the visitor agreed to: `email` from the quiz (it asks for no phone number) or `email+sms` from the brief. Neither form can be sent without ticking its box. Rows from before this change say `yes` (brief) or are blank (quiz).
 
 Both sheet writes use plain text (RAW), so a name like `=1+1` or a phone like `+1 555…` is stored as typed instead of being run as a formula.
 
