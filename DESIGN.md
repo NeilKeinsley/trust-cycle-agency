@@ -14,6 +14,16 @@ colors:
   studio-night: "oklch(0.19 0.012 200)"
   night-paper: "oklch(0.97 0.005 95)"
   night-grey: "oklch(0.75 0.01 200)"
+  night-teal: "oklch(0.94 0.03 180)"
+  studio-floor: "oklch(0.17 0.008 230)"
+  chalk: "oklch(0.95 0.005 95)"
+  slate-sheet: "oklch(0.21 0.01 225)"
+  chalk-grey: "oklch(0.74 0.01 250)"
+  chalk-hairline: "oklch(0.95 0.005 95 / 0.12)"
+  chalk-hairline-strong: "oklch(0.95 0.005 95 / 0.28)"
+  lit-teal: "oklch(0.8 0.09 180)"
+  deep-wash: "oklch(0.32 0.045 180)"
+  studio-night-raised: "oklch(0.235 0.013 200)"
 typography:
   display:
     fontFamily: "Geist, system-ui, sans-serif"
@@ -146,6 +156,20 @@ components:
     textColor: "{colors.night-paper}"
     rounded: "{rounded.card}"
     padding: "2rem"
+  theme-toggle:
+    textColor: "{colors.pencil-grey}"
+    rounded: "{rounded.pill}"
+    size: "2.25rem"
+  case-study-facts:
+    backgroundColor: "{colors.clean-sheet}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.card}"
+    padding: "1.5rem"
+  case-study-watched:
+    backgroundColor: "{colors.studio-night}"
+    textColor: "{colors.night-paper}"
+    rounded: "{rounded.card}"
+    padding: "2rem"
 ---
 
 # Design System: Trust Cycle Agency
@@ -158,10 +182,10 @@ Warm paper, dark ink, systems left visible. The site behaves like a studio that 
 
 Structure is shown rather than hidden. Numbered stages, indexed questions, progress bars, step badges that lock and unlock, a services stage with visible progress tabs: the machinery of the process is part of the look. Depth comes from how panels physically stack over each other as you move through the page, not from ornament.
 
-Density is generous on the home page (full-viewport panels at desktop, one idea per view) and compact and form-like in the intake flows, where cards, pills and fields do the work. Light theme only; the dark Studio Night surface is a fixed ground for the hero, the services stage, the quiz and the closing call to action.
+Density is generous on the home page (full-viewport panels at desktop, one idea per view) and compact and form-like in the intake flows and case studies, where cards, pills and fields do the work. The studio works in two lights: Warm Paper by day and a cool Studio Floor by night, following the visitor's system setting or the header toggle. Either way, Studio Night stays the fixed dark ground for the hero, the services stage, the quiz and the closing call to action.
 
 **Key Characteristics:**
-- Warm off-white paper and near-black ink, with one deep teal signal.
+- Warm off-white paper and near-black ink, with one deep teal signal; a matching night palette under the same token names.
 - Flat, hairline-bordered surfaces; depth by stacking, not by shadow.
 - Three radii only: generous cards, softer fields, full pills.
 - Geist Sans at weight 500 for every heading; Geist Mono for numbers and data.
@@ -174,7 +198,8 @@ A near-neutral warm palette of paper and ink, one fixed dark ground, and a singl
 
 ### Primary
 - **Trust Teal** (`trust-teal`): the signal. Selected chips and quiz options, focus rings, text selection, the FAQ indices, client marks in the rail, the active services progress tab, and the one stage or tile in a composition that should draw the eye (the Build process card, the bento CTA tile). Darkened specifically so it passes 4.5:1 as small text on Warm Paper.
-- **Teal Wash** (`teal-wash`): the quiet tint of the accent. Completed step badges, numbered intro list markers, the Plan stage of the process progression. A background, never a text colour on light surfaces.
+- **Teal Wash** (`teal-wash`): the quiet tint of the accent. Completed step badges, numbered intro list markers, service tags, the Plan stage of the process progression. A background only: in the dark theme it turns into Deep Wash, so it can never carry text on Studio Night.
+- **Night Teal** (`night-teal`): the light teal for TEXT and fine strokes on Studio Night (quiz errors and the selected "Not sure yet", closing-CTA step numbers, services-stage eyebrows, hero accents, scene art). Identical in both themes, which is why it is its own token rather than Teal Wash.
 - **Teal Ink** (`teal-ink`): text and icons sitting on a Trust Teal fill.
 
 ### Neutral
@@ -188,10 +213,19 @@ A near-neutral warm palette of paper and ink, one fixed dark ground, and a singl
 - **Night Paper** (`night-paper`): primary text on Studio Night and the fill of the on-dark button.
 - **Night Grey** (`night-grey`): secondary text on Studio Night. At 15 to 30% opacity it is also the hairline colour on dark surfaces.
 
+### Dark theme (same names, night values)
+The dark theme redefines the light tokens under the same names, so components never branch on theme:
+- **Studio Floor** (`studio-floor`) replaces Warm Paper as the page ground; **Chalk** (`chalk`) replaces Ink for text and the primary button fill; **Slate Sheet** (`slate-sheet`) replaces Clean Sheet for cards; **Chalk Grey** (`chalk-grey`) replaces Pencil Grey.
+- **Chalk Hairline** and **Chalk Hairline Strong** replace the ink hairlines, so borders and both shadows stay pencil-soft on a dark page.
+- **Lit Teal** (`lit-teal`) replaces Trust Teal: brightened so it still reads as 4.5:1 text on Studio Floor, with Studio Floor as its ink on teal fills. **Deep Wash** (`deep-wash`) replaces Teal Wash as the tint behind tags and badges.
+- **Studio Night Raised** (`studio-night-raised`): Studio Night lifts slightly in the dark theme so the always-dark cards still read as cards on a dark page.
+
 ### Named Rules
 **The Signal Rule.** Trust Teal marks selection, focus and the single point of emphasis in a composition. At most one teal-filled surface per view; everything else is paper, ink or night.
 
-**The Fixed Night Rule.** Studio Night is a ground, not a theme. Anything placed on it uses Night Paper, Night Grey and Night Grey hairlines only, never the light-surface tokens.
+**The Fixed Night Rule.** Studio Night is a ground, not a theme. Anything placed on it uses Night Paper, Night Grey, Night Teal and Night Grey hairlines only, never the light-surface tokens (which change with the theme).
+
+**The Same Names Rule.** A theme is a new set of values for the existing token names, never a new set of classes. If a component needs `dark:` utilities, the token is wrong.
 
 **The Token-Only Rule.** Every colour, including shadows, SVG strokes and illustration fills, comes from a token (`var(--color-*)` or a Tailwind token utility with opacity). No hex, rgb or oklch literal appears in a component.
 
@@ -232,6 +266,8 @@ The home page is a sequence of full-bleed Panels. At `lg` each panel fills the v
 
 Section heads split into a 12-column grid at `lg` (headline in 7 columns, lead and action in 5, lead aligned to the headline's baseline) and stack below. Card grids go 1, then 2 at `sm`, then 4 at `lg`, with 1.5rem gaps. The work section is a bento: 4 columns and fixed row heights at `lg`, collapsing to a 2-column then single-column stack.
 
+Case studies use the same container: a breadcrumb, then a 12-column split at `lg` with a sticky facts card in 4 columns and the narrative in 7 (starting at column 6), each narrative section capped near 65ch. The `/work` index is a two-column card grid from `md`.
+
 Pinning (the lock stack and the services stage) only engages at 768px wide and 600px tall or more. Below that the page is plain document flow and touch devices keep native scrolling. No horizontal scroll at 320px.
 
 ## Elevation & Depth
@@ -257,7 +293,7 @@ Three radii and nothing between them. Cards and panel tops take a generous 28px 
 ### Buttons
 Calm, pill-shaped and quick to respond.
 - **Shape:** full pill. Two sizes: `md` (2.75rem tall, 1.5rem side padding, 0.875rem text) and `sm` (2.25rem tall, 1rem side padding, 0.8125rem text). Weight 500.
-- **Primary:** Ink fill, Warm Paper text. The default call to action in the header and on light panels.
+- **Primary:** Ink fill, Warm Paper text. The default call to action in the header and on light panels. In the dark theme it inverts to a Chalk fill with Studio Floor text, through the tokens alone.
 - **Accent:** Trust Teal fill, Teal Ink text. Reserved for the moment that most needs the signal.
 - **Ghost:** transparent with a Hairline border, Ink text; border strengthens to Hairline Strong on hover. On dark grounds the border and text swap to Night Grey hairline and Night Paper.
 - **On-dark:** Night Paper fill, Studio Night text; the primary call to action on every Studio Night surface.
@@ -284,6 +320,15 @@ The main input device of the intake: choices are pills, not dropdowns.
 - **Header:** sticky, 4rem tall, transparent at the top of the page; after 8px of scroll it gains a 95% Warm Paper fill, backdrop blur and a Hairline bottom border. Links are Nav type in Pencil Grey, turning Ink on hover with an underline that draws left to right. A small primary button opens the quiz.
 - **Mobile:** a circular hairline toggle opens a panel of hairline-divided links and a full-width small primary button.
 
+### Theme Toggle
+A 2.25rem circular hairline button at the start of the header's right cluster, visible at every size. It shows a moon in the light theme and a sun in the dark one, in Pencil Grey turning Ink on hover, with a Trust Teal focus ring. Its label always names the action ("Switch to dark theme"). It follows the system until clicked, then remembers the choice; an inline script applies the saved theme before first paint, so there is never a flash of the other theme.
+
+### Case Study Page
+A dark page hero (eyebrow with the study index and services, the client name as the title, the summary as the lead), then a breadcrumb and the facts/narrative split. The facts card is a Clean Sheet card with a Hairline border holding Sector, Engagement, service tags and a bulleted "What we shipped" list, closed by a small honesty note about placeholder clients. The narrative runs The situation, What we did (a Mono-numbered ordered list with Title-size step names), What changed, and a Studio Night "What we watched" block listing the signals tracked with short Night Teal rules. It ends on a full-width hairline "Next case study" link card that nudges its arrow on hover.
+
+### Stretched-Link Tiles
+Bento and index cards that open a page are a single link: the client name is the link text and its `::after` covers the tile, so the whole card is the hit area with one accessible name. The tile keeps its lift shadow on hover and focus-within, and focus draws the ring around the whole tile.
+
 ### Monogram
 The TCA mark is a 7px-rounded tile in `currentColor` with the T and A cut in the ground colour and the C stroked in Trust Teal, followed by the wordmark with "Agency" in the muted tone. It adapts to light or dark grounds without a separate asset and must stay in sync with the favicon and app icons.
 
@@ -309,7 +354,8 @@ The `/start` brief is a column of Clean Sheet cards, one per step. Each carries 
 
 ### Do:
 - **Do** take every colour from the tokens, including shadows (`var(--line-strong)`) and SVG strokes (`var(--color-accent)`).
-- **Do** keep small text at 4.5:1 contrast or better (WCAG 2.2 AA); Trust Teal was darkened to `oklch(0.46 0.085 180)` for exactly this reason. Check any new token pairing before shipping it.
+- **Do** keep small text at 4.5:1 contrast or better (WCAG 2.2 AA) in BOTH themes; Trust Teal was darkened and Lit Teal brightened for exactly this reason. Run Lighthouse with dark emulated as well as light before shipping a new surface.
+- **Do** use Night Teal, not Teal Wash, for any teal text on Studio Night.
 - **Do** give every animation a `prefers-reduced-motion` fallback: reveals appear instantly, transitions drop to none, the rail becomes a swipeable strip.
 - **Do** ease motion with the spring curve (`cubic-bezier(0.23, 1, 0.32, 1)`) at 300ms for state changes and 700ms for entrances.
 - **Do** set every heading at weight 500 with -0.03em tracking.
@@ -325,3 +371,4 @@ The `/start` brief is a column of Clean Sheet cards, one per step. Each carries 
 - **Don't** put ambient or black shadows on cards at rest; depth comes from stacking and state.
 - **Don't** introduce a radius outside card, field and pill.
 - **Don't** use bold or semibold weights.
+- **Don't** reach for `dark:` utilities or theme-specific classes; redefine the token instead (the Same Names Rule).

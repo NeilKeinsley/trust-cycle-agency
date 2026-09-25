@@ -33,14 +33,14 @@ Around that core, the site also demonstrates front-end design craft (motion, loc
 
 ## Operating Context
 
-- **Stack:** Next.js 16 (App Router), React 19, TypeScript, Tailwind v4 tokens and zod. The frontend is planned for Railway. The n8n backend is planned for self-hosting (Oracle Cloud Always Free is recommended in `docs/BACKEND_PLAN.md`).
-- **Code:** the repo is `github.com/NeilKeinsley/trust-cycle-agency` (private for now).
+- **Stack:** Next.js 16 (App Router), React 19, TypeScript, Tailwind v4 tokens and zod. The site runs on Railway (its own project, with a volume for the lead outbox). n8n runs self-hosted on Railway in a separate shared project and is reached over its public HTTPS URL (`docs/N8N_SETUP.md`).
+- **Code:** the repo is `github.com/NeilKeinsley/trust-cycle-agency` (public).
 - **Reviewer path:** a reviewer typically lands on `/`, opens the quiz or `/start`, submits test data, and may then look at the n8n workflow, the lead sheet and the code.
 - **Design lineage:** layout patterns were studied from superpower.com. Its reference screenshots stay in `reference/` (git-ignored, pattern study only, never copied). The design rules come from the sister project Fine Lines (`D:\Work Files\Webs\fine-lines`).
 
 ## Capabilities and Constraints
 
-- **Pages:** `/` (home), `/start` (5-step brief), `/about`, `/faq`, `/contact`, `/login`, plus `/api/lead`.
+- **Pages:** `/` (home), `/start` (5-step brief), `/work` and four `/work/[slug]` case studies (illustrative, placeholder clients), `/about`, `/faq`, `/contact`, `/login`, plus `/api/lead` and `/api/lead/replay`.
 - **Intake:**
   - The LeadQuiz asks services, then budget, then timeline, then name and email.
   - The `/start` brief persists a draft in sessionStorage. The quiz hands contact details to it through sessionStorage, **never through the URL**.
@@ -51,7 +51,8 @@ Around that core, the site also demonstrates front-end design craft (motion, loc
   - Wheel, arrow keys, Page Up/Down and Space step one view at a time, with the same fixed timing in both directions.
   - A pinned Services stage with `1`–`4` shortcuts.
   - Back-to-top and a skip link.
-- **Open decisions:** production domain (`src/lib/site.ts` still holds a placeholder), final n8n host, the Cal.com scheduling handoff, whether the repo goes public, and when to flip `robots.ts` `PREVIEW` off.
+- **Settled (2026-09-26):** the repo is public, indexing is on (`robots.ts` `PREVIEW` off), and there's no custom domain for now (the site URL resolves from the Railway domain).
+- **Open decisions:** a custom domain (it would also unlock the Resend auto-reply), and the Cal.com scheduling handoff.
 
 ## Brand Commitments
 

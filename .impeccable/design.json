@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-24T15:30:33.495Z",
+  "generatedAt": "2026-09-25T19:02:39.792Z",
   "title": "Design System: Trust Cycle Agency",
   "extensions": {
     "colorMeta": {
@@ -182,6 +182,156 @@
           "oklch(0.7 0.01 200)",
           "oklch(0.82 0.01 200)",
           "oklch(0.95 0.01 200)"
+        ]
+      },
+      "night-teal": {
+        "role": "primary",
+        "displayName": "Night Teal",
+        "canonical": "oklch(0.94 0.03 180)",
+        "tonalRamp": [
+          "oklch(0.15 0.03 180)",
+          "oklch(0.26 0.03 180)",
+          "oklch(0.37 0.03 180)",
+          "oklch(0.48 0.03 180)",
+          "oklch(0.59 0.03 180)",
+          "oklch(0.7 0.03 180)",
+          "oklch(0.82 0.03 180)",
+          "oklch(0.95 0.03 180)"
+        ]
+      },
+      "studio-floor": {
+        "role": "neutral",
+        "displayName": "Studio Floor (dark theme page)",
+        "canonical": "oklch(0.17 0.008 230)",
+        "tonalRamp": [
+          "oklch(0.15 0.008 230)",
+          "oklch(0.26 0.008 230)",
+          "oklch(0.37 0.008 230)",
+          "oklch(0.48 0.008 230)",
+          "oklch(0.59 0.008 230)",
+          "oklch(0.7 0.008 230)",
+          "oklch(0.82 0.008 230)",
+          "oklch(0.95 0.008 230)"
+        ]
+      },
+      "chalk": {
+        "role": "neutral",
+        "displayName": "Chalk (dark theme text)",
+        "canonical": "oklch(0.95 0.005 95)",
+        "tonalRamp": [
+          "oklch(0.15 0.005 95)",
+          "oklch(0.26 0.005 95)",
+          "oklch(0.37 0.005 95)",
+          "oklch(0.48 0.005 95)",
+          "oklch(0.59 0.005 95)",
+          "oklch(0.7 0.005 95)",
+          "oklch(0.82 0.005 95)",
+          "oklch(0.95 0.005 95)"
+        ]
+      },
+      "slate-sheet": {
+        "role": "neutral",
+        "displayName": "Slate Sheet (dark theme card)",
+        "canonical": "oklch(0.21 0.01 225)",
+        "tonalRamp": [
+          "oklch(0.15 0.01 225)",
+          "oklch(0.26 0.01 225)",
+          "oklch(0.37 0.01 225)",
+          "oklch(0.48 0.01 225)",
+          "oklch(0.59 0.01 225)",
+          "oklch(0.7 0.01 225)",
+          "oklch(0.82 0.01 225)",
+          "oklch(0.95 0.01 225)"
+        ]
+      },
+      "chalk-grey": {
+        "role": "neutral",
+        "displayName": "Chalk Grey (dark theme muted)",
+        "canonical": "oklch(0.74 0.01 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.01 250)",
+          "oklch(0.26 0.01 250)",
+          "oklch(0.37 0.01 250)",
+          "oklch(0.48 0.01 250)",
+          "oklch(0.59 0.01 250)",
+          "oklch(0.7 0.01 250)",
+          "oklch(0.82 0.01 250)",
+          "oklch(0.95 0.01 250)"
+        ]
+      },
+      "chalk-hairline": {
+        "role": "neutral",
+        "displayName": "Chalk Hairline",
+        "canonical": "oklch(0.95 0.005 95 / 0.12)",
+        "tonalRamp": [
+          "oklch(0.15 0.005 95)",
+          "oklch(0.26 0.005 95)",
+          "oklch(0.37 0.005 95)",
+          "oklch(0.48 0.005 95)",
+          "oklch(0.59 0.005 95)",
+          "oklch(0.7 0.005 95)",
+          "oklch(0.82 0.005 95)",
+          "oklch(0.95 0.005 95)"
+        ]
+      },
+      "chalk-hairline-strong": {
+        "role": "neutral",
+        "displayName": "Chalk Hairline Strong",
+        "canonical": "oklch(0.95 0.005 95 / 0.28)",
+        "tonalRamp": [
+          "oklch(0.15 0.005 95)",
+          "oklch(0.26 0.005 95)",
+          "oklch(0.37 0.005 95)",
+          "oklch(0.48 0.005 95)",
+          "oklch(0.59 0.005 95)",
+          "oklch(0.7 0.005 95)",
+          "oklch(0.82 0.005 95)",
+          "oklch(0.95 0.005 95)"
+        ]
+      },
+      "lit-teal": {
+        "role": "primary",
+        "displayName": "Lit Teal (dark theme accent)",
+        "canonical": "oklch(0.8 0.09 180)",
+        "tonalRamp": [
+          "oklch(0.15 0.09 180)",
+          "oklch(0.26 0.09 180)",
+          "oklch(0.37 0.09 180)",
+          "oklch(0.48 0.09 180)",
+          "oklch(0.59 0.09 180)",
+          "oklch(0.7 0.09 180)",
+          "oklch(0.82 0.09 180)",
+          "oklch(0.95 0.09 180)"
+        ]
+      },
+      "deep-wash": {
+        "role": "primary",
+        "displayName": "Deep Wash (dark theme tint)",
+        "canonical": "oklch(0.32 0.045 180)",
+        "tonalRamp": [
+          "oklch(0.15 0.045 180)",
+          "oklch(0.26 0.045 180)",
+          "oklch(0.37 0.045 180)",
+          "oklch(0.48 0.045 180)",
+          "oklch(0.59 0.045 180)",
+          "oklch(0.7 0.045 180)",
+          "oklch(0.82 0.045 180)",
+          "oklch(0.95 0.045 180)"
+        ]
+      },
+      "studio-night-raised": {
+        "role": "neutral",
+        "displayName": "Studio Night Raised (dark theme)",
+        "canonical": "oklch(0.235 0.013 200)",
+        "tonalRamp": [
+          "oklch(0.15 0.013 200)",
+          "oklch(0.26 0.013 200)",
+          "oklch(0.37 0.013 200)",
+          "oklch(0.48 0.013 200)",
+          "oklch(0.59 0.013 200)",
+          "oklch(0.7 0.013 200)",
+          "oklch(0.82 0.013 200)",
+          "oklch(0.95 0.013 200)"
         ]
       }
     },
@@ -388,13 +538,37 @@
       "description": "Cells of the hero client rail: teal mark, client name, mono service caption.",
       "html": "<div class=\"ds-rail\"><a class=\"ds-cell\" href=\"#work\"><svg viewBox=\"0 0 32 32\" width=\"20\" height=\"20\" aria-hidden=\"true\"><circle cx=\"16\" cy=\"16\" r=\"11\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\"/></svg><span><b>Northwind</b><i>Brand identity</i></span></a><a class=\"ds-cell\" href=\"#work\"><svg viewBox=\"0 0 32 32\" width=\"20\" height=\"20\" aria-hidden=\"true\"><path d=\"M16 4 28 16 16 28 4 16Z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/></svg><span><b>Halcyon</b><i>Website</i></span></a></div>",
       "css": ".ds-rail{display:flex;background:var(--surface-dark);border-top:1px solid color-mix(in oklch,var(--on-dark-muted) 15%,transparent)}.ds-cell{display:flex;align-items:center;gap:.625rem;height:3.5rem;padding:0 1.25rem;border-right:1px solid color-mix(in oklch,var(--on-dark-muted) 15%,transparent);color:var(--accent);text-decoration:none;transition:background .3s}.ds-cell:hover{background:color-mix(in oklch,var(--on-dark) 5%,transparent)}.ds-cell span{display:flex;flex-direction:column;line-height:1.2}.ds-cell b{font:500 .875rem var(--font-geist-sans),system-ui,sans-serif;color:var(--on-dark)}.ds-cell i{font:normal 400 .625rem var(--font-geist-mono),ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--on-dark-muted)}"
+    },
+    {
+      "name": "Theme Toggle",
+      "kind": "button",
+      "refersTo": "theme-toggle",
+      "description": "Circular hairline light/dark switch in the header; moon in light, sun in dark; label names the action.",
+      "html": "<button class=\"ds-theme-toggle\" aria-label=\"Switch to dark theme\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z\"/></svg></button>",
+      "css": ".ds-theme-toggle { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: 9999px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; transition: color 0.3s; } .ds-theme-toggle:hover { color: var(--foreground); } .ds-theme-toggle:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent); }"
+    },
+    {
+      "name": "Case Study Facts Card",
+      "kind": "card",
+      "refersTo": "case-study-facts",
+      "description": "Sticky 'At a glance' card beside a case study: sector, engagement, service tags, what shipped, honesty note.",
+      "html": "<aside class=\"ds-facts\"><h2 class=\"ds-facts-title\">At a glance</h2><dl><div><dt>Sector</dt><dd>Professional services</dd></div><div><dt>Services</dt><dd><span class=\"ds-facts-tag\">Website</span><span class=\"ds-facts-tag\">SEO</span></dd></div></dl><p class=\"ds-facts-note\">Illustrative case study. The client is a placeholder and no results are claimed.</p></aside>",
+      "css": ".ds-facts { background: var(--card); color: var(--foreground); border: 1px solid var(--line); border-radius: 28px; padding: 1.5rem; max-width: 22rem; font-size: 0.875rem; } .ds-facts-title { font-size: 1.125rem; font-weight: 500; letter-spacing: -0.03em; margin: 0 0 1.25rem; } .ds-facts dl { margin: 0; display: grid; gap: 1rem; } .ds-facts dt { color: var(--muted); } .ds-facts dd { margin: 0.25rem 0 0; display: flex; gap: 0.375rem; flex-wrap: wrap; } .ds-facts-tag { background: var(--accent-soft); color: var(--accent); border-radius: 9999px; padding: 0.25rem 0.625rem; font-size: 0.75rem; letter-spacing: 0.04em; } .ds-facts-note { margin: 1.5rem 0 0; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.8125rem; }"
+    },
+    {
+      "name": "What We Watched Block",
+      "kind": "custom",
+      "refersTo": "case-study-watched",
+      "description": "Studio Night block ending a case study: the signals tracked, each led by a short Night Teal rule. Signals, not results.",
+      "html": "<section class=\"ds-watched\"><h2>What we watched</h2><ul><li>Indexed pages against duplicates</li><li>Clicks for the priority searches</li></ul></section>",
+      "css": ".ds-watched { background: var(--surface-dark); color: var(--on-dark); border-radius: 28px; padding: 2rem; max-width: 36rem; } .ds-watched h2 { font-size: 1.25rem; font-weight: 500; letter-spacing: -0.03em; margin: 0 0 1.25rem; } .ds-watched ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; } .ds-watched li { display: flex; gap: 0.75rem; align-items: baseline; } .ds-watched li::before { content: ''; flex: none; width: 1rem; height: 1px; background: var(--on-dark-accent); transform: translateY(-0.25em); }"
     }
   ],
   "narrative": {
     "northStar": "The Working Studio",
-    "overview": "Warm paper, dark ink, systems left visible. The site behaves like a studio that shows its work and how it gets done: honest, hands-on, never glossy. Surfaces are flat sheets separated by hairlines, the type is a single confident sans at medium weight, and the one colour with a voice is a deep teal used as a signal, not a decoration.\n\nStructure is shown rather than hidden. Numbered stages, indexed questions, progress bars, step badges that lock and unlock, a services stage with visible progress tabs: the machinery of the process is part of the look. Depth comes from how panels physically stack over each other as you move through the page, not from ornament.\n\nDensity is generous on the home page (full-viewport panels at desktop, one idea per view) and compact and form-like in the intake flows, where cards, pills and fields do the work. Light theme only; the dark Studio Night surface is a fixed ground for the hero, the services stage, the quiz and the closing call to action.",
+    "overview": "Warm paper, dark ink, systems left visible. The site behaves like a studio that shows its work and how it gets done: honest, hands-on, never glossy. Surfaces are flat sheets separated by hairlines, the type is a single confident sans at medium weight, and the one colour with a voice is a deep teal used as a signal, not a decoration.\n\nStructure is shown rather than hidden. Numbered stages, indexed questions, progress bars, step badges that lock and unlock, a services stage with visible progress tabs: the machinery of the process is part of the look. Depth comes from how panels physically stack over each other as you move through the page, not from ornament.\n\nDensity is generous on the home page (full-viewport panels at desktop, one idea per view) and compact and form-like in the intake flows and case studies, where cards, pills and fields do the work. The studio works in two lights: Warm Paper by day and a cool Studio Floor by night, following the visitor's system setting or the header toggle. Either way, Studio Night stays the fixed dark ground for the hero, the services stage, the quiz and the closing call to action.",
     "keyCharacteristics": [
-      "Warm off-white paper and near-black ink, with one deep teal signal.",
+      "Warm off-white paper and near-black ink, with one deep teal signal; a matching night palette under the same token names.",
       "Flat, hairline-bordered surfaces; depth by stacking, not by shadow.",
       "Three radii only: generous cards, softer fields, full pills.",
       "Geist Sans at weight 500 for every heading; Geist Mono for numbers and data.",
@@ -409,7 +583,12 @@
       },
       {
         "name": "The Fixed Night Rule",
-        "body": "Studio Night is a ground, not a theme. Anything placed on it uses Night Paper, Night Grey and Night Grey hairlines only, never the light-surface tokens.",
+        "body": "Studio Night is a ground, not a theme. Anything placed on it uses Night Paper, Night Grey, Night Teal and Night Grey hairlines only, never the light-surface tokens (which change with the theme).",
+        "section": "colors"
+      },
+      {
+        "name": "The Same Names Rule",
+        "body": "A theme is a new set of values for the existing token names, never a new set of classes. If a component needs `dark:` utilities, the token is wrong.",
         "section": "colors"
       },
       {
@@ -428,6 +607,11 @@
         "section": "typography"
       },
       {
+        "name": "The 12px Floor Rule",
+        "body": "0.75rem (12px) is the smallest size any readable text on the site is set at; nothing goes smaller. The only exception is decorative illustration labels marked `aria-hidden` inside `service-scenes.tsx` and `mockups.tsx` (down to 0.5rem), which are inert scene dressing, not content, and are exempt from the type ramp entirely.",
+        "section": "typography"
+      },
+      {
         "name": "The Stacking Rule",
         "body": "Surfaces are flat at rest. Depth comes from panels stacking over each other (the cover shadow) and from state (the lift shadow). No ambient card shadows, no black shadows.",
         "section": "elevation"
@@ -439,23 +623,25 @@
       }
     ],
     "dos": [
-      "Do take every colour from the tokens, including shadows (`var(--line-strong)`) and SVG strokes (`var(--color-accent)`).",
-      "Do keep small text at 4.5:1 contrast or better (WCAG 2.2 AA); Trust Teal was darkened to `oklch(0.46 0.085 180)` for exactly this reason. Check any new token pairing before shipping it.",
-      "Do give every animation a `prefers-reduced-motion` fallback: reveals appear instantly, transitions drop to none, the rail becomes a swipeable strip.",
-      "Do ease motion with the spring curve (`cubic-bezier(0.23, 1, 0.32, 1)`) at 300ms for state changes and 700ms for entrances.",
-      "Do set every heading at weight 500 with -0.03em tracking.",
-      "Do use pill chips for choices in intake flows, with Trust Teal as the selected state.",
-      "Do keep outer containers at a 1rem side gutter minimum and free of horizontal scroll at 320px."
+      "**Do** take every colour from the tokens, including shadows (`var(--line-strong)`) and SVG strokes (`var(--color-accent)`).",
+      "**Do** keep small text at 4.5:1 contrast or better (WCAG 2.2 AA) in BOTH themes; Trust Teal was darkened and Lit Teal brightened for exactly this reason. Run Lighthouse with dark emulated as well as light before shipping a new surface.",
+      "**Do** use Night Teal, not Teal Wash, for any teal text on Studio Night.",
+      "**Do** give every animation a `prefers-reduced-motion` fallback: reveals appear instantly, transitions drop to none, the rail becomes a swipeable strip.",
+      "**Do** ease motion with the spring curve (`cubic-bezier(0.23, 1, 0.32, 1)`) at 300ms for state changes and 700ms for entrances.",
+      "**Do** set every heading at weight 500 with -0.03em tracking.",
+      "**Do** use pill chips for choices in intake flows, with Trust Teal as the selected state.",
+      "**Do** keep outer containers at a 1rem side gutter minimum and free of horizontal scroll at 320px."
     ],
     "donts": [
-      "Don't hardcode a hex, rgb or oklch value in a component.",
-      "Don't use em-dashes in visible copy.",
-      "Don't present invented statistics, client counts, outcomes or testimonial metrics as fact; placeholder content reads as honestly generic.",
-      "Don't add a second marquee. The client rail is the one sanctioned marquee because it carries real content, pauses on hover and focus, and falls back under reduced motion.",
-      "Don't add gradient text, shimmer sweeps or decorative scrolling text.",
-      "Don't put ambient or black shadows on cards at rest; depth comes from stacking and state.",
-      "Don't introduce a radius outside card, field and pill.",
-      "Don't use bold or semibold weights."
+      "**Don't** hardcode a hex, rgb or oklch value in a component.",
+      "**Don't** use em-dashes in visible copy.",
+      "**Don't** present invented statistics, client counts, outcomes or testimonial metrics as fact; placeholder content reads as honestly generic.",
+      "**Don't** add a second marquee. The client rail is the one sanctioned marquee because it carries real content, pauses on hover and focus, and falls back under reduced motion.",
+      "**Don't** add gradient text, shimmer sweeps or decorative scrolling text.",
+      "**Don't** put ambient or black shadows on cards at rest; depth comes from stacking and state.",
+      "**Don't** introduce a radius outside card, field and pill.",
+      "**Don't** use bold or semibold weights.",
+      "**Don't** reach for `dark:` utilities or theme-specific classes; redefine the token instead (the Same Names Rule)."
     ]
   }
 }
