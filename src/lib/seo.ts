@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SITE_NAME } from "@/lib/site";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 /**
  * Per-page metadata. Every page sets its own canonical, og:url and social
@@ -56,5 +56,19 @@ export function pageMetadata({
       images: [{ url: "/twitter-image", ...SOCIAL_IMAGE }],
     },
     ...(noindex ? { robots: { index: false, follow: true } } : {}),
+  };
+}
+
+/** BreadcrumbList JSON-LD from [name, path] pairs, root first. */
+export function breadcrumbJsonLd(items: [name: string, path: string][]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map(([name, path], i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name,
+      item: `${SITE_URL}${path === "/" ? "" : path}`,
+    })),
   };
 }

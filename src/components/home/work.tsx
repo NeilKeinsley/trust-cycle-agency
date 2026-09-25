@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
+import { ButtonLink } from "@/components/button";
 import { Panel, SectionHead } from "@/components/section";
 import { Reveal } from "@/components/reveal";
 import { QuizTrigger } from "@/components/lead-quiz";
@@ -13,9 +15,9 @@ const PROCESS_STEPS = [
 
 /* Tile: shared bento surface. The hover/focus lift and shadow are the
    section's "second motion moment" — motion-safe only, mirrored on
-   focus-within since some tiles hold a focusable control. Tiles are plain
-   divs (not links): there are no case-study pages yet, only the CTA tile
-   is interactive. */
+   focus-within since every tile now holds a focusable control. Client tiles
+   link to their case study through a stretched link on the client name
+   (StudyLink), so the whole tile is clickable with one accessible name. */
 function Tile({
   tone = "light",
   className = "",
@@ -53,6 +55,19 @@ function TileMockup({ className = "", children }: { className?: string; children
   );
 }
 
+/* Stretched link: the client name is the link text, and its ::after covers
+   the tile (Tile is `relative`), so the whole card is the hit area. */
+function StudyLink({ slug, children }: { slug: string; children: ReactNode }) {
+  return (
+    <Link
+      href={`/work/${slug}`}
+      className="after:absolute after:inset-0 after:rounded-[var(--radius-card)] focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-accent"
+    >
+      {children}
+    </Link>
+  );
+}
+
 function Tags({ tags, tone = "light" }: { tags: string[]; tone?: "light" | "dark" }) {
   return (
     <div className="flex flex-wrap gap-1.5">
@@ -84,12 +99,9 @@ export function Work() {
           title="A few recent engagements."
           lead="A sample of the brand, web and campaign work we have shipped for clients like these."
           action={
-            <span
-              aria-disabled="true"
-              className="inline-block rounded-full border border-line px-4 py-2 text-[0.8125rem] text-muted"
-            >
-              Case studies coming soon
-            </span>
+            <ButtonLink href="/work" variant="ghost" size="sm">
+              All case studies
+            </ButtonLink>
           }
         />
       </Reveal>
@@ -104,7 +116,9 @@ export function Work() {
               </TileMockup>
               <div className="flex min-h-0 flex-1 flex-col justify-center lg:w-1/2">
                 <Tags tags={northwind.tags} />
-                <h3 className="mt-3 text-xl sm:text-2xl">{northwind.client}</h3>
+                <h3 className="mt-3 text-xl sm:text-2xl">
+                  <StudyLink slug={northwind.slug}>{northwind.client}</StudyLink>
+                </h3>
                 <p className="mt-2 text-sm lg:line-clamp-4 leading-relaxed text-muted">
                   {northwind.outcome}
                 </p>
@@ -124,7 +138,9 @@ export function Work() {
                 <Mockup kind={oakridge.mockup} />
               </TileMockup>
               <p className="shrink-0 text-xs text-muted">
-                <span className="text-foreground">{oakridge.client}</span> · {oakridge.tags[0]}
+                <span className="text-foreground">
+                  <StudyLink slug={oakridge.slug}>{oakridge.client}</StudyLink>
+                </span> · {oakridge.tags[0]}
               </p>
             </div>
           </Tile>
@@ -141,7 +157,9 @@ export function Work() {
                 <Mockup kind={halcyon.mockup} />
               </TileMockup>
               <p className="shrink-0 text-xs text-muted">
-                <span className="text-foreground">{halcyon.client}</span> · {halcyon.tags[0]}
+                <span className="text-foreground">
+                  <StudyLink slug={halcyon.slug}>{halcyon.client}</StudyLink>
+                </span> · {halcyon.tags[0]}
               </p>
             </div>
           </Tile>
@@ -159,7 +177,9 @@ export function Work() {
               </TileMockup>
               <div className="flex min-h-0 flex-1 flex-col justify-center">
                 <Tags tags={brightline.tags} />
-                <h3 className="mt-2 text-base sm:text-lg">{brightline.client}</h3>
+                <h3 className="mt-2 text-base sm:text-lg">
+                  <StudyLink slug={brightline.slug}>{brightline.client}</StudyLink>
+                </h3>
                 <p className="mt-1 text-xs lg:line-clamp-2 leading-relaxed text-muted">
                   {brightline.outcome}
                 </p>
@@ -197,7 +217,7 @@ export function Work() {
           </Tile>
         </Reveal>
 
-        {/* CTA — 2x1, the only interactive tile */}
+        {/* CTA — 2x1 */}
         <Reveal
           delay={460}
           className="lg:col-span-2 lg:col-start-3 lg:row-span-1 lg:row-start-3"
