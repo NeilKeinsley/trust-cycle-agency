@@ -29,8 +29,9 @@ In n8n, go to **Credentials → Add credential** and create these:
 
 | Credential | Type | Values |
 |---|---|---|
-| `Trust Cycle webhook secret` | Header Auth | Name `x-webhook-secret`, Value = the secret from step 2 |
-| `Google Sheets` | Google Service Account API | `client_email` and `private_key` from the service account's JSON key (recommended; see step 4) |
+| `Trust Cycle webhook secret` | Header Auth | Name `x-webhook-secret`, Value = the secret from step 2. **Name is the HTTP header name**, not a label. Anything else makes n8n reject every lead with 403. |
+| `Google Sheets` | Google Service Account API | `client_email` and `private_key` from the service account's JSON key (see step 4). Paste the key with real line breaks, not the JSON's literal `
+`, and without the surrounding quotes, or n8n fails with "secretOrPrivateKey must be an asymmetric key". |
 | `Resend API key` | Header Auth | Name `Authorization`, Value `Bearer re_...` (optional, see step 5) |
 
 Discord doesn't need a credential. Paste its webhook URL into the two Discord nodes: in Discord, go to **Server Settings → Integrations → Webhooks → New Webhook → Copy URL**.
@@ -42,7 +43,7 @@ Use a Google **Service Account**, not OAuth, so there's no consent screen, no te
 1. In Google Cloud (project `strategic-hull-494501-q9`), enable the **Google Sheets API** and the **Google Drive API**.
 2. Go to **IAM & Admin → Service Accounts → Create** (for example `n8n-leads`), then **Keys → Add key → JSON**. Keep the file private.
 3. Share the sheet with the service account's email as **Editor**.
-4. In the workflow's **Save to Leads sheet** node, set **Authentication → Service Account**.
+4. The imported **Save to Leads sheet** node already uses **Authentication → Service Account**; just select the credential.
 
 Create a sheet with a tab named **Leads**, and put these column headers in row 1:
 
@@ -62,7 +63,7 @@ The workflow matches rows on `id` (the submission ID), so if the same submission
    - **Auto-reply (Resend):** this node is imported **disabled**. Resend's test sender (`onboarding@resend.dev`) only delivers to your own Resend account address. It can't email real visitors until you verify a sending domain (with SPF and DKIM). Enable the node only after that.
 3. In **Trust Cycle: pipeline errors**, paste the Discord webhook URL.
 4. In the lead workflow, open **Settings → Error workflow** and choose **Trust Cycle: pipeline errors**.
-5. **Save** both workflows, then toggle **Active** on the lead workflow.
+5. **Save** both workflows, then **Publish** the lead workflow (n8n 2.x replaced the Active toggle with Publish). An error workflow only fires once it is published too.
 
 The production webhook is then `https://n8n-production-93bcc.up.railway.app/webhook/lead`.
 

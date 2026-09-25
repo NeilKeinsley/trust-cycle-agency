@@ -43,6 +43,7 @@
     },
     {
       "parameters": {
+        "authentication": "serviceAccount",
         "operation": "appendOrUpdate",
         "documentId": { "__rl": true, "mode": "url", "value": "PASTE_YOUR_GOOGLE_SHEET_URL" },
         "sheetName": { "__rl": true, "mode": "name", "value": "Leads" },
@@ -60,7 +61,7 @@
       "typeVersion": 4.5,
       "position": [760, 120],
       "credentials": {
-        "googleSheetsOAuth2Api": { "id": "", "name": "Google Sheets" }
+        "googleApi": { "id": "", "name": "Google Sheets" }
       }
     },
     {
