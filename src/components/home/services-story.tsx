@@ -3,7 +3,6 @@
 import { scrollToStop } from "@/lib/stops";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SectionHead } from "@/components/section";
 import { QuizTrigger } from "@/components/lead-quiz";
 import type { ServiceValue } from "@/lib/intake";
 import { ServiceScene, type ServiceSceneKind } from "./service-scenes";
@@ -193,13 +192,11 @@ export function ServicesStory() {
   );
 
   return (
-    <section id="services" className="relative bg-background">
-      <div className="mx-auto max-w-[112rem] px-4 pb-10 pt-16 sm:px-8 lg:px-12 lg:pt-20 2xl:px-16">
-        <SectionHead
-          title="Four pillars, one team."
-          lead="Brand, web, marketing and SEO, handled by one team instead of four vendors."
-        />
-      </div>
+    // No header strip of its own: its intro ("Four pillars, one team.") lives
+    // at the foot of the Process panel above, so scrolling goes straight
+    // from Process into the pinned stage.
+    <section id="services" aria-labelledby="services-heading" className="relative bg-background">
+      <h2 id="services-heading" className="sr-only">Services</h2>
 
       {/* Desktop / tablet: a pinned, full-bleed stage. Shown only at md+ AND
           when the viewport is tall enough (>=600px) to fit it comfortably;

@@ -40,6 +40,16 @@ function GrowIcon() {
   );
 }
 
+/* The bridge into the pinned Services stage that follows: the pillars were
+   a separate header strip there, which broke the scroll into the stage.
+   Links jump straight to each pillar's stop (ids live in services-story). */
+const PILLAR_LINKS = [
+  { label: "Brand", href: "#services-brand" },
+  { label: "Website", href: "#services-website" },
+  { label: "Marketing", href: "#services-marketing" },
+  { label: "SEO", href: "#services-seo" },
+];
+
 const STEPS = [
   {
     n: "01",
@@ -85,11 +95,11 @@ const STEPS = [
 
 export function Process() {
   return (
-    <Panel id="process" tone="card" raised>
+    <Panel id="process" tone="card" raised padClassName="py-12 lg:py-10">
       <Reveal>
         <SectionHead
           title="A steady process, not a scramble."
-          lead="Four stages, repeated for every project, so you always know what happens next."
+          lead="Brand, web, marketing and SEO, handled by one team instead of four vendors, in four stages that repeat for every project."
         />
       </Reveal>
 
@@ -134,6 +144,28 @@ export function Process() {
           );
         })}
       </div>
+
+      <Reveal delay={480}>
+        {/* Pills sit beside the text, not at the far right, so the floating
+            back-to-top button never covers them. */}
+        <div className="mt-8 flex flex-col gap-4 border-t border-line pt-5 sm:flex-row sm:items-center sm:gap-10 lg:mt-6">
+          <div>
+            <h3 className="text-xl">Four pillars, one team.</h3>
+            <p className="mt-1 text-sm text-muted">Every stage runs across all four, with the same people.</p>
+          </div>
+          <nav aria-label="Service pillars" className="flex flex-wrap gap-2">
+            {PILLAR_LINKS.map((p) => (
+              <a
+                key={p.href}
+                href={p.href}
+                className="rounded-full border border-line px-4 py-2 text-[0.8125rem] transition-colors duration-300 hover:border-line-strong"
+              >
+                {p.label}
+              </a>
+            ))}
+          </nav>
+        </div>
+      </Reveal>
     </Panel>
   );
 }
