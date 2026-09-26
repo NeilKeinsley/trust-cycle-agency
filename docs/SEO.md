@@ -68,8 +68,12 @@ Tags follow SEOBase's own discipline:
 - **`lastmod`.** Static pages have no real per-page update timestamp, and an inaccurate `lastmod` is worse than none.
 - **Organization `logo`, `email`, `address` or `sameAs`.** The agency is fictional and `trustcycle.agency` isn't registered. Adding contact or identity values that don't exist would be fabricated structured data.
 
-## Next steps (need Neil's Google account)
+## Search Console (done 2026-09-27)
 
-1. **Search Console.** Add a URL-prefix property for the site URL, choose the **HTML tag** method, copy the `content` value, and set it as `GOOGLE_SITE_VERIFICATION` on the Railway site service. The layout already emits the tag when that variable is set; no code change is needed. Then click Verify and submit `sitemap.xml`. "Couldn't fetch" just after submitting is normal before the first crawl.
-2. **Baseline.** Record Search Console coverage a few days after verification. Coverage is point-in-time and isn't backfilled, so the start date matters for any later "it improved" claim.
-3. **If a custom domain is added,** set `NEXT_PUBLIC_SITE_URL`. Canonicals, `og:url`, the sitemap, robots and structured data all follow it.
+- **URL-prefix property** `https://trust-cycle-agency-production.up.railway.app/`, verified with the **HTML file** method (`public/google9f1b37bb300001af.html`, which must stay deployed). The env-gated `GOOGLE_SITE_VERIFICATION` meta tag is still available as a second method; it's unused.
+- **Sitemap** `sitemap.xml` submitted on 2026-09-27. "Couldn't fetch" right after submitting is expected until the first crawl.
+
+## Next steps
+
+1. **About 2026-09-30:** confirm the sitemap status is "Success". Record the coverage baseline (indexed vs excluded pages, with reasons) and check "Google-selected canonical" for `/`, `/work` and one case study in URL Inspection.
+2. **If a custom domain is added:** set `NEXT_PUBLIC_SITE_URL`, add a new URL-prefix property for it (verification doesn't transfer), and resubmit the sitemap there.

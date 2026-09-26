@@ -47,6 +47,7 @@ Light and dark themes. Dark redefines the same token names in `globals.css`: it 
 - `src/app/icon.svg`, `src/app/apple-icon.tsx`, `src/app/manifest.ts` — TCA monogram tab/home-screen icons. Keep the three in visual sync if the mark changes.
 - SEO: `src/lib/seo.ts` (`pageMetadata()`) sets each page's canonical, og:url, titles and social image; every page must use it (Next.js metadata merges shallowly, so layout-level nested metadata leaks into every page). `src/app/opengraph-image.tsx` + `twitter-image.tsx` generate the shared card. Audit, fact-checked sources and next steps: `docs/SEO.md`.
 - `src/app/robots.ts` — has a `PREVIEW` flag. Launched: it is `false` (crawlers allowed, sitemap advertised) since 2026-09-26. Set it back to `true` to hide the site from search engines again.
+- `public/google9f1b37bb300001af.html` — Google Search Console ownership token (URL-prefix property, verified 2026-09-27). **Never delete or rename it**: removing it un-verifies the property.
 - `next.config.ts` — carries the security header baseline (HSTS, CSP frame-ancestors, etc.). Don't remove it.
 
 ## Knowledge bases (use the `seo-web-kb` skill)
