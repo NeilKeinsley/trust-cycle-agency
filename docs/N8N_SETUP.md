@@ -55,6 +55,8 @@ The workflow matches rows on `id` (the submission ID), so if the same submission
 
 `consent` records what the visitor agreed to: `email` from the quiz (it asks for no phone number) or `email+sms` from the brief. Neither form can be sent without ticking its box. Rows from before this change say `yes` (brief) or are blank (quiz).
 
+`receivedAt` is written as `MM-DD-YYYY HH:mm` (24-hour, no seconds) in **Asia/Manila** time. To change the timezone, edit `TIMEZONE` at the top of the **Normalise and score** node. The API still sends the full UTC ISO timestamp to n8n. Because it's stored as text, sorting column B puts month before year; rows are appended in arrival order, so sort by row rather than by that column.
+
 Both sheet writes use plain text (RAW), so a name like `=1+1` or a phone like `+1 555…` is stored as typed instead of being run as a formula.
 
 **Why two sheet nodes.** n8n's Google Sheets node works out the target row itself, so two leads arriving within about a second can overwrite each other (tested: 5 simultaneous leads left 1 row). New leads therefore go through **Append new lead**, an HTTP Request to the Sheets API's `values.append`, which Google applies atomically. Only a brief that continues a quiz (`continuesQuiz: true`) goes through **Update quiz row** (append-or-update on `id`), because it has to rewrite an existing row. **Append new lead** writes columns by position, so keep the header order above if you change the sheet.
