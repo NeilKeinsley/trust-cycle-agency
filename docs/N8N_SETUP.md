@@ -53,7 +53,7 @@ id | receivedAt | source | name | email | company | phone | website | services |
 
 The workflow matches rows on `id` (the submission ID), so if the same submission is sent twice, it updates the row instead of duplicating it. A brief started from the quiz's "Add more detail" link reuses the quiz's ID, so the brief upgrades that lead's row in place.
 
-`consent` records what the visitor agreed to: `email` from the quiz (it asks for no phone number) or `email+sms` from the brief. Neither form can be sent without ticking its box. Rows from before this change say `yes` (brief) or are blank (quiz).
+`consent` records what the visitor agreed to: `email+sms` from the brief, and from the quiz when the visitor fills its optional phone field (the quiz's consent wording then covers texts too); otherwise `email`. A quiz phone lands in the `phone` column and shows in the Discord message. Neither form can be sent without ticking its box. Rows from before this change say `yes` (brief) or are blank (quiz).
 
 `receivedAt` is written as `MM-DD-YYYY HH:mm` (24-hour, no seconds) in **Asia/Manila** time. To change the timezone, edit `TIMEZONE` at the top of the **Normalise and score** node. The API still sends the full UTC ISO timestamp to n8n. Because it's stored as text, sorting column B puts month before year. For true chronological order, sort by column **P** (`receivedAtUtc`, the full UTC ISO time), which is hidden in the sheet: right-click the column header area to unhide it. The append writes values by position, so P must stay the 16th column.
 

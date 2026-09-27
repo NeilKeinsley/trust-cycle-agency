@@ -147,7 +147,7 @@ function QuizArcs() {
   );
 }
 
-type FieldErrors = Partial<Record<"name" | "email" | "consent", string[]>>;
+type FieldErrors = Partial<Record<"name" | "email" | "phone" | "consent", string[]>>;
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -165,6 +165,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
   const [timeline, setTimeline] = useState<TimelineValue | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [consent, setConsent] = useState(false);
   const [honeypot, setHoneypot] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -189,6 +190,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
     setTimeline(null);
     setName("");
     setEmail("");
+    setPhone("");
     setConsent(false);
     setHoneypot("");
     setFieldErrors({});
@@ -272,6 +274,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
           timeline,
           name,
           email,
+          phone,
           leadId: submissionIdRef.current ?? undefined,
         })
       );
@@ -292,6 +295,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
       timeline,
       name,
       email,
+      phone,
       consent,
       company_website: honeypot,
       elapsedMs: openedAtRef.current !== null ? Date.now() - openedAtRef.current : undefined,
@@ -300,7 +304,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
 
     if (!result.success) {
       const flat = result.error.flatten().fieldErrors;
-      setFieldErrors({ name: flat.name, email: flat.email, consent: flat.consent });
+      setFieldErrors({ name: flat.name, email: flat.email, phone: flat.phone, consent: flat.consent });
       return;
     }
     setFieldErrors({});
@@ -329,6 +333,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
             setFieldErrors({
               name: body.fieldErrors.name,
               email: body.fieldErrors.email,
+              phone: body.fieldErrors.phone,
               consent: body.fieldErrors.consent,
             });
           }
@@ -646,6 +651,30 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
                       </div>
 
                       <div>
+                        <label htmlFor="quiz-phone" className="mb-1.5 block text-[0.8125rem] text-on-dark-muted">
+                          Phone <span className="text-on-dark-muted/80">(optional)</span>
+                        </label>
+                        <input
+                          id="quiz-phone"
+                          name="phone"
+                          type="tel"
+                          inputMode="tel"
+                          autoComplete="tel"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          aria-invalid={fieldErrors.phone ? true : undefined}
+                          aria-describedby={fieldErrors.phone ? "quiz-phone-error" : undefined}
+                          placeholder="For a quicker call back"
+                          className="w-full rounded-[var(--radius-field)] border border-on-dark-muted/25 bg-on-dark/[0.04] px-4 py-3 text-base text-on-dark outline-none transition-colors duration-300 placeholder:text-on-dark-muted/60 focus:border-accent"
+                        />
+                        {fieldErrors.phone && (
+                          <p id="quiz-phone-error" className="mt-1.5 text-[0.8125rem] text-on-dark-accent">
+                            {fieldErrors.phone[0]}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
                         <label className="flex cursor-pointer items-start gap-3">
                           <input
                             type="checkbox"
@@ -658,8 +687,9 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
                             className="mt-0.5 h-4 w-4 shrink-0 rounded border-on-dark-muted/40 accent-accent focus-visible:ring-2 focus-visible:ring-accent"
                           />
                           <span className="text-[0.8125rem] text-on-dark-muted">
-                            I agree to receive emails from {SITE_NAME} about this project, sent to the
-                            email address above. Use the unsubscribe link in any email to opt out.
+                            {phone.trim()
+                              ? `I agree to receive emails and text messages from ${SITE_NAME} about this project, sent to the email address and phone number above. Message and data rates may apply. Reply STOP to any text or use the unsubscribe link in any email to opt out.`
+                              : `I agree to receive emails from ${SITE_NAME} about this project, sent to the email address above. Use the unsubscribe link in any email to opt out.`}
                           </span>
                         </label>
                         {fieldErrors.consent && (

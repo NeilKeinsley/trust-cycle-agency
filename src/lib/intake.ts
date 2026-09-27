@@ -103,10 +103,10 @@ export const consentField = z
   .boolean()
   .refine((v) => v === true, "Tick the box to agree to emails and texts about this project");
 
-/** The quiz collects no phone number, so its consent covers email only. */
+/** The quiz's phone is optional; its consent copy covers texts only when one is given. */
 export const quizConsentField = z
   .boolean()
-  .refine((v) => v === true, "Tick the box to agree to emails about this project");
+  .refine((v) => v === true, "Tick the box to agree to be contacted about this project");
 
 /** Elapsed time between the form becoming interactive and submit, in ms.
  * Paired with the honeypot as a time-trap: real visitors can't finish in
@@ -125,6 +125,7 @@ export const quizLeadSchema = z.object({
   timeline: timelineEnum,
   name: nameField,
   email: emailField,
+  phone: phoneField,
   consent: quizConsentField,
   company_website: honeypotField,
   elapsedMs: elapsedMsField,
