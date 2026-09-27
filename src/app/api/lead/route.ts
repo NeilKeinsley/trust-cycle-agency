@@ -20,6 +20,34 @@ function normaliseWebsite(value: string | undefined): string | undefined {
 
 const rateLimiter = new RateLimiter(5, 60_000, "lead");
 
+/** The largest real submission (a full brief) is a few KB; anything far bigger is abuse. */
+const MAX_BODY_BYTES = 32 * 1024;
+
+/**
+ * Reads the body as text, giving up as soon as it passes MAX_BODY_BYTES so an
+ * oversized request can't hold the server while it's buffered and parsed.
+ * Returns null when the body is too large.
+ */
+async function readCappedBody(request: Request): Promise<string | null> {
+  const declared = Number(request.headers.get("content-length"));
+  if (declared > MAX_BODY_BYTES) return null;
+  if (!request.body) return "";
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > MAX_BODY_BYTES) {
+      await reader.cancel().catch(() => {});
+      return null;
+    }
+    chunks.push(value);
+  }
+  return new TextDecoder().decode(Buffer.concat(chunks));
+}
+
 export async function POST(request: Request) {
   const key = clientKey(request);
   const { allowed, retryAfterSeconds } = await rateLimiter.check(key);
@@ -30,9 +58,14 @@ export async function POST(request: Request) {
     );
   }
 
+  const raw = await readCappedBody(request);
+  if (raw === null) {
+    return Response.json({ ok: false, error: "Request too large." }, { status: 413 });
+  }
+
   let body: unknown;
   try {
-    body = await request.json();
+    body = JSON.parse(raw);
   } catch {
     return Response.json(
       { ok: false, error: "Invalid JSON body." },

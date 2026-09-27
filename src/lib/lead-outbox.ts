@@ -18,6 +18,8 @@ export type LeadPayload = { id: string } & Record<string, unknown>;
 
 const FORWARD_TIMEOUT_MS = 5000;
 const ID_PATTERN = /^[0-9a-f-]{36}$/i;
+/** Caps disk use if n8n is down while the form is being flooded; overflow is only logged. */
+const MAX_QUEUED = 500;
 
 function outboxDir(): string | null {
   return process.env.LEAD_OUTBOX_DIR || null;
@@ -52,6 +54,11 @@ export async function queueLead(payload: LeadPayload, reason: string): Promise<b
   try {
     await mkdir(dir, { recursive: true });
     const file = path.join(dir, `${payload.id}.json`);
+    const queued = (await readdir(dir)).filter((f) => f.endsWith(".json"));
+    if (queued.length >= MAX_QUEUED && !queued.includes(`${payload.id}.json`)) {
+      console.error(`[lead-outbox] outbox full (${MAX_QUEUED}), not queuing`, payload.id);
+      return false;
+    }
     const tmp = `${file}.tmp`;
     const record = { payload, reason, queuedAt: new Date().toISOString() };
     // Write then rename so a crash mid-write never leaves a half-written lead.
