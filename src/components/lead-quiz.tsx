@@ -22,6 +22,7 @@ import {
   type ReactNode,
 } from "react";
 import { Button, type ButtonSize, type ButtonVariant } from "@/components/button";
+import { CalendlyEmbed } from "@/components/calendly-embed";
 import {
   BUDGETS,
   SERVICES,
@@ -32,6 +33,7 @@ import {
   type ServiceValue,
   type TimelineValue,
 } from "@/lib/intake";
+import { CALENDLY_URL } from "@/lib/calendly";
 import { CONTACT_EMAIL, SITE_NAME } from "@/lib/site";
 
 const REAL_SERVICES = SERVICES.filter((s) => s.value !== "unsure");
@@ -42,7 +44,8 @@ function submitErrorMessage(status: number): string {
   return "Something went wrong on our end. Please try again.";
 }
 
-type QuizStep = 1 | 2 | 3 | 4 | 5;
+/** 5 = sent; 6 = the Calendly scheduler (only when CALENDLY_URL is set). */
+type QuizStep = 1 | 2 | 3 | 4 | 5 | 6;
 
 type OpenOptions = { services?: ServiceValue[] };
 
@@ -150,10 +153,11 @@ function QuizArcs() {
 type FieldErrors = Partial<Record<"name" | "email" | "phone" | "consent", string[]>>;
 
 const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), iframe, [tabindex]:not([tabindex="-1"])';
 
 export function LeadQuizProvider({ children }: { children: ReactNode }) {
   const headingId = useId();
+  const overlayRef = useRef<HTMLDivElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   const advanceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -171,6 +175,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [booked, setBooked] = useState(false);
   // Time trap: when the modal became interactive, and a stable id for this
   // submission attempt (reused across retries of the same attempt).
   const openedAtRef = useRef<number | null>(null);
@@ -196,6 +201,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
     setFieldErrors({});
     setSubmitError(null);
     setSubmitting(false);
+    setBooked(false);
     setStep(preselected.length > 0 ? 2 : 1);
     setIsOpen(true);
     openedAtRef.current = Date.now();
@@ -404,8 +410,21 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    // Tab inside the cross-origin Calendly iframe never reaches onKeyDown, so
+    // tabbing off its edge can land outside the modal. Pull focus back in.
+    function onFocusIn(e: FocusEvent) {
+      const overlay = overlayRef.current;
+      if (overlay && e.target instanceof Node && !overlay.contains(e.target)) {
+        (getFocusable()[0] ?? container!).focus();
+      }
+    }
+
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    document.addEventListener("focusin", onFocusIn);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("focusin", onFocusIn);
+    };
   }, [isOpen, step, close]);
 
   return (
@@ -413,30 +432,34 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
       {children}
 
       {isOpen && (
-        <div className="fixed inset-0 z-[100] overflow-y-auto bg-surface-dark text-on-dark">
-          <QuizArcs />
+        <div ref={overlayRef} className="fixed inset-0 z-[100] overflow-y-auto bg-surface-dark text-on-dark">
+          {step !== 6 && <QuizArcs />}
 
           <button
             type="button"
             onClick={close}
             aria-label="Close"
-            className="fixed right-4 top-4 z-10 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-on-dark-muted/30 text-on-dark transition-colors duration-300 hover:border-on-dark-muted/60 sm:right-6 sm:top-6"
+            className="fixed right-4 top-4 z-10 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-on-dark-muted/30 bg-surface-dark text-on-dark transition-colors duration-300 hover:border-on-dark-muted/60 sm:right-6 sm:top-6"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" stroke="currentColor" strokeWidth={1.5} fill="none" strokeLinecap="round">
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </button>
 
-          <div className="mx-auto flex min-h-full w-full max-w-[1200px] items-center justify-center px-4 py-20 sm:px-6 lg:justify-end lg:px-16">
+          <div
+            className={`mx-auto flex min-h-full w-full max-w-[1200px] items-center justify-center px-4 py-20 sm:px-6 lg:px-16 ${
+              step === 6 ? "" : "lg:justify-end"
+            }`}
+          >
             <div
               ref={dialogRef}
               role="dialog"
               aria-modal="true"
               aria-labelledby={headingId}
               tabIndex={-1}
-              className="relative w-full max-w-md outline-none lg:max-w-lg"
+              className={`relative w-full outline-none ${step === 6 ? "max-w-none" : "max-w-md lg:max-w-lg"}`}
             >
-              {step !== 5 && (
+              {step < 5 && (
                 <div className="mb-8 flex items-center gap-4">
                   {step > 1 && (
                     <button
@@ -740,22 +763,88 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
                     <h2 id={headingId} className="text-3xl font-medium sm:text-4xl">
                       You&apos;re in.
                     </h2>
-                    <p className="mt-3 max-w-sm text-on-dark-muted">
-                      Expect a reply within 1 business day.
+                    {CALENDLY_URL ? (
+                      <>
+                        <p className="mt-3 max-w-sm text-on-dark-muted">
+                          Expect a reply within 1 business day, or skip the wait and pick a time for a call now.
+                        </p>
+                        <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
+                          <Button variant="on-dark" size="md" onClick={() => setStep(6)}>
+                            Book a call
+                          </Button>
+                          <Link href={detailHref} onClick={handOffToBrief} className="link-line text-sm text-on-dark-muted hover:text-on-dark">
+                            Add more detail (2 min)
+                          </Link>
+                        </div>
+                        <p className="mt-8 max-w-sm border-t border-on-dark-muted/15 pt-5 text-xs text-on-dark-muted">
+                          {SITE_NAME} is a portfolio concept. Booking sets up a real call with Neil, who built this site.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="mt-3 max-w-sm text-on-dark-muted">
+                          Expect a reply within 1 business day.
+                        </p>
+                        <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
+                          <Button variant="on-dark" size="md" onClick={close}>
+                            Close
+                          </Button>
+                          <Link href={detailHref} onClick={handOffToBrief} className="link-line text-sm text-on-dark-muted hover:text-on-dark">
+                            Add more detail (2 min)
+                          </Link>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {step === 6 && CALENDLY_URL && (
+                  <div>
+                    {!booked && (
+                      <button
+                        type="button"
+                        onClick={back}
+                        className="mb-6 flex cursor-pointer items-center gap-1.5 text-[0.8125rem] text-on-dark-muted transition-colors duration-300 hover:text-on-dark"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" stroke="currentColor" strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M15 18l-6-6 6-6" />
+                        </svg>
+                        Back
+                      </button>
+                    )}
+                    <h2 id={headingId} className="text-3xl font-medium sm:text-4xl">
+                      {booked ? "Your call is booked." : "Pick a time that works."}
+                    </h2>
+                    <p role="status" className="mt-2 text-on-dark-muted">
+                      {booked
+                        ? "Calendly is emailing you the invite. The details are below."
+                        : "A real call with Neil, who built this site. Times show in your time zone."}
                     </p>
-                    <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
-                      <Button variant="on-dark" size="md" onClick={close}>
-                        Close
-                      </Button>
-                      <Link href={detailHref} onClick={handOffToBrief} className="link-line text-sm text-on-dark-muted hover:text-on-dark">
-                        Add more detail (2 min)
-                      </Link>
+                    {booked && (
+                      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
+                        <Button variant="on-dark" size="md" onClick={close}>
+                          Done
+                        </Button>
+                        <Link href={detailHref} onClick={handOffToBrief} className="link-line text-sm text-on-dark-muted hover:text-on-dark">
+                          Add more detail before the call (2 min)
+                        </Link>
+                      </div>
+                    )}
+                    <div className="mt-8">
+                      <CalendlyEmbed
+                        bookingUrl={CALENDLY_URL}
+                        source="quiz"
+                        name={name}
+                        email={email}
+                        tone="dark"
+                        onScheduled={() => setBooked(true)}
+                      />
                     </div>
                   </div>
                 )}
               </div>
 
-              {step !== 5 && (
+              {step < 5 && (
                 <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-on-dark-muted/15 pt-6 text-[0.8125rem] text-on-dark-muted">
                   {TRUST_NOTES.map((note) => (
                     <div key={note.label} className="flex items-center gap-2">

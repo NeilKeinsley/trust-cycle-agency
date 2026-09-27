@@ -102,7 +102,8 @@ The honeypot field is never forwarded. Submissions that trip the honeypot or the
 - [x] time-trap, `submissionId` idempotency key, `Idempotency-Key` header, email normalisation, and a notice at collection under both forms
 - [ ] **Durable fallback before forwarding.** Append each validated lead to a local NDJSON file (self-hosted) or a second Sheet via the API (serverless). Add a small "replay unforwarded" script, so an n8n outage never loses a lead.
 - [ ] **Rate limiter:** the current limiter lives in memory and resets on redeploy. That's fine on a single instance. If the site ever runs on multiple instances, move the limiter to Upstash Redis (free tier).
-- [ ] **Scheduling handoff:** embed Cal.com on the success screens. Its free tier has no event-type limit, while Calendly's free plan allows one ([TaskROI](https://taskroi.com/blog/calcom-vs-calendly/)).
+- [x] **Scheduling handoff:** Calendly on both success screens (quiz step 6, `/start` success). Calendly's free plan (one event type) is enough for a single "intro call". Embedded as a script-free iframe; see `src/lib/calendly.ts`.
+- [ ] **Booking back into the lead row** (deferred): free-plan Calendly has no webhooks, but its REST API does work on Free with a personal access token. The plan: on `calendly.event_scheduled`, POST the invitee URI to a new route, verify it server-side against `api.calendly.com`, then have n8n add the call time to the lead's row and to Discord. Open issue first: the booking can reach n8n before an outboxed lead's row exists.
 - [ ] **"About this build" note** linking the n8n workflow screenshot, with an honest demo caveat.
 
 ## Privacy and data handling

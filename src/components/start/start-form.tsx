@@ -9,6 +9,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/button";
+import { CalendlyEmbed } from "@/components/calendly-embed";
 import { ProjectSummary } from "./project-summary";
 import {
   BUDGETS,
@@ -25,6 +26,7 @@ import {
   type TimelineValue,
   START_DRAFT_KEY,
 } from "@/lib/intake";
+import { CALENDLY_URL } from "@/lib/calendly";
 import { CONTACT_EMAIL, SITE_NAME } from "@/lib/site";
 
 /** Which step card a given field belongs to, so a mapped server-side
@@ -121,6 +123,8 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
+  const [booking, setBooking] = useState<"idle" | "open" | "booked">("idle");
+  const bookingHeadingRef = useRef<HTMLHeadingElement | null>(null);
 
   const stepRefs = useRef<Array<HTMLDivElement | null>>([null, null, null, null, null]);
   const didMountScroll = useRef(false);
@@ -187,6 +191,11 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     requestAnimationFrame(() => el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" }));
   }, [expandedStep, hydrated]);
+
+  // "Book a call" unmounts itself; move focus to the scheduler's heading.
+  useEffect(() => {
+    if (booking === "open") bookingHeadingRef.current?.focus();
+  }, [booking]);
 
   function clearDraftStorage() {
     try {
@@ -352,26 +361,71 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
 
   if (status === "success") {
     return (
-      <div className="mx-auto max-w-xl text-center">
-        <h1 className="text-3xl font-medium sm:text-4xl">
-          Thanks, {draft.name || "there"}. Your brief is in.
-        </h1>
-        <p className="mt-4 text-muted">Here is what happens next.</p>
-        <ol className="mt-8 flex flex-col gap-4 text-left">
-          {[
-            "We read through your brief and the services you picked.",
-            "We reply within 1 business day with next steps or a few questions.",
-            "If it looks like a fit, we set up a short call to scope the work.",
-          ].map((text, i) => (
-            <li key={text} className="flex gap-4 rounded-[var(--radius-card)] border border-line bg-card p-4">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[0.8125rem] font-medium text-accent">
-                {i + 1}
-              </span>
-              <span className="text-sm text-foreground/90">{text}</span>
-            </li>
-          ))}
-        </ol>
-        <div className="mt-10">
+      <div>
+        <div className="mx-auto max-w-xl text-center">
+          <h1 className="text-3xl font-medium sm:text-4xl">
+            Thanks, {draft.name || "there"}. Your brief is in.
+          </h1>
+          <p className="mt-4 text-muted">Here is what happens next.</p>
+          <ol className="mt-8 flex flex-col gap-4 text-left">
+            {[
+              "We read through your brief and the services you picked.",
+              "We reply within 1 business day with next steps or a few questions.",
+              "If it looks like a fit, we set up a short call to scope the work.",
+            ].map((text, i) => (
+              <li key={text} className="flex gap-4 rounded-[var(--radius-card)] border border-line bg-card p-4">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[0.8125rem] font-medium text-accent">
+                  {i + 1}
+                </span>
+                <span className="text-sm text-foreground/90">{text}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        {CALENDLY_URL && (
+          <div className="mt-10">
+            {booking === "idle" ? (
+              <div className="mx-auto max-w-xl rounded-[var(--radius-card)] border border-line bg-card p-6 text-center sm:p-8">
+                <h2 className="text-xl font-medium">Rather not wait for the reply?</h2>
+                <p className="mt-2 text-sm text-muted">Pick a time for a call now.</p>
+                <Button size="md" className="mt-5" onClick={() => setBooking("open")}>
+                  Book a call
+                </Button>
+                <p className="mt-5 text-xs text-muted">
+                  {SITE_NAME} is a portfolio concept. Booking sets up a real call with Neil, who built this site.
+                </p>
+              </div>
+            ) : (
+              <div>
+                <h2
+                  ref={bookingHeadingRef}
+                  tabIndex={-1}
+                  className="text-center text-2xl font-medium outline-none sm:text-3xl"
+                >
+                  {booking === "booked" ? "Your call is booked." : "Pick a time that works."}
+                </h2>
+                <p role="status" className="mt-2 text-center text-sm text-muted">
+                  {booking === "booked"
+                    ? "Calendly is emailing you the invite. The details are below."
+                    : "A real call with Neil, who built this site. Times show in your time zone."}
+                </p>
+                <div className="mt-6">
+                  <CalendlyEmbed
+                    bookingUrl={CALENDLY_URL}
+                    source="brief"
+                    name={draft.name}
+                    email={draft.email}
+                    tone="light"
+                    onScheduled={() => setBooking("booked")}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mt-10 text-center">
           <Link href="/" className="link-line text-sm text-muted hover:text-foreground">
             Back to home
           </Link>

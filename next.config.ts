@@ -7,8 +7,10 @@ import type { NextConfig } from "next";
    user-submitted content. So inline scripts (Next's hydration payload, the
    theme script in layout.tsx) stay allowed, while everything else is pinned
    to this origin: no foreign scripts, no data sent to other hosts, no plugins,
-   no <base> hijack, forms post only here, no framing. Dev adds eval and the
-   HMR websocket. */
+   no <base> hijack, forms post only here, no framing. The one exception is
+   frame-src: the Calendly scheduler (src/lib/calendly.ts) is an iframe of
+   calendly.com, embedded without widget.js so script-src stays 'self'.
+   Dev adds eval and the HMR websocket. */
 const isDev = process.env.NODE_ENV === "development";
 
 const contentSecurityPolicy = [
@@ -17,6 +19,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
+  "frame-src 'self' https://calendly.com",
   `connect-src 'self'${isDev ? " ws:" : ""}`,
   "object-src 'none'",
   "base-uri 'self'",
