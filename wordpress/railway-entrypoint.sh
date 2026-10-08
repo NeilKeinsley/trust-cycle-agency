@@ -40,7 +40,9 @@ a2enmod mpm_prefork >/dev/null 2>&1 || true
 	wp option update blog_public 0 || true
 	wp rewrite structure '/%postname%/' --hard || true
 	# Setting or changing WP_ADMIN_PASSWORD and redeploying resets the admin's password.
-	if [ -n "$WP_ADMIN_PASSWORD" ]; then
+	# Only when it differs: setting a password ends that user's sessions, so
+	# doing it on every boot signed the admin out on every redeploy.
+	if [ -n "$WP_ADMIN_PASSWORD" ] && ! wp user check-password "$WP_ADMIN_USER" "$WP_ADMIN_PASSWORD" >/dev/null 2>&1; then
 		wp user update "$WP_ADMIN_USER" --user_pass="$WP_ADMIN_PASSWORD" --skip-email >/dev/null || true
 	fi
 	wp plugin activate advanced-custom-fields || true
