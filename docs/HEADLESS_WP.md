@@ -71,7 +71,9 @@ Tested locally on 2026-10-09 as the `client` editor: publish refused for no head
 
 Hosted on 2026-10-09 (Railway volume `wordpress-cms-volume` at `/var/www/html/wp-content/uploads`): the three demo posts and their pictures seeded on first boot and survived a redeploy; staging showed them through the image optimiser with `img-src 'self'` unchanged; as the administrator, a publish without a header picture was refused, a picture uploaded, a post using it published and appeared on staging on the first check, and a team photo replaced the monogram. The test post is in Trash and the team photo was cleared; the test picture `hosted-test-picture.jpg` is still in the media library. Two faults were found and fixed on the way: a broken line in the Dockerfile failed the image build, and the first-boot seed (run as root) left the uploads folder unwritable for WordPress, so uploads failed with "could not be moved" until the entrypoint re-owned it. Not repeated on hosted: the Content manager role checks (run locally only).
 
-Known gaps: the editor still offers the theme's colour swatches (ignored by the site); Preview shows the last saved draft, and for an already published post it opens the public page; the Lighthouse contrast check on the new pages has not been run.
+Known gaps: the editor still offers the theme's colour swatches (ignored by the site); Preview shows the last saved draft, and for an already published post it opens the public page.
+
+Lighthouse mobile on staging, 2026-10-09, light and dark emulated: `/blog` and two posts (one with a picture and list, one with a quote and numbered list) scored 100 accessibility in all six runs, with the contrast audit passing and no failing nodes. A separate measurement of every text style in a post body found the lowest ratio at 5.24:1 in light and 6.14:1 in dark, against the 4.5:1 requirement. Best practices 96: the one failure is the same Content Security Policy entry in the browser Issues panel noted above. SEO 69 because staging blocks crawlers on purpose.
 
 ### Reset demo content
 
