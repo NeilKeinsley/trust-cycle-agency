@@ -1,13 +1,14 @@
 import { z } from "zod";
 import type { FaqItem } from "@/components/faq";
-import { CASE_STUDIES, TESTIMONIALS, type CaseStudy, type MockupKind } from "./fixtures";
+import { CASE_STUDIES, TEAM, TESTIMONIALS, type CaseStudy, type MockupKind } from "./fixtures";
 import { FAQS } from "./faqs";
 
 /**
  * Headless WordPress content (proof of concept, see docs/HEADLESS_WP.md).
  *
- * Case studies, FAQs and testimonials are read from WordPress + ACF over the
- * REST API when WP_API_URL is set. The code fixtures stay as the fallback, so
+ * Case studies, FAQs, testimonials and team members are read from WordPress +
+ * ACF over the REST API when WP_API_URL is set. The code fixtures stay as the
+ * fallback, so
  * the site builds and serves with WordPress unset, down or returning rubbish:
  *
  *   WP_API_URL unset           -> fixtures
@@ -26,6 +27,7 @@ export const CMS_TAG = "cms";
 const REFRESH_SECONDS = 3600;
 
 export type Testimonial = { quote: string; name: string; role: string; company: string };
+export type TeamMember = { name: string; role: string; focus: string; currentFocus: string };
 
 type Options = { draft?: boolean };
 
@@ -109,6 +111,15 @@ const testimonialSchema = entry(z.object({ quote: copy, role: copy, company: cop
   ({ tca_title, acf }): Testimonial => ({ name: tca_title, ...acf })
 );
 
+const teamSchema = entry(z.object({ role: copy, focus: copy, current_focus: copy })).transform(
+  ({ tca_title, acf }): TeamMember => ({
+    name: tca_title,
+    role: acf.role,
+    focus: acf.focus,
+    currentFocus: acf.current_focus,
+  })
+);
+
 /** Last content read from WordPress, per collection, for when it goes away. */
 const lastGood = new Map<string, unknown[]>();
 
@@ -177,6 +188,10 @@ export function getCaseStudies(options: Options = {}): Promise<CaseStudy[]> {
 
 export function getFaqs(options: Options = {}): Promise<FaqItem[]> {
   return load("faqs", faqSchema, FAQS, options);
+}
+
+export function getTeam(options: Options = {}): Promise<TeamMember[]> {
+  return load("team", teamSchema, TEAM, options);
 }
 
 export function getTestimonials(options: Options = {}): Promise<Testimonial[]> {

@@ -16,8 +16,7 @@ export default function robots(): MetadataRoute.Robots {
     return { rules: { userAgent: "*", disallow: "/" } };
   }
   return {
-    // /manage is the signed-in content editor: nothing there for a crawler.
-    rules: { userAgent: "*", allow: "/", disallow: "/manage" },
+    rules: { userAgent: "*", allow: "/" },
     sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }

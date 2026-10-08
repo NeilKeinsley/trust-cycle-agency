@@ -1,6 +1,7 @@
 import { Panel, SectionHead } from "@/components/section";
 import { Reveal } from "@/components/reveal";
-import { TEAM, initials } from "@/lib/fixtures";
+import { initials } from "@/lib/fixtures";
+import { getTeam } from "@/lib/cms";
 
 /* Tone progression (same idea as the Work section's "Process" tile): each
    card gets a different token-driven surface instead of one repeated
@@ -38,7 +39,9 @@ const TONES = [
   },
 ] as const;
 
-export function Team() {
+export async function Team() {
+  const team = await getTeam();
+
   return (
     <Panel tone="card">
       <Reveal>
@@ -49,7 +52,7 @@ export function Team() {
       </Reveal>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {TEAM.map((member, i) => {
+        {team.map((member, i) => {
           const tone = TONES[i % TONES.length];
           return (
             <Reveal key={member.name} delay={120 + i * 90} className="h-full">
@@ -72,7 +75,7 @@ export function Team() {
                   <h3 className={`text-xl sm:text-2xl ${tone.name}`}>{member.name}</h3>
                   <p className={`mt-1 text-sm ${tone.sub}`}>{member.role}</p>
                   <p className={`mt-1 text-[0.8125rem] ${tone.sub}`}>{member.focus}</p>
-                  {i === TEAM.length - 1 ? (
+                  {i === team.length - 1 ? (
                     <p className={`mt-3 text-sm italic leading-snug ${tone.name}`}>
                       {member.currentFocus}
                     </p>

@@ -1,6 +1,6 @@
 # Headless WordPress + ACF (proof of concept)
 
-Branch `headless-wp-proof`. WordPress is the content admin; this Next.js app stays the website. Case studies, FAQs and testimonials are edited in WordPress with ACF (free) fields and read over the REST API. Nothing else moved: nav, tagline, team, the client rail and all layouts stay in code.
+Branch `headless-wp-proof`. WordPress is the content admin; this Next.js app stays the website. Case studies, FAQs, testimonials and team members are edited in WordPress with ACF (free) fields and read over the REST API. Nothing else moved: nav, tagline, the client rail, section copy and all layouts stay in code (`docs/CMS_CLIENT_GUIDE.md` lists what could move next).
 
 With `WP_API_URL` unset the site behaves exactly as before and WordPress is not needed.
 
@@ -34,11 +34,10 @@ WP_SHARED_SECRET=local-dev-secret
 | Reading, validating and falling back | `src/lib/cms.ts` |
 | Publish-on-save | `src/app/api/revalidate/route.ts` |
 | Draft preview | `src/app/api/draft/route.ts`, `src/app/api/draft/exit/route.ts`, `src/components/preview-banner.tsx` |
-| On-site editor | `src/app/manage/`, `src/lib/manage.ts` |
 | Role, admin dashboard, save-time rules, editing API | `wordpress/mu-plugins/tca-editing.php` |
 | Hosted WordPress (untested) | `wordpress/Dockerfile`, `wordpress/railway-entrypoint.sh` |
 
-- **Published content**: `GET /wp-json/wp/v2/{case-studies,faqs,testimonials}`. ACF puts the fields under `acf` because each field group has "Show in REST API" on.
+- **Published content**: `GET /wp-json/wp/v2/{case-studies,faqs,testimonials,team}`. ACF puts the fields under `acf` because each field group has "Show in REST API" on.
 - **Publish-on-save**: saving, trashing or deleting in WordPress POSTs to `/api/revalidate` with the shared secret; the next visit re-reads WordPress. As a safety net for a missed webhook, cached content is also re-read after an hour.
 - **Preview**: the WordPress Preview button opens `/api/draft?secret=...&slug=...`, which turns on Next.js Draft Mode. Drafts come from `GET /wp-json/tca/v1/content/{type}`, which requires the secret. Preview shows saved drafts, not unsaved edits.
 - **Fallback**: if WordPress is unset, unreachable or returns nothing valid, pages use the last content this server read, and failing that the code fixtures. The site never depends on WordPress being up.
@@ -47,14 +46,14 @@ WP_SHARED_SECRET=local-dev-secret
 
 ## Editing for non-technical people
 
-Two ways in, both writing to the same WordPress (`docs/CMS_CLIENT_GUIDE.md` is the client-facing version):
+Editors work in WordPress admin (`docs/CMS_CLIENT_GUIDE.md` is the client-facing version):
 
-- **`/manage`** on the site itself: sign in, then add, edit, reorder and remove FAQs. Files: `src/app/manage/`, `src/lib/manage.ts`. The editor signs in with their WordPress username and password; WordPress checks them, the site keeps a signed http-only cookie for 8 hours, and every change is made through WordPress as that user. Sign-in is rate limited (5 a minute per address).
-- **WordPress admin** with the "Content manager" role (`wordpress/mu-plugins/tca-editing.php`): the menu shows only Dashboard, the three content types and Profile. The same rules run at save time (required fields, length limits, no long dashes).
+- An editor page on the site itself (`/manage`) was built, tested locally and on hosted, and then removed on 2026-10-08: WordPress admin covers everything it did, and it was a second login to secure. Its results are kept below as a record.
+- **WordPress admin** with the "Content manager" role (`wordpress/mu-plugins/tca-editing.php`): the menu shows only Dashboard, the four content types and Profile. The same rules run at save time (required fields, length limits, no long dashes).
 
 `npm run wp` creates a local test editor, username `client`; its password is the `TCA_DEMO_EDITOR_PASSWORD` value in the `wp` script in `package.json`. Local only.
 
-`npm run cms:limits` runs 27 edge-case checks against the two local servers (sign-in, validation, HTML stripping, Unicode, 105 entries, ordering, simultaneous saves, removal) and cleans up after itself. All 27 passed on 2026-10-08.
+The 27-check limits script (`npm run cms:limits`) tested the `/manage` editing API and was removed with it. All 27 passed locally before removal, and the same rules were exercised on hosted.
 
 ## Hosting WordPress on Railway (deployed 2026-10-08)
 
@@ -128,4 +127,4 @@ Also verified on 2026-10-08: the `/manage` editor in the browser (wrong password
 
 Also verified locally on 2026-10-08: scheduled publishing (a scheduled FAQ went live and the site refreshed by itself about a minute after its time), revision restore (field text is in revisions from the second saved edit, and restoring one reached the site), and Lighthouse mobile on the production build: `/faq` 100 accessibility, 100 SEO, 96 best practices; `/manage` in dark mode 100 accessibility, 96 best practices, SEO 66 because the page is deliberately noindex. The one best-practices failure is a Content Security Policy entry in the browser Issues panel; not checked whether `main` has it too.
 
-Not done: the hosted items listed above, a persistent local database, and a security review of `/manage`.
+Not done: a persistent local database, media uploads, and backups or monitoring for the hosted pair.

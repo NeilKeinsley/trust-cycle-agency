@@ -18,6 +18,7 @@ const TCA_TYPES = [
 	'case_study'  => ['case-studies', 'Case study', 'Case studies', 'dashicons-portfolio'],
 	'faq'         => ['faqs', 'FAQ', 'FAQs', 'dashicons-editor-help'],
 	'testimonial' => ['testimonials', 'Testimonial', 'Testimonials', 'dashicons-format-quote'],
+	'team_member' => ['team', 'Team member', 'Team', 'dashicons-groups'],
 ];
 
 /** A setting from a PHP constant (local Playground) or an environment variable (hosted). */
@@ -119,6 +120,11 @@ function tca_field_groups(): array {
 			tca_field('testimonial', 'role', 'Role'),
 			tca_field('testimonial', 'company', 'Company'),
 		],
+		'team_member' => [
+			tca_field('team_member', 'role', 'Role', 'text', ['maxlength' => 40]),
+			tca_field('team_member', 'focus', 'Specialty', 'text', ['maxlength' => 60]),
+			tca_field('team_member', 'current_focus', 'Current focus', 'text', ['maxlength' => 90, 'instructions' => 'One line. On the last card it is shown on its own, like a quote.']),
+		],
 	];
 }
 
@@ -143,6 +149,9 @@ function tca_seed_meta(string $type, array $item): array {
 	if ($type === 'testimonial') {
 		return ['title' => $item['name'], 'fields' => ['quote' => $item['quote'], 'role' => $item['role'], 'company' => $item['company']]];
 	}
+	if ($type === 'team_member') {
+		return ['title' => $item['name'], 'fields' => ['role' => $item['role'], 'focus' => $item['focus'], 'current_focus' => $item['currentFocus']]];
+	}
 	$fields = [
 		'tags'       => $item['tags'],
 		'mockup'     => $item['mockup'],
@@ -164,7 +173,13 @@ function tca_seed_meta(string $type, array $item): array {
 }
 
 add_action('init', function () {
-	if (get_option('tca_seeded') || !function_exists('update_field')) {
+	if (!function_exists('update_field')) {
+		return;
+	}
+	// Per type, so a content type added later is seeded on an existing install.
+	// Installs seeded before this list existed already hold the first three.
+	$seeded = get_option('tca_seeded_types', get_option('tca_seeded') ? ['case_study', 'faq', 'testimonial'] : []);
+	if (!array_diff(array_keys(TCA_TYPES), $seeded)) {
 		return;
 	}
 	$file = __DIR__ . '/tca-seed.json';
@@ -173,8 +188,9 @@ add_action('init', function () {
 		return;
 	}
 	update_option('tca_seeded', 1);
+	update_option('tca_seeded_types', array_keys(TCA_TYPES));
 	foreach ($seed as $type => $items) {
-		if (!isset(TCA_TYPES[$type])) {
+		if (!isset(TCA_TYPES[$type]) || in_array($type, $seeded, true)) {
 			continue;
 		}
 		foreach ($items as $order => $item) {
