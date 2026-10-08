@@ -96,7 +96,7 @@ Administrators get a "Reset demo content" box on the WordPress dashboard (`tca-e
 | `WP_SITE_URL` | `https://${{RAILWAY_PUBLIC_DOMAIN}}` |
 | `WP_ADMIN_USER`, `WP_ADMIN_EMAIL` | The administrator created on first boot |
 | `WP_ADMIN_PASSWORD` (optional) | Its password. Unset: a random one is generated and printed once in the first deploy log |
-| `TCA_FRONTEND_URL` | The public URL of the Next.js site |
+| `TCA_FRONTEND_URL` | The public URL of the Next.js site. Several sites can read one WordPress: list them separated by commas. Every one is told about changes; View and Preview links open on the first |
 | `TCA_SHARED_SECRET` | A long random string, the same as `WP_SHARED_SECRET` on the site. Unset: the public content API still works, but the publish webhook, preview and `/manage` are off |
 
 Do not set `TCA_DEMO_EDITOR_PASSWORD` on a hosted WordPress. Create real editors in Users, with the Content manager role.

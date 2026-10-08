@@ -65,8 +65,13 @@ chown www-data:www-data /var/www/html/wp-content/uploads
 	# A site that built while this WordPress was restarting is showing fallback
 	# content. Tell it to re-read, a few times in case it is still starting too.
 	if [ -n "$TCA_FRONTEND_URL" ] && [ -n "$TCA_SHARED_SECRET" ]; then
+		# TCA_FRONTEND_URL can list several sites, separated by commas.
+		IFS=',' read -ra sites <<< "$TCA_FRONTEND_URL"
 		for _ in 1 2 3 4 5; do
-			curl -fsS -m 10 -o /dev/null -X POST -H "x-webhook-secret: $TCA_SHARED_SECRET" 				"${TCA_FRONTEND_URL%/}/api/revalidate" && echo "[tca] asked the site to refresh" || true
+			for site in "${sites[@]}"; do
+				site="${site// /}"
+				curl -fsS -m 10 -o /dev/null -X POST -H "x-webhook-secret: $TCA_SHARED_SECRET" "${site%/}/api/revalidate" && echo "[tca] asked ${site} to refresh" || true
+			done
 			sleep 60
 		done
 	fi

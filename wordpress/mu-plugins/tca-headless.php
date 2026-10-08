@@ -5,7 +5,10 @@
  *
  * Expects two settings, as PHP constants (the Playground CLI passes them with
  * --define) or environment variables (the hosted container):
- *   TCA_FRONTEND_URL   Origin of the Next.js site, e.g. http://localhost:3000
+ *   TCA_FRONTEND_URL   Origin of the Next.js site, e.g. http://localhost:3000.
+ *                      Several sites can read this WordPress: separate them with
+ *                      commas. All are told about changes; the first is the main
+ *                      one, where View and Preview links open.
  *   TCA_SHARED_SECRET  Same value as WP_SHARED_SECRET on the Next.js side
  */
 
@@ -27,8 +30,14 @@ function tca_setting(string $name): string {
 	return defined($name) ? (string) constant($name) : (string) getenv($name);
 }
 
+/** Every site that shows this content, main one first. */
+function tca_frontend_urls(): array {
+	$urls = array_map(fn ($url) => rtrim(trim($url), '/'), explode(',', tca_setting('TCA_FRONTEND_URL')));
+	return array_values(array_filter($urls));
+}
+
 function tca_frontend_url(): string {
-	return rtrim(tca_setting('TCA_FRONTEND_URL'), '/');
+	return tca_frontend_urls()[0] ?? '';
 }
 
 function tca_secret(): string {
@@ -242,12 +251,14 @@ function tca_notify_frontend(int $post_id): void {
 	if (!tca_frontend_url() || !tca_secret()) {
 		return;
 	}
-	wp_remote_post(tca_frontend_url() . '/api/revalidate', [
-		'timeout'  => 5,
-		'blocking' => false,
-		'headers'  => ['content-type' => 'application/json', 'x-webhook-secret' => tca_secret()],
-		'body'     => wp_json_encode(['type' => $type]),
-	]);
+	foreach (tca_frontend_urls() as $site) {
+		wp_remote_post("$site/api/revalidate", [
+			'timeout'  => 5,
+			'blocking' => false,
+			'headers'  => ['content-type' => 'application/json', 'x-webhook-secret' => tca_secret()],
+			'body'     => wp_json_encode(['type' => $type]),
+		]);
+	}
 }
 
 // ACF saves its fields after save_post, so listen on acf/save_post as well.
