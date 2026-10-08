@@ -1,0 +1,9 @@
+{
+  "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+  "plugins": ["advanced-custom-fields"],
+  "siteOptions": {
+    "blogname": "Trust Cycle Agency CMS",
+    "blog_public": "0",
+    "permalink_structure": "/%postname%/"
+  }
+}

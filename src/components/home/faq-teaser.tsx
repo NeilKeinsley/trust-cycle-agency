@@ -2,12 +2,14 @@ import { Panel } from "@/components/section";
 import { Reveal } from "@/components/reveal";
 import { ButtonLink } from "@/components/button";
 import { Faq } from "@/components/faq";
-import { FAQS } from "@/lib/faqs";
+import { getFaqs } from "@/lib/cms";
 
 /* Locked "base" panel: pins under the header (md+, >=700px tall) while
    ClosingCta slides up over it — see page.tsx and globals.css
    (.tc-lock-base) for the mechanism. */
-export function FaqTeaser() {
+export async function FaqTeaser() {
+  const faqs = await getFaqs();
+
   return (
     <Panel id="faq" tone="card" lock="base">
       <div className="grid items-stretch gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
@@ -31,7 +33,7 @@ export function FaqTeaser() {
         </div>
 
         <Reveal delay={120} className="flex flex-col justify-center">
-          <Faq items={FAQS.slice(0, 6)} />
+          <Faq items={faqs.slice(0, 6)} />
         </Reveal>
       </div>
     </Panel>

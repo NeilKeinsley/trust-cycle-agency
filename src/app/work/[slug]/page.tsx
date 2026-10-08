@@ -1,24 +1,26 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { draftMode } from "next/headers";
 import { notFound } from "next/navigation";
 import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
-import { CASE_STUDIES, caseStudyBySlug } from "@/lib/fixtures";
+import { getCaseStudies } from "@/lib/cms";
 import { PageHero } from "@/components/page-hero";
 import { Section } from "@/components/section";
 import { Reveal } from "@/components/reveal";
 import { QuizTrigger } from "@/components/lead-quiz";
 import { Mockup } from "@/components/home/mockups";
 import { ClosingCta } from "@/components/home/closing-cta";
+import { PreviewBanner } from "@/components/preview-banner";
 
-// Only the studies in fixtures exist; anything else 404s instead of rendering.
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  return CASE_STUDIES.map((c) => ({ slug: c.slug }));
+/* Known studies are prerendered. A slug published in the CMS after the build
+   is rendered on first visit; anything unknown still 404s (notFound below). */
+export async function generateStaticParams() {
+  return (await getCaseStudies()).map((c) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/work/[slug]">): Promise<Metadata> {
-  const study = caseStudyBySlug((await params).slug);
+  const { slug } = await params;
+  const study = (await getCaseStudies()).find((c) => c.slug === slug);
   if (!study) return {};
   return pageMetadata({
     title: `${study.client} case study`,
@@ -28,11 +30,14 @@ export async function generateMetadata({ params }: PageProps<"/work/[slug]">): P
 }
 
 export default async function CaseStudyPage({ params }: PageProps<"/work/[slug]">) {
-  const study = caseStudyBySlug((await params).slug);
+  const { slug } = await params;
+  const { isEnabled: draft } = await draftMode();
+  const studies = await getCaseStudies({ draft });
+  const study = studies.find((c) => c.slug === slug);
   if (!study) notFound();
 
-  const index = CASE_STUDIES.indexOf(study);
-  const next = CASE_STUDIES[(index + 1) % CASE_STUDIES.length];
+  const index = studies.indexOf(study);
+  const next = studies[(index + 1) % studies.length];
   const breadcrumbs = breadcrumbJsonLd([
     ["Home", "/"],
     ["Case studies", "/work"],
@@ -41,12 +46,13 @@ export default async function CaseStudyPage({ params }: PageProps<"/work/[slug]"
 
   return (
     <>
+      {draft && <PreviewBanner />}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
       />
       <PageHero
-        eyebrow={`Case study ${String(index + 1).padStart(2, "0")}/${String(CASE_STUDIES.length).padStart(2, "0")} · ${study.tags.join(" + ")}`}
+        eyebrow={`Case study ${String(index + 1).padStart(2, "0")}/${String(studies.length).padStart(2, "0")} · ${study.tags.join(" + ")}`}
         title={study.client}
         lead={study.summary}
       >

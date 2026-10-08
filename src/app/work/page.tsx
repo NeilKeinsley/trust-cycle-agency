@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { draftMode } from "next/headers";
 import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
-import { CASE_STUDIES } from "@/lib/fixtures";
+import { getCaseStudies } from "@/lib/cms";
 import { PageHero } from "@/components/page-hero";
 import { Section } from "@/components/section";
 import { Reveal } from "@/components/reveal";
 import { QuizTrigger } from "@/components/lead-quiz";
 import { Mockup } from "@/components/home/mockups";
 import { ClosingCta } from "@/components/home/closing-cta";
+import { PreviewBanner } from "@/components/preview-banner";
 
 export const metadata: Metadata = pageMetadata({
   title: "Case studies",
@@ -21,9 +23,13 @@ const breadcrumbs = breadcrumbJsonLd([
   ["Case studies", "/work"],
 ]);
 
-export default function WorkPage() {
+export default async function WorkPage() {
+  const { isEnabled: draft } = await draftMode();
+  const studies = await getCaseStudies({ draft });
+
   return (
     <>
+      {draft && <PreviewBanner />}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
@@ -37,7 +43,7 @@ export default function WorkPage() {
 
       <Section>
         <ul className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {CASE_STUDIES.map((study, i) => (
+          {studies.map((study, i) => (
             <li key={study.slug}>
               <Reveal delay={i * 80} className="h-full">
                 <Link

@@ -1,9 +1,10 @@
 import { Panel, SectionHead } from "@/components/section";
 import { Reveal } from "@/components/reveal";
-import { TESTIMONIALS, initials } from "@/lib/fixtures";
+import { initials } from "@/lib/fixtures";
+import { getTestimonials } from "@/lib/cms";
 
-export function Testimonials() {
-  const [feature, ...rest] = TESTIMONIALS;
+export async function Testimonials() {
+  const [feature, ...rest] = await getTestimonials();
 
   return (
     <Panel tone="light" padClassName="py-10 lg:py-12">

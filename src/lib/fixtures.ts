@@ -226,10 +226,6 @@ export const CASE_STUDIES: CaseStudy[] = [
   },
 ];
 
-export function caseStudyBySlug(slug: string): CaseStudy | undefined {
-  return CASE_STUDIES.find((c) => c.slug === slug);
-}
-
 /* `focus` is the specialty shown under the role; `currentFocus` is a
    one-line, honestly generic note on what that person is working on right
    now (see AGENTS.md — no invented stats or client specifics). Sam's reads

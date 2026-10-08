@@ -6,6 +6,7 @@ import { Reveal } from "@/components/reveal";
 import { QuizTrigger } from "@/components/lead-quiz";
 import { Mockup } from "./mockups";
 import { CASE_STUDIES } from "@/lib/fixtures";
+import { getCaseStudies } from "@/lib/cms";
 
 const PROCESS_STEPS = [
   { label: "Problem", detail: "What's broken or missing" },
@@ -85,12 +86,17 @@ function Tags({ tags, tone = "light" }: { tags: string[]; tone?: "light" | "dark
   );
 }
 
-export function Work() {
-  const byClient = (name: string) => CASE_STUDIES.find((c) => c.client === name)!;
-  const northwind = byClient("Northwind");
-  const brightline = byClient("Brightline");
-  const oakridge = byClient("Oakridge");
-  const halcyon = byClient("Halcyon");
+/* The bento is composed around these four studies. Their copy comes from the
+   CMS; if one is renamed or removed there, its tile keeps the fixture copy
+   rather than breaking the layout. */
+export async function Work() {
+  const studies = await getCaseStudies();
+  const bySlug = (slug: string) =>
+    studies.find((c) => c.slug === slug) ?? CASE_STUDIES.find((c) => c.slug === slug)!;
+  const northwind = bySlug("northwind");
+  const brightline = bySlug("brightline");
+  const oakridge = bySlug("oakridge");
+  const halcyon = bySlug("halcyon");
 
   return (
     <Panel id="work" tone="card" center={false} padClassName="py-10 lg:py-12">

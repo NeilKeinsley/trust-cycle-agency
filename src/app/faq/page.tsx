@@ -3,7 +3,7 @@ import { pageMetadata } from "@/lib/seo";
 import { Section } from "@/components/section";
 import { Reveal } from "@/components/reveal";
 import { Faq } from "@/components/faq";
-import { FAQS } from "@/lib/faqs";
+import { getFaqs } from "@/lib/cms";
 import { ClosingCta } from "@/components/home/closing-cta";
 
 export const metadata: Metadata = pageMetadata({
@@ -13,7 +13,9 @@ export const metadata: Metadata = pageMetadata({
   path: "/faq",
 });
 
-export default function FaqPage() {
+export default async function FaqPage() {
+  const faqs = await getFaqs();
+
   return (
     <>
       <Section className="pt-16 lg:pt-20">
@@ -33,7 +35,7 @@ export default function FaqPage() {
           </div>
 
           <h2 className="sr-only">All questions</h2>
-          <Faq items={FAQS} />
+          <Faq items={faqs} />
         </div>
       </Section>
 
