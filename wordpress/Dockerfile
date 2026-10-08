@@ -1,9 +1,9 @@
 # WordPress as the content admin for the Trust Cycle Agency site, for Railway.
-# NOT YET BUILT OR RUN ANYWHERE: written from the image and Railway docs on a
-# machine without Docker. Treat the first deploy as the test (docs/HEADLESS_WP.md).
+# First built and deployed on Railway on 2026-10-08 (docs/HEADLESS_WP.md).
 #
-# Railway service settings: Root Directory = wordpress, one volume mounted at
-# /var/www/html/wp-content/uploads, and the variables listed in docs/HEADLESS_WP.md.
+# Railway service settings: Root Directory = wordpress, domain target port 80,
+# and the variables listed in docs/HEADLESS_WP.md. Add a volume at
+# /var/www/html/wp-content/uploads before anything uploads media.
 FROM wordpress:php8.3-apache
 
 # WP-CLI is not part of the Apache image; the first-boot setup needs it.

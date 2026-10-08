@@ -17,8 +17,8 @@ Say the second half out loud. It is the real selling point, and it is also the m
 | Sign-in | Their WordPress username and password | The same account |
 | Add, edit, remove, reorder | Yes, with Move up / Move down | Yes, with an Order number |
 | Drafts and preview | No: every save is live | Yes: Save Draft, Preview, Publish |
-| Schedule for later | No | Yes (WordPress built-in; our go-live refresh for it is written but not tested) |
-| Undo | No | Trash keeps removed items 30 days. A "Browse revisions" link appeared after field edits; restoring through it was not tested |
+| Schedule for later | No | Yes, tested: a scheduled FAQ went live about a minute after its time and the site refreshed by itself. WordPress only runs scheduled jobs when something visits it, so a quiet install needs a regular ping |
+| Undo | No | Trash keeps removed items 30 days. Revisions, tested: "Browse revisions" appears from the second saved edit, shows the field text, and "Restore This Revision" put the old answer back on the site. The version from before the first ever edit is not kept |
 
 Both write to the same WordPress, with the same rules, so they never disagree.
 
@@ -97,7 +97,7 @@ Field types below are in ACF free unless marked PRO. PRO is $49 a year for one s
 
 ## Not yet true (do not promise)
 
-- Hosted WordPress: the Railway configuration in `wordpress/` is written but has never been built or deployed.
+- A finished hosted setup: WordPress runs on Railway and serves content, but the shared secret is not set there yet, so the publish webhook, preview and `/manage` have only been tested locally.
 - Two-factor sign-in, password reset from `/manage`, and an audit log of who changed what.
-- Images, rich text, scheduling tested end to end, and a persistent local database.
+- Images, rich text, and a persistent local database.
 - A security review of `/manage`. It is a proof: sign-in is rate limited and every change is re-checked by WordPress, but it has not been audited.

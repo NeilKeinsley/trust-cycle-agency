@@ -56,9 +56,9 @@ Two ways in, both writing to the same WordPress (`docs/CMS_CLIENT_GUIDE.md` is t
 
 `npm run cms:limits` runs 27 edge-case checks against the two local servers (sign-in, validation, HTML stripping, Unicode, 105 entries, ordering, simultaneous saves, removal) and cleans up after itself. All 27 passed on 2026-10-08.
 
-## Hosting WordPress on Railway (written, never deployed)
+## Hosting WordPress on Railway (deployed 2026-10-08)
 
-`wordpress/Dockerfile` and `wordpress/railway-entrypoint.sh` were written from the WordPress image and Railway docs on a machine without Docker. Nothing here has been built or run: the first deploy is the test.
+`wordpress/Dockerfile` and `wordpress/railway-entrypoint.sh` run on Railway at `https://selfless-trust-production-3e09.up.railway.app` (service `selfless-trust` in the project "Trust Cycle Agency", with a MySQL service beside it). The steps below are how it was set up.
 
 1. New Railway project (or a service in the site's project): add a MySQL database.
 2. Add a service from this GitHub repo and branch, with Root Directory `wordpress`.
@@ -78,14 +78,14 @@ Two ways in, both writing to the same WordPress (`docs/CMS_CLIENT_GUIDE.md` is t
 
 Do not set `TCA_DEMO_EDITOR_PASSWORD` on a hosted WordPress. Create real editors in Users, with the Content manager role.
 
-State on 2026-10-08, in the Railway project "Trust Cycle Agency": a MySQL database is created and online; a service named `selfless-trust` is created from this repo (branch `headless-wp-proof`, root `/wordpress`) but has never been deployed and has no public domain. Seven variables are staged on it and not yet applied (the database references, `WP_SITE_URL`, `WP_ADMIN_USER`, `WP_ADMIN_EMAIL`). Still missing: `TCA_SHARED_SECRET`, `WP_ADMIN_PASSWORD`, `TCA_FRONTEND_URL`, the volume, the domain, and the first deploy. The MySQL variable names in the table were checked against the live service.
+State on 2026-10-08: deployed from branch `headless-wp-proof`, root `/wordpress`, domain target port 80. WordPress installed itself on first boot, seeded 4 case studies, 10 FAQs and 3 testimonials, and kept them across redeploys. `TCA_SHARED_SECRET`, `TCA_FRONTEND_URL` and `WP_ADMIN_PASSWORD` are not set, and there is no volume (nothing uploads media yet). The admin user is `tca-admin`; set `WP_ADMIN_PASSWORD` and redeploy to choose its password.
 
-Things to check on the first deploy, because they are known trouble spots or assumptions:
+Verified from outside on 2026-10-08:
 
-- Apache starting at all. Railway users report "More than one MPM loaded" with this image; the entrypoint removes the extra modules.
-- The MySQL variable names above, against what the Railway MySQL service actually exposes.
-- That the first-boot install ran (the admin can log in) and the three content types appear with seeded content.
-- That the webhook reaches the site: edit an FAQ in WordPress and reload `/faq`.
+- The public content API returns ACF fields for all three types, and a production build of the site with `WP_API_URL` pointed at it completed with no fallback warnings.
+- The install screen reports "Already Installed"; the drafts and sign-in endpoints answer 401 without the secret; the user list is 404; theme pages redirect to the login screen.
+- Two bugs found by the first deploys and fixed: Apache followed Railway's injected `PORT` while the domain targeted 80 (502), and the database wait used `wp db check`, which needs a mysql client the image does not have.
+- Not yet tested on the hosted copy: logging in, editing, the publish webhook, preview and `/manage`. They need the secret and a site that points at this WordPress.
 
 Running cost is Railway usage: $10 per GB of RAM and $20 per vCPU a month, $0.15 per GB of volume, against the plan's included credit ($5 on Hobby). A small WordPress plus MySQL has been quoted at roughly $5 to $10 a month on Railway's own template page; not verified against a bill.
 
@@ -109,4 +109,6 @@ Running cost is Railway usage: $10 per GB of RAM and $20 per vCPU a month, $0.15
 
 Also verified on 2026-10-08: the `/manage` editor in the browser (wrong password, sign-in, add, validation message, edit, reorder, two-step remove, each change live on `/faq` without a manual refresh, no horizontal scroll at 375px), the Content manager role in WordPress admin (restricted menu, dashboard panel, long-dash rejection, plugins page blocked), and `npm run cms:limits`.
 
-Not done: deploying WordPress anywhere, Lighthouse runs, a persistent local database, and a security review of `/manage`.
+Also verified locally on 2026-10-08: scheduled publishing (a scheduled FAQ went live and the site refreshed by itself about a minute after its time), revision restore (field text is in revisions from the second saved edit, and restoring one reached the site), and Lighthouse mobile on the production build: `/faq` 100 accessibility, 100 SEO, 96 best practices; `/manage` in dark mode 100 accessibility, 96 best practices, SEO 66 because the page is deliberately noindex. The one best-practices failure is a Content Security Policy entry in the browser Issues panel; not checked whether `main` has it too.
+
+Not done: the hosted items listed above, a persistent local database, and a security review of `/manage`.
