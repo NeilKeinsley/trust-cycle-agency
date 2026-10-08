@@ -18,6 +18,11 @@ RUN curl -fsSL -o /tmp/acf.zip https://downloads.wordpress.org/plugin/advanced-c
 COPY mu-plugins/ /usr/src/wordpress/wp-content/mu-plugins/
 RUN chown -R www-data:www-data /usr/src/wordpress/wp-content
 
+# Without these, the image invents new login keys on every start, which signs
+# every editor out on each redeploy. WordPress ignores this exact placeholder
+# and falls back to keys it generates once and keeps in the database.
+ENV WORDPRESS_AUTH_KEY="put your unique phrase here" 	WORDPRESS_SECURE_AUTH_KEY="put your unique phrase here" 	WORDPRESS_LOGGED_IN_KEY="put your unique phrase here" 	WORDPRESS_NONCE_KEY="put your unique phrase here" 	WORDPRESS_AUTH_SALT="put your unique phrase here" 	WORDPRESS_SECURE_AUTH_SALT="put your unique phrase here" 	WORDPRESS_LOGGED_IN_SALT="put your unique phrase here" 	WORDPRESS_NONCE_SALT="put your unique phrase here"
+
 COPY railway-entrypoint.sh /usr/local/bin/railway-entrypoint.sh
 RUN chmod +x /usr/local/bin/railway-entrypoint.sh
 

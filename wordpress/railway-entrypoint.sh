@@ -45,6 +45,14 @@ a2enmod mpm_prefork >/dev/null 2>&1 || true
 	fi
 	wp plugin activate advanced-custom-fields || true
 	echo "[tca] setup finished"
+	# A site that built while this WordPress was restarting is showing fallback
+	# content. Tell it to re-read, a few times in case it is still starting too.
+	if [ -n "$TCA_FRONTEND_URL" ] && [ -n "$TCA_SHARED_SECRET" ]; then
+		for _ in 1 2 3 4 5; do
+			curl -fsS -m 10 -o /dev/null -X POST -H "x-webhook-secret: $TCA_SHARED_SECRET" 				"${TCA_FRONTEND_URL%/}/api/revalidate" && echo "[tca] asked the site to refresh" || true
+			sleep 60
+		done
+	fi
 ) &
 
 # The stock entrypoint only copies WordPress into the web root when its first
