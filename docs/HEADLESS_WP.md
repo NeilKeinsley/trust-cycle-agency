@@ -96,7 +96,9 @@ Verified from outside on 2026-10-08:
   - Accents, Japanese, Arabic and emoji rendered; duplicates were allowed; the homepage still showed only the first six.
   - A scheduled FAQ went live and staging refreshed by itself within about 15 seconds of its time.
   - Trashing the 105 test entries brought staging back to 11 items, again with no redeploy.
-- Not tested on the hosted pair: `/manage` (needs the owner to sign in on the staging site), revision restore, Lighthouse, and the 27-check script itself (it signs in with a password, so it needs a test editor account the owner creates).
+  - Revision restore: after two edits in WordPress admin, restoring the original revision put the original answer back, and staging followed without a redeploy.
+  - Lighthouse mobile on staging `/faq`: 100 accessibility, 96 best practices, SEO 66 (expected: staging blocks crawlers on purpose).
+- Not tested on the hosted pair: `/manage` (needs the owner to sign in on the staging site) and the 27-check script itself (it signs in with a password, so it needs a test editor account the owner creates).
 
 Running cost is Railway usage: $10 per GB of RAM and $20 per vCPU a month, $0.15 per GB of volume, against the plan's included credit ($5 on Hobby). A small WordPress plus MySQL has been quoted at roughly $5 to $10 a month on Railway's own template page; not verified against a bill.
 
