@@ -35,8 +35,13 @@ a2enmod mpm_prefork >/dev/null 2>&1 || true
 			${WP_ADMIN_PASSWORD:+--admin_password="$WP_ADMIN_PASSWORD"} \
 			--admin_email="${WP_ADMIN_EMAIL:?set WP_ADMIN_EMAIL}" \
 			--skip-email
-		wp option update blog_public 0
-		wp rewrite structure '/%postname%/' --hard
+	fi
+	# Repeated on every boot on purpose: cheap, and it repairs a half-finished first boot.
+	wp option update blog_public 0 || true
+	wp rewrite structure '/%postname%/' --hard || true
+	# Setting or changing WP_ADMIN_PASSWORD and redeploying resets the admin's password.
+	if [ -n "$WP_ADMIN_PASSWORD" ]; then
+		wp user update "$WP_ADMIN_USER" --user_pass="$WP_ADMIN_PASSWORD" --skip-email >/dev/null || true
 	fi
 	wp plugin activate advanced-custom-fields || true
 	echo "[tca] setup finished"

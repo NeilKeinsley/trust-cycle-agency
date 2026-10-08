@@ -292,8 +292,15 @@ add_filter('preview_post_link', function ($link, $post) {
 }, 10, 2);
 
 add_action('template_redirect', function () {
-	if (tca_frontend_url()) {
-		wp_redirect(tca_frontend_url() . '/', 302);
-		exit;
+	// No theme pages for visitors: the real site, or the login screen until it is configured.
+	wp_redirect(tca_frontend_url() ? tca_frontend_url() . '/' : wp_login_url(), 302);
+	exit;
+});
+
+/* The public API is for content. Don't hand out the list of account names with it. */
+add_filter('rest_endpoints', function ($endpoints) {
+	if (!is_user_logged_in()) {
+		unset($endpoints['/wp/v2/users'], $endpoints['/wp/v2/users/(?P<id>[\d]+)']);
 	}
+	return $endpoints;
 });
