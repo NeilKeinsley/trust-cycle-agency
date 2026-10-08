@@ -71,9 +71,10 @@ Two ways in, both writing to the same WordPress (`docs/CMS_CLIENT_GUIDE.md` is t
 | `WORDPRESS_DB_HOST` | `${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}` |
 | `WORDPRESS_DB_USER`, `WORDPRESS_DB_PASSWORD`, `WORDPRESS_DB_NAME` | `${{MySQL.MYSQLUSER}}`, `${{MySQL.MYSQLPASSWORD}}`, `${{MySQL.MYSQLDATABASE}}` |
 | `WP_SITE_URL` | `https://${{RAILWAY_PUBLIC_DOMAIN}}` |
-| `WP_ADMIN_USER`, `WP_ADMIN_PASSWORD`, `WP_ADMIN_EMAIL` | The administrator created on first boot |
+| `WP_ADMIN_USER`, `WP_ADMIN_EMAIL` | The administrator created on first boot |
+| `WP_ADMIN_PASSWORD` (optional) | Its password. Unset: a random one is generated and printed once in the first deploy log |
 | `TCA_FRONTEND_URL` | The public URL of the Next.js site |
-| `TCA_SHARED_SECRET` | A long random string, the same as `WP_SHARED_SECRET` on the site |
+| `TCA_SHARED_SECRET` | A long random string, the same as `WP_SHARED_SECRET` on the site. Unset: the public content API still works, but the publish webhook, preview and `/manage` are off |
 
 Do not set `TCA_DEMO_EDITOR_PASSWORD` on a hosted WordPress. Create real editors in Users, with the Content manager role.
 

@@ -23,11 +23,13 @@ fi
 		sleep 5
 	done
 	if ! wp core is-installed >/dev/null 2>&1; then
+		# Without WP_ADMIN_PASSWORD, WP-CLI makes a random one and prints it once
+		# in this deploy's log ("Admin password: ..."). Change it after first login.
 		wp core install \
 			--url="${WP_SITE_URL:?set WP_SITE_URL}" \
 			--title="Trust Cycle Agency CMS" \
 			--admin_user="${WP_ADMIN_USER:?set WP_ADMIN_USER}" \
-			--admin_password="${WP_ADMIN_PASSWORD:?set WP_ADMIN_PASSWORD}" \
+			${WP_ADMIN_PASSWORD:+--admin_password="$WP_ADMIN_PASSWORD"} \
 			--admin_email="${WP_ADMIN_EMAIL:?set WP_ADMIN_EMAIL}" \
 			--skip-email
 		wp option update blog_public 0
