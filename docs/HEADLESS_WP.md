@@ -61,7 +61,7 @@ Administrators get a "Reset demo content" box on the WordPress dashboard (`tca-e
 
 ## Hosting WordPress on Railway (deployed 2026-10-08)
 
-`wordpress/Dockerfile` and `wordpress/railway-entrypoint.sh` run on Railway at `https://selfless-trust-production-3e09.up.railway.app` (service `wordpress-cms` in the project "Trust Cycle Agency", with its MySQL database `wordpress-db` beside it; the services were renamed from their generated names on 2026-10-08, and the public URLs keep the old names because they were generated first). The steps below are how it was set up.
+`wordpress/Dockerfile` and `wordpress/railway-entrypoint.sh` run on Railway at `https://wordpress-cms.up.railway.app` (service `wordpress-cms` in the project "Trust Cycle Agency", with its MySQL database `wordpress-db` beside it; the services and their public URLs were renamed from the generated names on 2026-10-08; the start-up script now writes `WP_SITE_URL` into WordPress on every boot, so a domain rename plus a redeploy is all a move takes). The steps below are how it was set up.
 
 1. New Railway project (or a service in the site's project): add a MySQL database.
 2. Add a service from this GitHub repo and branch, with Root Directory `wordpress`.
@@ -88,7 +88,7 @@ Verified from outside on 2026-10-08:
 - The public content API returns ACF fields for all three types, and a production build of the site with `WP_API_URL` pointed at it completed with no fallback warnings.
 - The install screen reports "Already Installed"; the drafts and sign-in endpoints answer 401 without the secret; the user list is 404; theme pages redirect to the login screen.
 - Two bugs found by the first deploys and fixed: Apache followed Railway's injected `PORT` while the domain targeted 80 (502), and the database wait used `wp db check`, which needs a mysql client the image does not have.
-- A staging copy of the site runs beside it: service `website-cms-staging`, same branch, `https://incredible-clarity-production-86a3.up.railway.app`, with `SITE_STAGING=1` (robots.txt answers `Disallow: /`), `WP_API_URL` and `WP_SHARED_SECRET` set by reference to the WordPress service, and WordPress's `TCA_FRONTEND_URL` pointing back at it. All pages answer 200 and `/faq` shows the 10 hosted FAQs; the refresh and preview routes answer 401 without the secret.
+- A staging copy of the site runs beside it: service `website-cms-staging`, same branch, `https://website-cms-staging-production.up.railway.app`, with `SITE_STAGING=1` (robots.txt answers `Disallow: /`), `WP_API_URL` and `WP_SHARED_SECRET` set by reference to the WordPress service, and WordPress's `TCA_FRONTEND_URL` pointing back at it. All pages answer 200 and `/faq` shows the 10 hosted FAQs; the refresh and preview routes answer 401 without the secret.
 - Hosted tests run on 2026-10-08 with the owner signed in to WordPress admin: an FAQ published in hosted WordPress appeared on staging `/faq` with no redeploy (publish webhook); a draft case study was 404 publicly and opened through Preview on the staging site with the banner; Publish refused a long dash with the plain message.
 - Found on hosted: Save Draft does not run the field rules, so a draft can hold a long dash. Publish refuses it, and the site skips such an entry anyway.
 - Hosted limit tests, run on 2026-10-08 through the WordPress REST API from the owner's signed-in admin session, with results read off the staging site:

@@ -39,6 +39,12 @@ a2enmod mpm_prefork >/dev/null 2>&1 || true
 	# Repeated on every boot on purpose: cheap, and it repairs a half-finished first boot.
 	wp option update blog_public 0 || true
 	wp rewrite structure '/%postname%/' --hard || true
+	# WordPress keeps its own address in the database. Follow WP_SITE_URL, so
+	# renaming the Railway domain and redeploying is all a move takes.
+	if [ -n "$WP_SITE_URL" ]; then
+		wp option update home "$WP_SITE_URL" || true
+		wp option update siteurl "$WP_SITE_URL" || true
+	fi
 	# Setting or changing WP_ADMIN_PASSWORD and redeploying resets the admin's password.
 	# Only when it differs: setting a password ends that user's sessions, so
 	# doing it on every boot signed the admin out on every redeploy.
