@@ -293,6 +293,9 @@ add_filter('preview_post_link', function ($link, $post) {
 
 add_action('template_redirect', function () {
 	// No theme pages for visitors: the real site, or the login screen until it is configured.
+	if (is_robots() || is_favicon()) {
+		return; // robots.txt must keep answering "Disallow: /"
+	}
 	wp_redirect(tca_frontend_url() ? tca_frontend_url() . '/' : wp_login_url(), 302);
 	exit;
 });
