@@ -23,6 +23,8 @@ export function pageMetadata({
   description,
   path,
   noindex = false,
+  image,
+  article,
 }: {
   /** Page title without the brand; omit on the homepage. */
   title?: string;
@@ -31,29 +33,40 @@ export function pageMetadata({
   path: string;
   /** Keep the page crawlable but out of search results. */
   noindex?: boolean;
+  /** The page's own picture for social cards (a blog post's header), in place of the shared card. */
+  image?: { src: string; width: number; height: number; alt: string };
+  /** Marks the page as an article, with its real publish and edit times. */
+  article?: { published: string; modified: string };
 }): Metadata {
   // Dash, not pipe: Google rewrites pipe separators about twice as often
   // (Zyppy title-rewrite study). Brand last so the page topic leads.
   const fullTitle = title ? `${title} - ${SITE_NAME}` : `${SITE_NAME} - Brand, Web and Growth`;
+
+  const social = (shared: string) =>
+    image
+      ? [{ url: image.src, width: image.width, height: image.height, alt: image.alt || fullTitle }]
+      : [{ url: shared, ...SOCIAL_IMAGE }];
 
   return {
     title: { absolute: fullTitle },
     description,
     alternates: { canonical: path },
     openGraph: {
-      type: "website",
+      ...(article
+        ? { type: "article", publishedTime: article.published, modifiedTime: article.modified }
+        : { type: "website" }),
       siteName: SITE_NAME,
       locale: "en_US",
       url: path,
       title: fullTitle,
       description,
-      images: [{ url: "/opengraph-image", ...SOCIAL_IMAGE }],
+      images: social("/opengraph-image"),
     },
     twitter: {
       card: "summary_large_image",
       title: fullTitle,
       description,
-      images: [{ url: "/twitter-image", ...SOCIAL_IMAGE }],
+      images: social("/twitter-image"),
     },
     ...(noindex ? { robots: { index: false, follow: true } } : {}),
   };

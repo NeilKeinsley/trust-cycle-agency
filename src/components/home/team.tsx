@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Panel, SectionHead } from "@/components/section";
 import { Reveal } from "@/components/reveal";
 import { initials } from "@/lib/fixtures";
@@ -59,15 +60,26 @@ export async function Team() {
               <div
                 className={`flex h-full flex-col overflow-hidden rounded-[var(--radius-card)] ${tone.card}`}
               >
-                {/* Portrait placeholder: large monogram until real headshots
-                    exist. max-h caps the portrait so four cards never push
-                    the row taller than a short viewport (e.g. 768px). */}
-                <div className="flex aspect-[4/3] max-h-[180px] items-center justify-center sm:max-h-[220px] lg:aspect-[4/5] lg:max-h-[260px]">
-                  <span
-                    className={`text-[clamp(3rem,6vw,6.5rem)] font-medium tracking-tight ${tone.initials}`}
-                  >
-                    {initials(member.name)}
-                  </span>
+                {/* Portrait: the photo set in the CMS ("Featured image"), or a
+                    large monogram in the card's own tone when there is none.
+                    max-h caps the portrait so four cards never push the row
+                    taller than a short viewport (e.g. 768px). */}
+                <div className="relative flex aspect-[4/3] max-h-[180px] items-center justify-center sm:max-h-[220px] lg:aspect-[4/5] lg:max-h-[260px]">
+                  {member.photo ? (
+                    <Image
+                      src={member.photo.src}
+                      alt={member.photo.alt || `Portrait of ${member.name}`}
+                      fill
+                      sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <span
+                      className={`text-[clamp(3rem,6vw,6.5rem)] font-medium tracking-tight ${tone.initials}`}
+                    >
+                      {initials(member.name)}
+                    </span>
+                  )}
                 </div>
                 <div
                   className={`flex flex-1 flex-col justify-center border-t p-6 lg:p-7 ${tone.divider}`}

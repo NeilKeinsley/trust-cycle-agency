@@ -19,6 +19,7 @@ const TCA_TYPES = [
 	'faq'         => ['faqs', 'FAQ', 'FAQs', 'dashicons-editor-help'],
 	'testimonial' => ['testimonials', 'Testimonial', 'Testimonials', 'dashicons-format-quote'],
 	'team_member' => ['team', 'Team member', 'Team', 'dashicons-groups'],
+	'blog_post'   => ['blog', 'Blog post', 'Blog posts', 'dashicons-admin-post'],
 ];
 
 /** A setting from a PHP constant (local Playground) or an environment variable (hosted). */
@@ -55,7 +56,13 @@ add_action('init', function () {
 			'rest_base'    => $rest_base,
 			'menu_icon'    => $icon,
 			// No body editor: every piece of content is a labelled ACF field.
-			'supports'     => ['title', 'page-attributes', 'revisions'],
+			// The two exceptions (tca-blog.php): a blog post is written in the block
+			// editor, and a team member can carry a photo.
+			'supports'     => match ($type) {
+				'blog_post'   => ['title', 'editor', 'thumbnail', 'excerpt', 'revisions'],
+				'team_member' => ['title', 'page-attributes', 'revisions', 'thumbnail'],
+				default       => ['title', 'page-attributes', 'revisions'],
+			},
 		]);
 	}
 });
@@ -185,6 +192,10 @@ function tca_seed_types(array $types): int {
 			continue;
 		}
 		foreach ($items as $order => $item) {
+			if ($type === 'blog_post') {
+				$made += tca_seed_blog_post($item) ? 1 : 0;
+				continue;
+			}
 			$meta = tca_seed_meta($type, $item);
 			$id   = wp_insert_post([
 				'post_type'   => $type,
@@ -248,8 +259,12 @@ add_action('deleted_post', 'tca_notify_frontend');
 /* ---------- Drafts for preview (secret-protected) ---------- */
 
 function tca_public_path(WP_Post $post): string {
+	$slug = $post->post_name ?: sanitize_title($post->post_title);
 	if ($post->post_type === 'case_study') {
-		return '/work/' . ($post->post_name ?: sanitize_title($post->post_title));
+		return "/work/$slug";
+	}
+	if ($post->post_type === 'blog_post') {
+		return "/blog/$slug";
 	}
 	return $post->post_type === 'faq' ? '/faq' : '/';
 }
@@ -287,10 +302,11 @@ add_action('rest_api_init', function () {
 				'post_type'   => $type,
 				'post_status' => ['publish', 'draft', 'pending', 'future'],
 				'numberposts' => 100,
-				'orderby'     => 'menu_order',
-				'order'       => 'ASC',
+				// Blog posts read newest first; everything else in page order.
+				'orderby'     => $type === 'blog_post' ? 'date' : 'menu_order',
+				'order'       => $type === 'blog_post' ? 'DESC' : 'ASC',
 			]);
-			return array_map(fn (WP_Post $post) => [
+			return array_map(fn (WP_Post $post) => tca_entry_extras($post) + [
 				'id'        => $post->ID,
 				'slug'      => $post->post_name ?: sanitize_title($post->post_title),
 				'tca_title' => $post->post_title,

@@ -49,15 +49,31 @@ WP_SHARED_SECRET=local-dev-secret
 Editors work in WordPress admin (`docs/CMS_CLIENT_GUIDE.md` is the client-facing version):
 
 - An editor page on the site itself (`/manage`) was built, tested locally and on hosted, and then removed on 2026-10-08: WordPress admin covers everything it did, and it was a second login to secure. Its results are kept below as a record.
-- **WordPress admin** with the "Content manager" role (`wordpress/mu-plugins/tca-editing.php`): the menu shows only Dashboard, the four content types and Profile. The same rules run at save time (required fields, length limits, no long dashes).
+- **WordPress admin** with the "Content manager" role (`wordpress/mu-plugins/tca-editing.php`): the menu shows only Dashboard, the five content types, Media and Profile. The same rules run at save time (required fields, length limits, no long dashes).
 
 `npm run wp` creates a local test editor, username `client`; its password is the `TCA_DEMO_EDITOR_PASSWORD` value in the `wp` script in `package.json`. Local only.
 
 The 27-check limits script (`npm run cms:limits`) tested the `/manage` editing API and was removed with it. All 27 passed locally before removal, and the same rules were exercised on hosted.
 
+### Blog posts and pictures (added 2026-10-09)
+
+Code: `wordpress/mu-plugins/tca-blog.php`, `src/lib/blog-posts.ts`, `src/components/blog/post-body.tsx`, `src/app/blog/`.
+
+- **Editor.** Blog posts are the one type written in the block editor. Only paragraph, heading, image, list and quote can be added; the code view, block patterns and stock-picture search are off. The header picture is WordPress's "Featured image". Team members have the same box for an optional photo; without one the card keeps its monogram.
+- **Typed data, not HTML.** WordPress converts the post body to a list of typed blocks (`tca_blocks`): text is runs of `{ text, bold, italic, href }`. `cms.ts` validates it with zod and `post-body.tsx` renders it. Nothing an editor types or pastes reaches the page as markup. Anything else in the editor (colours, sizes, alignment) is ignored.
+- **Pictures.** `next/image` fetches them from the WordPress uploads folder and serves them from the site's own origin, so the Content-Security-Policy is unchanged (`img-src 'self'`). `next.config.ts` allows exactly one remote folder, built from `WP_API_URL` at build time. `cms.ts` refuses any picture address outside it.
+- **Publish checks** (server side, `rest_pre_insert_blog_post`): title, header picture, some text, a description on every picture, pictures uploaded and not linked, no long dashes. Drafts are not checked.
+- **Uploads.** Content managers can upload JPG, PNG and WebP up to 5 MB, and edit or delete media. PHP's limit is raised to 8 MB in the Dockerfile.
+- **Fallback.** Without `WP_API_URL` the site shows three built-in posts with pictures from `public/blog`. `npm run wp:seed` copies those pictures to `mu-plugins/seed-media` and WordPress loads them into its media library when it seeds. With WordPress connected, an empty blog is shown as empty, not replaced by the built-in posts.
+- **Reset demo content** restores the three posts and reuses their pictures. Pictures editors uploaded are left in the media library.
+
+Tested locally on 2026-10-09 as the `client` editor: publish refused for no header picture, a picture without a description, and a long dash; an unfinished draft saved; SVG and PDF uploads refused; a valid post published and appeared on `/blog` and in the sitemap without a rebuild; a draft was visible only through the preview link; a team photo set in WordPress replaced the monogram; settings, plugins and users pages answered 403; the image optimiser answered 400 for another host. The seeded posts open in the block editor with no invalid blocks.
+
+Known gaps: the editor still offers the theme's colour swatches (ignored by the site); Preview shows the last saved draft, and for an already published post it opens the public page; the Lighthouse contrast check on the new pages has not been run.
+
 ### Reset demo content
 
-Administrators get a "Reset demo content" box on the WordPress dashboard (`tca-editing.php`). It moves every entry of the four content types to Trash, including drafts, and re-creates the originals from `tca-seed.json`; the site refreshes through the normal publish hooks. Content managers do not see it, and posting the action without the administrator capability answers 403. Local test on 2026-10-08: after adding a published entry and a draft, editing a team member and trashing an FAQ, the reset reported 22 moved to Trash and 21 restored, and the site matched the original set again.
+Administrators get a "Reset demo content" box on the WordPress dashboard (`tca-editing.php`). It moves every entry of the five content types to Trash, including drafts, and re-creates the originals from `tca-seed.json`; the site refreshes through the normal publish hooks. Content managers do not see it, and posting the action without the administrator capability answers 403. Local test on 2026-10-08: after adding a published entry and a draft, editing a team member and trashing an FAQ, the reset reported 22 moved to Trash and 21 restored, and the site matched the original set again.
 
 ## Hosting WordPress on Railway (deployed 2026-10-08)
 
@@ -131,4 +147,4 @@ Also verified on 2026-10-08: the `/manage` editor in the browser (wrong password
 
 Also verified locally on 2026-10-08: scheduled publishing (a scheduled FAQ went live and the site refreshed by itself about a minute after its time), revision restore (field text is in revisions from the second saved edit, and restoring one reached the site), and Lighthouse mobile on the production build: `/faq` 100 accessibility, 100 SEO, 96 best practices; `/manage` in dark mode 100 accessibility, 96 best practices, SEO 66 because the page is deliberately noindex. The one best-practices failure is a Content Security Policy entry in the browser Issues panel; not checked whether `main` has it too.
 
-Not done: a persistent local database, media uploads, and backups or monitoring for the hosted pair.
+Not done: a persistent local database, and backups (database and uploaded pictures) or monitoring for the hosted pair.

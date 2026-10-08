@@ -2,12 +2,13 @@ import { z } from "zod";
 import type { FaqItem } from "@/components/faq";
 import { CASE_STUDIES, TEAM, TESTIMONIALS, type CaseStudy, type MockupKind } from "./fixtures";
 import { FAQS } from "./faqs";
+import { BLOG_POSTS, type Block, type BlogPost, type CmsImage, type Inline } from "./blog-posts";
 
 /**
  * Headless WordPress content (proof of concept, see docs/HEADLESS_WP.md).
  *
- * Case studies, FAQs, testimonials and team members are read from WordPress +
- * ACF over the REST API when WP_API_URL is set. The code fixtures stay as the
+ * Case studies, FAQs, testimonials, team members and blog posts are read from
+ * WordPress over the REST API when WP_API_URL is set. The code fixtures stay as the
  * fallback, so
  * the site builds and serves with WordPress unset, down or returning rubbish:
  *
@@ -27,7 +28,14 @@ export const CMS_TAG = "cms";
 const REFRESH_SECONDS = 3600;
 
 export type Testimonial = { quote: string; name: string; role: string; company: string };
-export type TeamMember = { name: string; role: string; focus: string; currentFocus: string };
+export type TeamMember = {
+  name: string;
+  role: string;
+  focus: string;
+  currentFocus: string;
+  /** From WordPress's "Featured image". Without one the card shows the monogram. */
+  photo: CmsImage | null;
+};
 
 type Options = { draft?: boolean };
 
@@ -57,6 +65,53 @@ const optionalCopy = z
   .nullish()
   .transform((v) => v?.trim() ?? "")
   .refine((v) => !v.includes("—"), "Em-dashes are not allowed in visible copy");
+
+/* Pictures come from the connected WordPress's media library and nowhere
+   else: that folder is the only remote source next.config.ts lets the image
+   optimiser read, so any other address would render as a broken image. */
+function mediaPrefix(): string | null {
+  const api = apiBase();
+  return api ? `${new URL(api).origin}/wp-content/uploads/` : null;
+}
+
+const imageSchema = z
+  .object({
+    url: z.string().refine((v) => {
+      const prefix = mediaPrefix();
+      return prefix !== null && v.startsWith(prefix);
+    }, "Pictures must be uploaded to the WordPress media library"),
+    width: z.number().int().positive(),
+    height: z.number().int().positive(),
+    alt: optionalCopy,
+  })
+  .transform(({ url, ...rest }): CmsImage => ({ src: url, ...rest }));
+
+/* A blog post body arrives as typed blocks (tca_blocks in tca-blog.php), not
+   HTML. Text is runs with formatting flags; links are limited to web, mail
+   and same-site addresses. */
+const inlineSchema: z.ZodType<Inline> = z.object({
+  text: z
+    .string()
+    .min(1)
+    .refine((v) => !v.includes("—"), "Em-dashes are not allowed in visible copy"),
+  bold: z.boolean().optional(),
+  italic: z.boolean().optional(),
+  href: z
+    .string()
+    .regex(/^(https?:\/\/|mailto:|\/(?!\/))/i)
+    .optional(),
+});
+
+const runs = z.array(inlineSchema);
+const text = runs.min(1);
+
+const blockSchema: z.ZodType<Block> = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("paragraph"), content: text }),
+  z.object({ type: z.literal("heading"), level: z.union([z.literal(2), z.literal(3)]), content: text }),
+  z.object({ type: z.literal("image"), image: imageSchema, caption: runs }),
+  z.object({ type: z.literal("list"), ordered: z.boolean(), items: z.array(text).min(1) }),
+  z.object({ type: z.literal("quote"), paragraphs: z.array(text).min(1), cite: runs }),
+]);
 
 const MOCKUPS = ["browser", "logo", "campaign", "search"] as const satisfies readonly MockupKind[];
 
@@ -111,14 +166,58 @@ const testimonialSchema = entry(z.object({ quote: copy, role: copy, company: cop
   ({ tca_title, acf }): Testimonial => ({ name: tca_title, ...acf })
 );
 
-const teamSchema = entry(z.object({ role: copy, focus: copy, current_focus: copy })).transform(
-  ({ tca_title, acf }): TeamMember => ({
-    name: tca_title,
-    role: acf.role,
-    focus: acf.focus,
-    currentFocus: acf.current_focus,
+const teamSchema = entry(z.object({ role: copy, focus: copy, current_focus: copy }))
+  .extend({ tca_image: imageSchema.nullish() })
+  .transform(
+    ({ tca_title, acf, tca_image }): TeamMember => ({
+      name: tca_title,
+      role: acf.role,
+      focus: acf.focus,
+      currentFocus: acf.current_focus,
+      photo: tca_image ?? null,
+    })
+  );
+
+/** WordPress gives UTC times without a zone marker. */
+const utc = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)
+  .transform((v) => (/(Z|[+-]\d{2}:\d{2})$/.test(v) ? v : `${v}Z`));
+
+const EXCERPT_LENGTH = 180;
+
+/** The post's own summary, or the start of its first paragraph when the editor left it empty. */
+function excerptFor(excerpt: string, blocks: Block[]): string {
+  if (excerpt) return excerpt;
+  const first = blocks.find((block) => block.type === "paragraph");
+  const opening = first ? first.content.map((run) => run.text).join("").replace(/\s+/g, " ").trim() : "";
+  if (opening.length <= EXCERPT_LENGTH) return opening;
+  return `${opening.slice(0, opening.lastIndexOf(" ", EXCERPT_LENGTH))}…`;
+}
+
+const blogSchema = z
+  .object({
+    slug: z.string().regex(/^[a-z0-9-]+$/),
+    tca_title: copy,
+    tca_excerpt: optionalCopy,
+    date_gmt: utc,
+    modified_gmt: utc,
+    tca_image: imageSchema.nullable(),
+    // May be empty: a draft can be previewed before any text is written, and
+    // WordPress refuses to publish a post with no text (tca-blog.php).
+    tca_blocks: z.array(blockSchema),
   })
-);
+  .transform(
+    (post): BlogPost => ({
+      slug: post.slug,
+      title: post.tca_title,
+      excerpt: excerptFor(post.tca_excerpt, post.tca_blocks),
+      date: post.date_gmt,
+      modified: post.modified_gmt,
+      cover: post.tca_image,
+      blocks: post.tca_blocks,
+    })
+  );
 
 /** Last content read from WordPress, per collection, for when it goes away. */
 const lastGood = new Map<string, unknown[]>();
@@ -127,7 +226,18 @@ const lastGood = new Map<string, unknown[]>();
 const PAGE_SIZE = 100;
 const MAX_PAGES = 10;
 
-async function fetchEntries(api: string, restBase: string, draft: boolean): Promise<unknown[]> {
+/* What to ask the public API for: page order and the ACF fields, or for the
+   blog, newest first with the typed body. */
+const ORDERED = "orderby=menu_order&order=asc&_fields=id,slug,tca_title,acf,tca_image";
+const DATED =
+  "orderby=date&order=desc&_fields=id,slug,date_gmt,modified_gmt,tca_title,tca_excerpt,tca_image,tca_blocks";
+
+async function fetchEntries(
+  api: string,
+  restBase: string,
+  draft: boolean,
+  query: string
+): Promise<unknown[]> {
   const signal = AbortSignal.timeout(8000);
   const list = z.array(z.unknown());
 
@@ -144,7 +254,7 @@ async function fetchEntries(api: string, restBase: string, draft: boolean): Prom
   const entries: unknown[] = [];
   for (let page = 1; page <= MAX_PAGES; page++) {
     const response = await fetch(
-      `${api}/wp/v2/${restBase}?per_page=${PAGE_SIZE}&page=${page}&orderby=menu_order&order=asc&_fields=id,slug,tca_title,acf`,
+      `${api}/wp/v2/${restBase}?per_page=${PAGE_SIZE}&page=${page}&${query}`,
       { next: { tags: [CMS_TAG], revalidate: REFRESH_SECONDS }, signal }
     );
     if (!response.ok) throw new Error(`WordPress answered ${response.status}`);
@@ -158,21 +268,23 @@ async function load<T>(
   restBase: string,
   schema: z.ZodType<T>,
   fallback: readonly T[],
-  { draft = false }: Options
+  { draft = false }: Options,
+  { query = ORDERED, allowEmpty = false }: { query?: string; allowEmpty?: boolean } = {}
 ): Promise<T[]> {
   const api = apiBase();
   if (!api) return [...fallback];
 
   try {
     const items: T[] = [];
-    for (const raw of await fetchEntries(api, restBase, draft)) {
+    for (const raw of await fetchEntries(api, restBase, draft, query)) {
       const parsed = schema.safeParse(raw);
       if (parsed.success) items.push(parsed.data);
       else console.warn(`[cms] skipped a ${restBase} entry:`, z.prettifyError(parsed.error));
     }
     // An empty collection is treated as a failed read: WordPress mid-install
-    // also answers [], and the page layouts assume there is content.
-    if (items.length === 0) throw new Error("no valid entries");
+    // also answers [], and the page layouts assume there is content. The blog
+    // is the exception (allowEmpty): no posts is a state its pages handle.
+    if (items.length === 0 && !allowEmpty) throw new Error("no valid entries");
     if (!draft) lastGood.set(restBase, items);
     return items;
   } catch (error) {
@@ -191,7 +303,17 @@ export function getFaqs(options: Options = {}): Promise<FaqItem[]> {
 }
 
 export function getTeam(options: Options = {}): Promise<TeamMember[]> {
-  return load("team", teamSchema, TEAM, options);
+  return load(
+    "team",
+    teamSchema,
+    TEAM.map((member) => ({ ...member, photo: null })),
+    options
+  );
+}
+
+/** Newest first. */
+export function getBlogPosts(options: Options = {}): Promise<BlogPost[]> {
+  return load("blog", blogSchema, BLOG_POSTS, options, { query: DATED, allowEmpty: true });
 }
 
 export function getTestimonials(options: Options = {}): Promise<Testimonial[]> {

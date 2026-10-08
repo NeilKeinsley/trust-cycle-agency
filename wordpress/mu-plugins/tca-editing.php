@@ -30,16 +30,17 @@ function tca_content_caps(): array {
 }
 
 add_action('init', function () {
-	if (get_option('tca_role_version') === '1') {
+	if (get_option('tca_role_version') === '2') {
 		return;
 	}
 	remove_role(TCA_ROLE);
-	add_role(TCA_ROLE, 'Content manager', array_fill_keys(array_merge(['read'], tca_content_caps()), true));
+	// upload_files: pictures for blog posts and team members (limits in tca-blog.php).
+	add_role(TCA_ROLE, 'Content manager', array_fill_keys(array_merge(['read', 'upload_files'], tca_content_caps()), true));
 	$admin = get_role('administrator');
 	foreach (tca_content_caps() as $cap) {
 		$admin?->add_cap($cap);
 	}
-	update_option('tca_role_version', '1');
+	update_option('tca_role_version', '2');
 }, 5);
 
 /* A local test editor, only when the start command passes a password for it. */
@@ -71,7 +72,7 @@ add_action('wp_dashboard_setup', function () {
 		remove_action('welcome_panel', 'wp_welcome_panel');
 	}
 	wp_add_dashboard_widget('tca_start', 'Your website content', function () {
-		echo '<p>Pick what you want to change. Nothing here can break the design: you only edit words.</p><ul>';
+		echo '<p>Pick what you want to change. Nothing here can break the design: you only edit words and pictures.</p><ul>';
 		foreach (TCA_TYPES as $type => [, $singular, $plural]) {
 			printf(
 				'<li style="margin:0 0 10px"><strong>%s</strong><br><a class="button button-primary" href="%s">Add %s</a> <a class="button" href="%s">See all</a></li>',
@@ -82,7 +83,8 @@ add_action('wp_dashboard_setup', function () {
 			);
 		}
 		echo '</ul><p><strong>Publish</strong> or <strong>Update</strong> puts your change on the website straight away. <strong>Save Draft</strong> keeps it private, and <strong>Preview</strong> shows a draft on the real site before anyone else sees it. <strong>Move to Trash</strong> removes an item from the site; it stays in Trash for 30 days in case you change your mind.</p>';
-		echo '<p>The <strong>Order</strong> number decides the position on the page: lower numbers come first.</p>';
+		echo '<p>The <strong>Order</strong> number decides the position on the page: lower numbers come first. Blog posts are different: the newest is always first.</p>';
+		echo '<p><strong>Pictures:</strong> JPG, PNG or WebP, up to 5 MB each. A blog post needs a header picture (the "Featured image" box), and a team member can have a photo the same way.</p>';
 	});
 });
 
@@ -109,7 +111,7 @@ add_action('wp_dashboard_setup', function () {
 				(int) $_GET['tca_reset']
 			);
 		}
-		echo '<p>Puts the case studies, FAQs, testimonials and team back to the original demo set. Everything there now, including drafts, is moved to Trash first and stays recoverable for 30 days. User accounts are not touched.</p>';
+		echo '<p>Puts the case studies, FAQs, testimonials, team and blog posts back to the original demo set. Everything there now, including drafts, is moved to Trash first and stays recoverable for 30 days. User accounts and uploaded pictures are not touched.</p>';
 		printf(
 			'<form method="post" action="%s" onsubmit="return confirm(%s);">%s<input type="hidden" name="action" value="tca_reset_demo"><button type="submit" class="button">Reset demo content</button></form>',
 			esc_url(admin_url('admin-post.php')),
@@ -149,19 +151,20 @@ add_filter('enter_title_here', function ($text, $post) {
 		'testimonial' => "Type the person's name here",
 		'case_study'  => 'Type the client name here',
 		'team_member' => "Type the person's name here",
+		'blog_post'   => 'Type the post title here',
 	][$post->post_type] ?? $text;
 }, 10, 2);
 
 /* Lists read in page order, with the order number visible. */
 add_action('pre_get_posts', function (WP_Query $query) {
-	if (is_admin() && $query->is_main_query() && isset(TCA_TYPES[$query->get('post_type')]) && !$query->get('orderby')) {
+	if (is_admin() && $query->is_main_query() && isset(TCA_TYPES[$query->get('post_type')]) && $query->get('post_type') !== 'blog_post' && !$query->get('orderby')) {
 		$query->set('orderby', 'menu_order');
 		$query->set('order', 'ASC');
 	}
 });
 
 add_action('admin_init', function () {
-	foreach (array_keys(TCA_TYPES) as $type) {
+	foreach (array_diff(array_keys(TCA_TYPES), ['blog_post']) as $type) {
 		add_filter("manage_{$type}_posts_columns", function ($columns) {
 			unset($columns['date']);
 			return $columns + ['tca_order' => 'Order on page', 'date' => 'Date'];

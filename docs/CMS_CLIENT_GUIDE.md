@@ -43,7 +43,8 @@ An earlier version of this proof also had an editor page on the website itself (
 |---|---|---|
 | FAQs | `/faq`, and the first six on the homepage | Question (160 characters), answer (1,200 characters, line breaks kept) |
 | Testimonials | Homepage | Name, quote, role, company |
-| Team | Homepage | Name, role, specialty, current focus |
+| Team | Homepage | Name, role, specialty, current focus, and an optional photo (the "Featured image" box). Without a photo the card shows the person's initials in the card's own colours |
+| Blog posts | `/blog`, each post's page, sitemap | Title, header picture ("Featured image", required), optional short summary, and a body written in WordPress's block editor: paragraphs, headings, pictures, lists and quotes, with bold, italic and links |
 | Case studies | `/work`, each case study page, homepage tiles, sitemap | Client name, services, illustration (pick from four), homepage line, summary, sector, engagement, situation, three approach steps, what shipped, what changed, what we watched |
 
 What happens when they get it wrong:
@@ -55,7 +56,10 @@ What happens when they get it wrong:
 | Go over a length limit | The field stops accepting text |
 | Paste emoji, accents, Arabic, Japanese | Saved and shown unchanged |
 | Add more than 100 items | All still appear (tested with 116 FAQs on hosted) |
-| Take the content system offline | The public site stays up on the last content it read |
+| Publish a blog post with no header picture, or a picture with no description | Refuses to publish and says what is missing, in plain words |
+| Upload something that is not a JPG, PNG or WebP, or is over 5 MB | The upload is refused |
+| Try colours, font sizes, embeds or custom HTML in a blog post | Not offered. Only five kinds of block can be added, and the site reads only their text and pictures |
+| Take the content system offline | The public site stays up on the last content it read. Pictures a visitor's browser has not loaded before may be missing until it is back |
 
 ## What the client cannot edit
 
@@ -63,7 +67,7 @@ What happens when they get it wrong:
 - Section headings and the hero, services, process, engagement and About copy (still in code; see the next table).
 - Illustrations: they choose one of four built-in ones; a new one is a developer job.
 - The number of homepage work tiles: four fixed studies. A fifth study gets its own page and a `/work` listing, not a homepage tile.
-- Images of any kind. Nothing in this build uploads media yet.
+- Pictures outside blog posts and team photos. Case studies still use the four built-in illustrations.
 
 ## What else on this site could become editable
 
@@ -87,11 +91,11 @@ Field types below are in ACF free unless marked PRO. PRO is $49 a year for one s
 
 | Client asks for | How | Effort |
 |---|---|---|
-| Photos (team, case study covers) | Image field, media uploads for the role, image handling on the site, persistent storage on the host | Medium |
-| Bold, links and lists inside text | Wysiwyg field, plus safe HTML rendering on the site | Medium |
+| Photos on case studies | Done for blog posts and team (2026-10-09). The same "Featured image" pattern would cover case study covers | Small |
+| Bold, links and lists inside other text | Done for blog posts. For the fixed fields: a Wysiwyg field, plus safe rendering on the site | Medium |
 | Embedded video | oEmbed field, a click-to-load player, and one more allowed origin in the site's security policy | Medium |
 | "Add another row" lists instead of fixed boxes | Repeater field (PRO) | Small once PRO is bought |
-| A new section such as News or a blog | New content type, new page templates, sitemap and SEO wiring | Large: this is design and build work |
+| Another section like the blog (News, Events) | The blog was added on 2026-10-09. A second section reuses its parts: content type, list page, entry page, sitemap and SEO wiring | Medium |
 | Search-result title and description per item | Two extra text fields | Small |
 | More editors, or a read-only reviewer | WordPress users and roles | None: built in |
 | Rearranging a page | Not offered. That is a redesign | Out of scope by design |
@@ -139,7 +143,7 @@ The CMS runs on a separate staging pair (WordPress plus a copy of the site), not
 
 ## Not yet true (do not promise)
 
-- A production-ready hosted setup: the Railway pair works and was tested, but it has no media storage, no backups configured and no uptime monitoring.
+- A production-ready hosted setup: the Railway pair works and was tested, but it has no backups configured (database or uploaded pictures) and no uptime monitoring.
 - Two-factor sign-in and an audit log of who changed what.
-- Images, rich text, and a persistent local database.
+- Pictures on case studies, video, and a persistent local database.
 - Protection against two editors overwriting each other. WordPress shows its own "someone else is editing" lock on the edit screen; that was not tested here.

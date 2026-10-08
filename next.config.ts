@@ -39,8 +39,27 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
 ];
 
+/* Pictures uploaded in WordPress (blog posts, team photos; see src/lib/cms.ts)
+   are fetched and resized by the image optimiser, then served from this
+   origin at /_next/image. That is why img-src above stays 'self': the
+   visitor's browser never talks to WordPress. The optimiser may read one
+   folder only, the connected WordPress's uploads. Read at build time, like
+   the rest of this file. */
+const wordpress = process.env.WP_API_URL ? new URL(process.env.WP_API_URL) : null;
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  images: {
+    remotePatterns: wordpress
+      ? [new URL(`${wordpress.origin}/wp-content/uploads/**`)]
+      : [],
+    // Only for the local WordPress (npm run wp), which lives on 127.0.0.1.
+    dangerouslyAllowLocalIP: wordpress ? /^(localhost|127\.0\.0\.1)$/.test(wordpress.hostname) : false,
+    // An upload never changes under the same address: WordPress gives a
+    // replaced picture a new file name.
+    minimumCacheTTL: 2678400,
+    maximumResponseBody: 8_000_000,
+  },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

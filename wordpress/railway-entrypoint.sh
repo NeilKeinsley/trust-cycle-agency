@@ -11,6 +11,11 @@ a2enmod mpm_prefork >/dev/null 2>&1 || true
 # (Following Railway's injected PORT instead left the domain pointing at a
 # port nothing listened on: 502 on the first deploy.)
 
+# The uploads volume is mounted owned by root; WordPress runs as www-data and
+# could not save a picture into it.
+mkdir -p /var/www/html/wp-content/uploads
+chown www-data:www-data /var/www/html/wp-content/uploads
+
 # First boot: install WordPress and switch ACF on once the database answers.
 # Runs beside Apache, because the stock entrypoint (below) is what copies the
 # WordPress files into place and must stay the main process.

@@ -2,8 +2,9 @@
 # First built and deployed on Railway on 2026-10-08 (docs/HEADLESS_WP.md).
 #
 # Railway service settings: Root Directory = wordpress, domain target port 80,
-# and the variables listed in docs/HEADLESS_WP.md. Add a volume at
-# /var/www/html/wp-content/uploads before anything uploads media.
+# and the variables listed in docs/HEADLESS_WP.md, plus a volume at
+# /var/www/html/wp-content/uploads: without it every redeploy deletes the
+# pictures editors uploaded (blog posts, team photos).
 FROM wordpress:php8.3-apache
 
 # WP-CLI is not part of the Apache image; the first-boot setup needs it.
@@ -16,6 +17,12 @@ RUN curl -fsSL -o /tmp/acf.zip https://downloads.wordpress.org/plugin/advanced-c
 	&& apt-get update && apt-get install -y --no-install-recommends unzip && rm -rf /var/lib/apt/lists/* \
 	&& unzip -q /tmp/acf.zip -d /usr/src/wordpress/wp-content/plugins/ && rm /tmp/acf.zip
 COPY mu-plugins/ /usr/src/wordpress/wp-content/mu-plugins/
+
+# PHP's stock limit is 2 MB a file, too small for a photo. The editor-facing
+# cap is 5 MB (TCA_UPLOAD_BYTES in tca-blog.php); this leaves headroom above it.
+RUN printf 'upload_max_filesize = 8M
+post_max_size = 10M
+' > /usr/local/etc/php/conf.d/tca-uploads.ini
 RUN chown -R www-data:www-data /usr/src/wordpress/wp-content
 
 # Without these, the image invents new login keys on every start, which signs
