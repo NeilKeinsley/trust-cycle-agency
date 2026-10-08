@@ -35,7 +35,7 @@ What happens when they get it wrong:
 | They do this | The system does this |
 |---|---|
 | Leave a required field empty | Refuses to save and says which field |
-| Type a long dash | Refuses to save with a plain message (house style) |
+| Type a long dash | Refuses to publish with a plain message (house style). Save Draft in WordPress admin does not check it; the site still keeps such an entry off the page |
 | Go over the length limit | Live counter warns, then refuses to save |
 | Paste HTML or a script | Tags are removed; only the text is kept |
 | Paste emoji, accents, Arabic, Japanese | Saved and shown unchanged |
