@@ -8,6 +8,19 @@ How to show, explain and hand over the content system on the `headless-wp-proof`
 
 Say the second half out loud. It is the real selling point, and it is also the main limit: the client edits content, never layout.
 
+## How it works, in plain words
+
+There are two separate things, and that separation is the whole idea.
+
+- **The website** is the shop window. Visitors only ever see this. Its design is fixed.
+- **WordPress** is the back office. It is where the words are kept and edited. Visitors never see it.
+
+When someone presses Publish in the back office, WordPress tells the website "something changed". The website fetches the new words and rebuilds just the pages that use them. That takes a few seconds and needs no developer.
+
+If the back office is ever closed (WordPress is down), the shop window stays open: the website keeps showing the last words it was given.
+
+An illustrated version of this guide for non-technical readers is in `docs/CMS_Guide.pdf`.
+
 ## How the client edits
 
 The client signs in to WordPress with a "Content manager" account. That account sees only Dashboard, Case studies, FAQs, Testimonials, Team and Profile; plugins, themes, users and settings are hidden and blocked.
@@ -98,8 +111,13 @@ Field types below are in ACF free unless marked PRO. PRO is $49 a year for one s
 
 The CMS runs on a separate staging pair (WordPress plus a copy of the site), not on the public portfolio site. Nothing links to it and crawlers are blocked, so it is seen only when you open it or send the link.
 
+| What | Link |
+|---|---|
+| Staging website (what visitors would see) | `https://website-cms-staging-production.up.railway.app` |
+| WordPress login (where they edit) | `https://wordpress-cms.up.railway.app/wp-admin` |
+
 1. Create a Content manager account for the client in WordPress (Users, Add New).
-2. Send them the staging site link and the WordPress login link.
+2. Send them the two links above and their login.
 3. They edit; the staging site updates in seconds.
 4. Afterwards, delete their account, then press **Reset demo content** on your administrator dashboard. It moves everything in the four content types to Trash (recoverable for 30 days) and restores the original entries. Only administrators see it. Tested locally and on hosted on 2026-10-08.
 
