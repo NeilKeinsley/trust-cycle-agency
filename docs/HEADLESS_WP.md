@@ -77,6 +77,8 @@ Two ways in, both writing to the same WordPress (`docs/CMS_CLIENT_GUIDE.md` is t
 
 Do not set `TCA_DEMO_EDITOR_PASSWORD` on a hosted WordPress. Create real editors in Users, with the Content manager role.
 
+State on 2026-10-08, in the Railway project "Trust Cycle Agency": a MySQL database is created and online; a service named `selfless-trust` is created from this repo (branch `headless-wp-proof`, root `/wordpress`) but has never been deployed and has no public domain. Seven variables are staged on it and not yet applied (the database references, `WP_SITE_URL`, `WP_ADMIN_USER`, `WP_ADMIN_EMAIL`). Still missing: `TCA_SHARED_SECRET`, `WP_ADMIN_PASSWORD`, `TCA_FRONTEND_URL`, the volume, the domain, and the first deploy. The MySQL variable names in the table were checked against the live service.
+
 Things to check on the first deploy, because they are known trouble spots or assumptions:
 
 - Apache starting at all. Railway users report "More than one MPM loaded" with this image; the entrypoint removes the extra modules.
