@@ -129,6 +129,10 @@ Verified from outside on 2026-10-08:
 
 Running cost is Railway usage: $10 per GB of RAM and $20 per vCPU a month, $0.15 per GB of volume, against the plan's included credit ($5 on Hobby). A small WordPress plus MySQL has been quoted at roughly $5 to $10 a month on Railway's own template page; not verified against a bill.
 
+### Live site connected (2026-10-09)
+
+The branch was merged to `main` and the live service was then given `WP_API_URL` and `WP_SHARED_SECRET` (the second as a reference to the WordPress service's `TCA_SHARED_SECRET`). WordPress's `TCA_FRONTEND_URL` lists the live site first and staging second. Verified from outside: live pictures come from WordPress through the optimiser; a test FAQ appeared on live and staging at the first check and went again when trashed; 15 pages answer 200 with self-referencing canonicals; robots, the Search Console file, the CSP and the lead endpoint are unchanged. To disconnect, delete `WP_API_URL` from the live service and redeploy: it serves its built-in content again.
+
 ## Limits of this proof
 
 - ACF free has no repeater. A case study's approach is three fixed title/detail pairs, and lists are one item per line in a text box.
