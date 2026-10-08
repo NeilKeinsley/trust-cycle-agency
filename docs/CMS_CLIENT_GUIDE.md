@@ -97,7 +97,7 @@ Field types below are in ACF free unless marked PRO. PRO is $49 a year for one s
 
 ## Not yet true (do not promise)
 
-- A finished hosted setup: WordPress runs on Railway and serves content, but the shared secret is not set there yet, so the publish webhook, preview and `/manage` have only been tested locally.
+- A production-ready hosted setup: WordPress and a staging copy of the site run on Railway and the publish webhook, preview, scheduling, revisions and `/manage` were all tested there, but it has no media storage, no backups configured and no uptime monitoring yet.
 - Two-factor sign-in, password reset from `/manage`, and an audit log of who changed what.
 - Images, rich text, and a persistent local database.
 - A security review of `/manage`. It is a proof: sign-in is rate limited and every change is re-checked by WordPress, but it has not been audited.

@@ -57,7 +57,7 @@ function Field({
       </label>
       {rows ? <textarea rows={rows} {...shared} /> : <input type="text" {...shared} />}
       <p id={`${id}-hint`} className="mt-1.5 flex justify-between gap-4 text-[0.8125rem] text-muted">
-        <span className="text-foreground">{error ?? (over ? "Too long. Please shorten it." : "")}</span>
+        <span className="text-foreground">{over ? "Too long. Please shorten it." : (error ?? "")}</span>
         <span className={over ? "text-foreground" : ""}>
           {value.length} / {limit}
         </span>
@@ -150,7 +150,15 @@ export function FaqCard({
   const [removed, remove, removing] = useActionState(deleteFaq, idle);
   const [confirming, setConfirming] = useState(false);
   const busy = saving || moving || removing;
-  const latest = [removed, moved, saved].find((s) => s.message) ?? idle;
+  // Show the message from whichever of the three actions finished last.
+  const states = [saved, moved, removed];
+  const [previous, setPrevious] = useState(states);
+  const [latest, setLatest] = useState(idle);
+  const changed = states.find((state, i) => state !== previous[i]);
+  if (changed) {
+    setPrevious(states);
+    setLatest(changed);
+  }
 
   return (
     <li className="rounded-[var(--radius-card)] border border-line bg-card p-5 sm:p-6">
