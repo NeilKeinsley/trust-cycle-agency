@@ -57,6 +57,10 @@ chown www-data:www-data /var/www/html/wp-content/uploads
 		wp user update "$WP_ADMIN_USER" --user_pass="$WP_ADMIN_PASSWORD" --skip-email >/dev/null || true
 	fi
 	wp plugin activate advanced-custom-fields || true
+	# The commands above run as root and can create the demo pictures (first
+	# boot seeds them), leaving folders in uploads that WordPress itself cannot
+	# write to: an editor's upload then fails with "could not be moved".
+	chown -R www-data:www-data /var/www/html/wp-content/uploads || true
 	echo "[tca] setup finished"
 	# A site that built while this WordPress was restarting is showing fallback
 	# content. Tell it to re-read, a few times in case it is still starting too.
