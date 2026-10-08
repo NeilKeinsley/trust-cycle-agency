@@ -20,9 +20,7 @@ COPY mu-plugins/ /usr/src/wordpress/wp-content/mu-plugins/
 
 # PHP's stock limit is 2 MB a file, too small for a photo. The editor-facing
 # cap is 5 MB (TCA_UPLOAD_BYTES in tca-blog.php); this leaves headroom above it.
-RUN printf 'upload_max_filesize = 8M
-post_max_size = 10M
-' > /usr/local/etc/php/conf.d/tca-uploads.ini
+RUN { echo 'upload_max_filesize = 8M'; echo 'post_max_size = 10M'; } > /usr/local/etc/php/conf.d/tca-uploads.ini
 RUN chown -R www-data:www-data /usr/src/wordpress/wp-content
 
 # Without these, the image invents new login keys on every start, which signs
