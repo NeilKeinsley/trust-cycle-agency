@@ -55,6 +55,10 @@ Editors work in WordPress admin (`docs/CMS_CLIENT_GUIDE.md` is the client-facing
 
 The 27-check limits script (`npm run cms:limits`) tested the `/manage` editing API and was removed with it. All 27 passed locally before removal, and the same rules were exercised on hosted.
 
+### Reset demo content
+
+Administrators get a "Reset demo content" box on the WordPress dashboard (`tca-editing.php`). It moves every entry of the four content types to Trash, including drafts, and re-creates the originals from `tca-seed.json`; the site refreshes through the normal publish hooks. Content managers do not see it, and posting the action without the administrator capability answers 403. Local test on 2026-10-08: after adding a published entry and a draft, editing a team member and trashing an FAQ, the reset reported 22 moved to Trash and 21 restored, and the site matched the original set again.
+
 ## Hosting WordPress on Railway (deployed 2026-10-08)
 
 `wordpress/Dockerfile` and `wordpress/railway-entrypoint.sh` run on Railway at `https://selfless-trust-production-3e09.up.railway.app` (service `wordpress-cms` in the project "Trust Cycle Agency", with its MySQL database `wordpress-db` beside it; the services were renamed from their generated names on 2026-10-08, and the public URLs keep the old names because they were generated first). The steps below are how it was set up.

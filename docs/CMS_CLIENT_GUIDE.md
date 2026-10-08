@@ -94,6 +94,15 @@ Field types below are in ACF free unless marked PRO. PRO is $49 a year for one s
 7. Move the test FAQ to Trash, and show that it is still recoverable.
 8. Hand them the keyboard. The acceptance test is the client adding one item of each type unaided.
 
+## Letting a client try it
+
+The CMS runs on a separate staging pair (WordPress plus a copy of the site), not on the public portfolio site. Nothing links to it and crawlers are blocked, so it is seen only when you open it or send the link.
+
+1. Create a Content manager account for the client in WordPress (Users, Add New).
+2. Send them the staging site link and the WordPress login link.
+3. They edit; the staging site updates in seconds.
+4. Afterwards, delete their account, then press **Reset demo content** on your administrator dashboard. It moves everything in the four content types to Trash (recoverable for 30 days) and restores the original entries. Only administrators see it. Tested locally and on hosted on 2026-10-08.
+
 ## Honest answers to the questions clients ask
 
 - **"Can I break the site?"** Not the design. You can publish a typo, and you can delete an item (recoverable from Trash for 30 days).

@@ -140,7 +140,7 @@ add_action('acf/init', function () {
 	}
 });
 
-/* ---------- Seed (first boot only) ---------- */
+/* ---------- Seed (first boot, and the "Reset demo content" action) ---------- */
 
 function tca_seed_meta(string $type, array $item): array {
 	if ($type === 'faq') {
@@ -172,25 +172,16 @@ function tca_seed_meta(string $type, array $item): array {
 	return ['title' => $item['client'], 'slug' => $item['slug'], 'fields' => $fields];
 }
 
-add_action('init', function () {
-	if (!function_exists('update_field')) {
-		return;
-	}
-	// Per type, so a content type added later is seeded on an existing install.
-	// Installs seeded before this list existed already hold the first three.
-	$seeded = get_option('tca_seeded_types', get_option('tca_seeded') ? ['case_study', 'faq', 'testimonial'] : []);
-	if (!array_diff(array_keys(TCA_TYPES), $seeded)) {
-		return;
-	}
+/** Creates the seed entries for the given content types. Returns how many were made. */
+function tca_seed_types(array $types): int {
 	$file = __DIR__ . '/tca-seed.json';
 	$seed = is_readable($file) ? json_decode(file_get_contents($file), true) : null;
-	if (!is_array($seed)) {
-		return;
+	if (!is_array($seed) || !function_exists('update_field')) {
+		return 0;
 	}
-	update_option('tca_seeded', 1);
-	update_option('tca_seeded_types', array_keys(TCA_TYPES));
+	$made = 0;
 	foreach ($seed as $type => $items) {
-		if (!isset(TCA_TYPES[$type]) || in_array($type, $seeded, true)) {
+		if (!isset(TCA_TYPES[$type]) || !in_array($type, $types, true)) {
 			continue;
 		}
 		foreach ($items as $order => $item) {
@@ -208,8 +199,26 @@ add_action('init', function () {
 			foreach ($meta['fields'] as $name => $value) {
 				update_field("field_tca_{$type}_{$name}", $value, $id);
 			}
+			$made++;
 		}
 	}
+	return $made;
+}
+
+add_action('init', function () {
+	if (!function_exists('update_field')) {
+		return;
+	}
+	// Per type, so a content type added later is seeded on an existing install.
+	// Installs seeded before this list existed already hold the first three.
+	$seeded  = get_option('tca_seeded_types', get_option('tca_seeded') ? ['case_study', 'faq', 'testimonial'] : []);
+	$missing = array_values(array_diff(array_keys(TCA_TYPES), $seeded));
+	if (!$missing) {
+		return;
+	}
+	update_option('tca_seeded', 1);
+	update_option('tca_seeded_types', array_keys(TCA_TYPES));
+	tca_seed_types($missing);
 }, 99);
 
 /* ---------- Publish webhook: tell Next.js to refresh ---------- */

@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: TCA Editing
- * Description: Makes the content admin safe for non-technical editors: a "Content manager" role that only sees the site's content, a plain-language dashboard and save-time validation. See docs/HEADLESS_WP.md.
+ * Description: Makes the content admin safe for non-technical editors: a "Content manager" role that only sees the site's content, a plain-language dashboard, save-time validation, and an administrator-only "Reset demo content" action. See docs/HEADLESS_WP.md.
  */
 
 if (!defined('ABSPATH')) {
@@ -91,6 +91,57 @@ add_action('wp_dashboard_setup', function () {
 add_filter('login_redirect', function ($redirect, $requested, $user) {
 	return $user instanceof WP_User && user_can($user, 'edit_tca_items') && !user_can($user, 'edit_posts') ? admin_url() : $redirect;
 }, 10, 3);
+
+/* ---------- Reset demo content (administrators only) ---------- */
+
+/* After a client has tried the CMS, one click puts the demo back: everything
+   in the site's content types goes to Trash (recoverable for 30 days) and the
+   original entries are created again from tca-seed.json. */
+add_action('wp_dashboard_setup', function () {
+	if (!current_user_can('manage_options')) {
+		return;
+	}
+	wp_add_dashboard_widget('tca_reset', 'Reset demo content', function () {
+		if (isset($_GET['tca_reset'])) {
+			printf(
+				'<p><strong>Done.</strong> %d entries moved to Trash, %d original entries restored. The website has been told to refresh.</p>',
+				(int) ($_GET['trashed'] ?? 0),
+				(int) $_GET['tca_reset']
+			);
+		}
+		echo '<p>Puts the case studies, FAQs, testimonials and team back to the original demo set. Everything there now, including drafts, is moved to Trash first and stays recoverable for 30 days. User accounts are not touched.</p>';
+		printf(
+			'<form method="post" action="%s" onsubmit="return confirm(%s);">%s<input type="hidden" name="action" value="tca_reset_demo"><button type="submit" class="button">Reset demo content</button></form>',
+			esc_url(admin_url('admin-post.php')),
+			esc_attr(wp_json_encode('Move all current content to Trash and restore the original demo set?')),
+			wp_nonce_field('tca_reset_demo', '_wpnonce', true, false)
+		);
+	});
+});
+
+add_action('admin_post_tca_reset_demo', function () {
+	if (!current_user_can('manage_options')) {
+		wp_die('Only an administrator can reset the demo content.', 403);
+	}
+	check_admin_referer('tca_reset_demo');
+	$trashed = 0;
+	foreach (array_keys(TCA_TYPES) as $type) {
+		$ids = get_posts([
+			'post_type'   => $type,
+			'post_status' => ['publish', 'draft', 'pending', 'future', 'private'],
+			'numberposts' => -1,
+			'fields'      => 'ids',
+		]);
+		foreach ($ids as $id) {
+			if (wp_trash_post($id)) {
+				$trashed++;
+			}
+		}
+	}
+	$restored = tca_seed_types(array_keys(TCA_TYPES));
+	wp_safe_redirect(add_query_arg(['tca_reset' => $restored, 'trashed' => $trashed], admin_url()));
+	exit;
+});
 
 add_filter('enter_title_here', function ($text, $post) {
 	return [
