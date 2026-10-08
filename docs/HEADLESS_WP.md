@@ -85,7 +85,8 @@ Verified from outside on 2026-10-08:
 - The public content API returns ACF fields for all three types, and a production build of the site with `WP_API_URL` pointed at it completed with no fallback warnings.
 - The install screen reports "Already Installed"; the drafts and sign-in endpoints answer 401 without the secret; the user list is 404; theme pages redirect to the login screen.
 - Two bugs found by the first deploys and fixed: Apache followed Railway's injected `PORT` while the domain targeted 80 (502), and the database wait used `wp db check`, which needs a mysql client the image does not have.
-- Not yet tested on the hosted copy: logging in, editing, the publish webhook, preview and `/manage`. They need the secret and a site that points at this WordPress.
+- A staging copy of the site runs beside it: service `incredible-clarity`, same branch, `https://incredible-clarity-production-86a3.up.railway.app`, with `SITE_STAGING=1` (robots.txt answers `Disallow: /`), `WP_API_URL` and `WP_SHARED_SECRET` set by reference to the WordPress service, and WordPress's `TCA_FRONTEND_URL` pointing back at it. All pages answer 200 and `/faq` shows the 10 hosted FAQs; the refresh and preview routes answer 401 without the secret.
+- Not yet tested on the hosted pair: logging in, editing, the publish webhook, preview and `/manage`. `TCA_SHARED_SECRET` is still unset, so `/manage` on staging reports "not connected". These tests also need someone to sign in with a real password, which is the owner's job.
 
 Running cost is Railway usage: $10 per GB of RAM and $20 per vCPU a month, $0.15 per GB of volume, against the plan's included credit ($5 on Hobby). A small WordPress plus MySQL has been quoted at roughly $5 to $10 a month on Railway's own template page; not verified against a bill.
 
