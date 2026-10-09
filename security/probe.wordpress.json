@@ -1,0 +1,8 @@
+{
+  "base": "https://wordpress-cms.up.railway.app",
+  "endpoints": [
+    { "name": "CMS status", "path": "/wp-json/tca/v1/status", "method": "GET", "type": "secret", "secretHeader": "x-webhook-secret" },
+    { "name": "CMS drafts", "path": "/wp-json/tca/v1/content/blog", "method": "GET", "type": "secret", "secretHeader": "x-webhook-secret" }
+  ],
+  "login": { "path": "/wp-login.php", "userField": "log", "passField": "pwd", "attempts": 12 }
+}

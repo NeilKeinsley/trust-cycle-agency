@@ -37,6 +37,11 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Content-Security-Policy", value: contentSecurityPolicy },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  // frame-ancestors above already forbids framing; this is the same rule for
+  // older browsers and scanners that only read the legacy header.
+  { key: "X-Frame-Options", value: "DENY" },
+  // Windows this site opens (the Calendly "new tab" link) get no handle back to it.
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
 ];
 
 /* Pictures uploaded in WordPress (blog posts, team photos; see src/lib/cms.ts)

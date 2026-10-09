@@ -1,0 +1,31 @@
+{
+  "base": "https://trust-cycle-agency-production.up.railway.app",
+  "endpoints": [
+    {
+      "name": "Lead intake",
+      "path": "/api/lead",
+      "method": "POST",
+      "type": "public-form",
+      "safeBody": {
+        "source": "quiz",
+        "services": ["website"],
+        "budget": "unsure",
+        "timeline": "exploring",
+        "name": "Security Probe",
+        "email": "security-probe@example.com",
+        "phone": "",
+        "consent": true,
+        "company_website": "https://honeypot.example",
+        "elapsedMs": 5000
+      },
+      "stringFields": ["name"],
+      "fieldMax": 120,
+      "maxBodyBytes": 32768,
+      "rateLimit": { "limit": 5, "windowSeconds": 60 }
+    },
+    { "name": "Outbox replay", "path": "/api/lead/replay", "method": "POST", "type": "secret", "secretHeader": "x-webhook-secret" },
+    { "name": "CMS revalidate", "path": "/api/revalidate", "method": "POST", "type": "secret", "secretHeader": "x-webhook-secret" },
+    { "name": "Draft preview", "path": "/api/draft?slug=/", "method": "GET", "type": "secret", "secretQuery": "token", "signedToken": true }
+  ],
+  "redirects": [{ "path": "/api/draft", "param": "slug", "query": { "token": "wrong" } }]
+}

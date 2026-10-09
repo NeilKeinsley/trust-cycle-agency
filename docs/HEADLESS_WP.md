@@ -39,7 +39,7 @@ WP_SHARED_SECRET=local-dev-secret
 
 - **Published content**: `GET /wp-json/wp/v2/{case-studies,faqs,testimonials,team}`. ACF puts the fields under `acf` because each field group has "Show in REST API" on.
 - **Publish-on-save**: saving, trashing or deleting in WordPress POSTs to `/api/revalidate` with the shared secret; the next visit re-reads WordPress. As a safety net for a missed webhook, cached content is also re-read after an hour.
-- **Preview**: the WordPress Preview button opens `/api/draft?secret=...&slug=...`, which turns on Next.js Draft Mode. Drafts come from `GET /wp-json/tca/v1/content/{type}`, which requires the secret. Preview shows saved drafts, not unsaved edits.
+- **Preview**: the WordPress Preview button opens `/api/draft?token=...&slug=...`, which turns on Next.js Draft Mode. The token is signed for that one path and expires within the hour, so the shared secret never appears in a link (`docs/SECURITY.md`). Drafts come from `GET /wp-json/tca/v1/content/{type}`, which requires the secret. Preview shows saved drafts, not unsaved edits.
 - **Fallback**: if WordPress is unset, unreachable or returns nothing valid, pages use the last content this server read, and failing that the code fixtures. The site never depends on WordPress being up.
 - **Copy rules**: an entry containing an em-dash is skipped and logged (`[cms] skipped ...`). The "no invented statistics" rule cannot be checked by code and stays an editorial responsibility.
 - **CSP**: unchanged. WordPress is only called from the server.

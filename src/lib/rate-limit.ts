@@ -102,12 +102,27 @@ export class RateLimiter {
 }
 
 /**
- * First hop of x-forwarded-for. Railway's edge replaces any client-supplied
- * value with the real client IP (verified 2026-09-26: spoofed headers shared
- * one bucket), so it can't be used to dodge the limit there. Behind a proxy
- * that appends instead, use the last trusted hop.
+ * The client address, read from x-forwarded-for.
+ *
+ * Default: the first entry. Railway's edge replaces any client-supplied value
+ * with the real client IP (verified 2026-09-26 and 2026-10-09: forged headers
+ * shared one bucket), so it can't be used to dodge the limit there.
+ *
+ * On a host whose proxy APPENDS to the header instead, the first entry is
+ * whatever the client typed. Set TRUSTED_PROXY_HOPS to the number of proxies
+ * in front of the app (1 for one appending proxy, 2 with a CDN before it) and
+ * the address is counted from the right, where a client cannot write.
+ *
+ * With no proxy at all (a local `next start`) the header is the client's own,
+ * so the limit can be dodged there. That is not a production shape, and
+ * `sec-probe` reports it when pointed at localhost.
  */
 export function clientKey(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  return forwarded?.split(",")[0]?.trim() || "unknown";
+  const hops = (request.headers.get("x-forwarded-for") ?? "")
+    .split(",")
+    .map((hop) => hop.trim())
+    .filter(Boolean);
+  const trusted = Number(process.env.TRUSTED_PROXY_HOPS) || 0;
+  const hop = trusted > 0 ? hops[Math.max(0, hops.length - trusted)] : hops[0];
+  return hop ?? "unknown";
 }

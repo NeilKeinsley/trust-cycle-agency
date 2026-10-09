@@ -1,6 +1,6 @@
 import { revalidateTag } from "next/cache";
 import { CMS_TAG } from "@/lib/cms";
-import { secretMatches } from "@/lib/webhook-auth";
+import { secretMatches, tooManyAttempts } from "@/lib/webhook-auth";
 
 /**
  * Called by WordPress whenever content is saved, trashed or deleted
@@ -13,6 +13,8 @@ import { secretMatches } from "@/lib/webhook-auth";
  * available: the next visit re-reads WordPress instead of serving the old page.
  */
 export async function POST(request: Request) {
+  const limited = await tooManyAttempts(request);
+  if (limited) return limited;
   if (!secretMatches(request.headers.get("x-webhook-secret"), process.env.WP_SHARED_SECRET)) {
     return Response.json({ ok: false }, { status: 401 });
   }

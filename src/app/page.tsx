@@ -10,6 +10,7 @@ import { ClosingCta } from "@/components/home/closing-cta";
 import { LockStack } from "@/components/lock-stack";
 import { pageMetadata } from "@/lib/seo";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_SHORT, SITE_URL } from "@/lib/site";
+import { jsonLd } from "@/lib/json-ld";
 
 export const metadata = pageMetadata({ description: SITE_DESCRIPTION, path: "/" });
 
@@ -30,7 +31,7 @@ export default function Home() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(websiteJsonLd) }}
       />
       {/* Full-bleed hero, its own client rail built in. Not part of the
           lock stack: it's plain document flow, and the first stacked card

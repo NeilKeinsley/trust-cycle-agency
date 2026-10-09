@@ -11,6 +11,7 @@ import { Reveal } from "@/components/reveal";
 import { ClosingCta } from "@/components/home/closing-cta";
 import { PreviewBanner } from "@/components/preview-banner";
 import { PostBody, PostDate } from "@/components/blog/post-body";
+import { jsonLd } from "@/lib/json-ld";
 
 /* Known posts are prerendered. A post published in the CMS after the build is
    rendered on first visit; anything unknown still 404s (notFound below). */
@@ -44,7 +45,7 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
   const index = posts.indexOf(post);
   const next = posts.length > 1 ? posts[(index + 1) % posts.length] : null;
   const path = `/blog/${post.slug}`;
-  const jsonLd = [
+  const structuredData = [
     breadcrumbJsonLd([
       ["Home", "/"],
       ["Blog", "/blog"],
@@ -69,7 +70,7 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
       {draft && <PreviewBanner />}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }}
       />
 
       <Section className="lg:pt-16">

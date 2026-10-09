@@ -280,6 +280,17 @@ function tca_public_path(WP_Post $post): string {
 	return $post->post_type === 'faq' ? '/faq' : '/';
 }
 
+/* A preview link carries this instead of the shared secret: links end up in
+   browser history and request logs. The token opens one path for an hour and
+   cannot be turned back into the secret. Checked by previewTokenValid() in
+   src/lib/webhook-auth.ts; keep the two in step. */
+const TCA_PREVIEW_SECONDS = HOUR_IN_SECONDS;
+
+function tca_preview_token(string $path): string {
+	$expires = time() + TCA_PREVIEW_SECONDS;
+	return $expires . '.' . hash_hmac('sha256', "preview:$path:$expires", tca_secret());
+}
+
 function tca_secret_matches(WP_REST_Request $request): bool {
 	$given = (string) $request->get_header('x-webhook-secret');
 	return tca_secret() !== '' && hash_equals(tca_secret(), $given);
@@ -337,8 +348,9 @@ add_filter('preview_post_link', function ($link, $post) {
 	if (!isset(TCA_TYPES[$post->post_type]) || !tca_frontend_url() || !tca_secret()) {
 		return $link;
 	}
+	$path = tca_public_path($post);
 	return add_query_arg(
-		['secret' => rawurlencode(tca_secret()), 'slug' => rawurlencode(tca_public_path($post))],
+		['token' => tca_preview_token($path), 'slug' => rawurlencode($path)],
 		tca_frontend_url() . '/api/draft'
 	);
 }, 10, 2);
@@ -350,9 +362,11 @@ add_action('template_redirect', function () {
 	}
 	wp_redirect(tca_frontend_url() ? tca_frontend_url() . '/' : wp_login_url(), 302);
 	exit;
-});
+}, 0); // Before WordPress's own redirects: /?author=1 would otherwise answer with the account name.
 
-/* The public API is for content. Don't hand out the list of account names with it. */
+/* The public API is for content. Don't hand out the list of account names with it.
+   (tca-security.php closes the rest of the default API to visitors; this stays
+   as the second lock on the one endpoint that matters most.) */
 add_filter('rest_endpoints', function ($endpoints) {
 	if (!is_user_logged_in()) {
 		unset($endpoints['/wp/v2/users'], $endpoints['/wp/v2/users/(?P<id>[\d]+)']);

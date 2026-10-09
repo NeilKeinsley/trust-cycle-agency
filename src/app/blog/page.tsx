@@ -11,6 +11,7 @@ import { QuizTrigger } from "@/components/lead-quiz";
 import { ClosingCta } from "@/components/home/closing-cta";
 import { PreviewBanner } from "@/components/preview-banner";
 import { PostDate } from "@/components/blog/post-body";
+import { jsonLd } from "@/lib/json-ld";
 
 export const metadata: Metadata = pageMetadata({
   title: "Blog",
@@ -33,7 +34,7 @@ export default async function BlogPage() {
       {draft && <PreviewBanner />}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbs) }}
       />
       <PageHero
         title="Notes from the work."

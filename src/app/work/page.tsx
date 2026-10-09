@@ -10,6 +10,7 @@ import { QuizTrigger } from "@/components/lead-quiz";
 import { Mockup } from "@/components/home/mockups";
 import { ClosingCta } from "@/components/home/closing-cta";
 import { PreviewBanner } from "@/components/preview-banner";
+import { jsonLd } from "@/lib/json-ld";
 
 export const metadata: Metadata = pageMetadata({
   title: "Case studies",
@@ -32,7 +33,7 @@ export default async function WorkPage() {
       {draft && <PreviewBanner />}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbs) }}
       />
       <PageHero
         title="How the work gets done."

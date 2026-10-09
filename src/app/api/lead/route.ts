@@ -22,6 +22,7 @@ const rateLimiter = new RateLimiter(5, 60_000, "lead");
 
 /** The largest real submission (a full brief) is a few KB; anything far bigger is abuse. */
 const MAX_BODY_BYTES = 32 * 1024;
+const MAX_HEADER_CHARS = 500;
 
 /**
  * Reads the body as text, giving up as soon as it passes MAX_BODY_BYTES so an
@@ -111,8 +112,9 @@ export async function POST(request: Request) {
     ...fields,
     ...(fields.source === "brief" ? { website: normaliseWebsite(fields.website) } : {}),
     email: fields.email.trim().toLowerCase(),
-    userAgent: request.headers.get("user-agent") ?? "",
-    referrer: request.headers.get("referer") ?? "",
+    // Request headers are free text the sender controls: cap what gets stored.
+    userAgent: (request.headers.get("user-agent") ?? "").slice(0, MAX_HEADER_CHARS),
+    referrer: (request.headers.get("referer") ?? "").slice(0, MAX_HEADER_CHARS),
     elapsedMs,
   };
 

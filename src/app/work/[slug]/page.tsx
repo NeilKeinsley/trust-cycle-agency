@@ -11,6 +11,7 @@ import { QuizTrigger } from "@/components/lead-quiz";
 import { Mockup } from "@/components/home/mockups";
 import { ClosingCta } from "@/components/home/closing-cta";
 import { PreviewBanner } from "@/components/preview-banner";
+import { jsonLd } from "@/lib/json-ld";
 
 /* Known studies are prerendered. A slug published in the CMS after the build
    is rendered on first visit; anything unknown still 404s (notFound below). */
@@ -49,7 +50,7 @@ export default async function CaseStudyPage({ params }: PageProps<"/work/[slug]"
       {draft && <PreviewBanner />}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbs) }}
       />
       <PageHero
         eyebrow={`Case study ${String(index + 1).padStart(2, "0")}/${String(studies.length).padStart(2, "0")} · ${study.tags.join(" + ")}`}

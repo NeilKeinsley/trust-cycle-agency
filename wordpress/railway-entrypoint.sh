@@ -56,7 +56,12 @@ chown www-data:www-data /var/www/html/wp-content/uploads
 	if [ -n "$WP_ADMIN_PASSWORD" ] && ! wp user check-password "$WP_ADMIN_USER" "$WP_ADMIN_PASSWORD" >/dev/null 2>&1; then
 		wp user update "$WP_ADMIN_USER" --user_pass="$WP_ADMIN_PASSWORD" --skip-email >/dev/null || true
 	fi
-	wp plugin activate advanced-custom-fields || true
+	wp plugin activate advanced-custom-fields two-factor || true
+	# Integrity: every core and plugin file against WordPress.org's published
+	# checksums. A mismatch means a file changed after it was downloaded.
+	wp core verify-checksums >/dev/null 2>&1 && echo "[tca] integrity: WordPress core files match WordPress.org" || echo "[tca] INTEGRITY WARNING: WordPress core files differ from WordPress.org"
+	wp plugin verify-checksums --all >/dev/null 2>&1 && echo "[tca] integrity: plugin files match WordPress.org" || echo "[tca] INTEGRITY WARNING: plugin files differ from WordPress.org"
+	echo "[tca] versions: WordPress $(wp core version 2>/dev/null); plugins: $(wp plugin list --fields=name,version --format=csv 2>/dev/null | tail -n +2 | tr '\n' ' ')"
 	# The commands above run as root and can create the demo pictures (first
 	# boot seeds them), leaving folders in uploads that WordPress itself cannot
 	# write to: an editor's upload then fails with "could not be moved".

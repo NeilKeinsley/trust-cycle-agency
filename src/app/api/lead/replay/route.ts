@@ -1,5 +1,5 @@
-import { timingSafeEqual } from "node:crypto";
 import { drainOutbox } from "@/lib/lead-outbox";
+import { secretMatches, tooManyAttempts } from "@/lib/webhook-auth";
 
 /**
  * Replays leads queued in the outbox while n8n was unreachable.
@@ -10,18 +10,10 @@ import { drainOutbox } from "@/lib/lead-outbox";
  * The outbox also drains on its own after the next successful lead, so this
  * is for replaying right away (for example, after fixing n8n).
  */
-
-function authorised(request: Request): boolean {
-  const expected = process.env.N8N_WEBHOOK_SECRET;
-  const given = request.headers.get("x-webhook-secret");
-  if (!expected || !given) return false;
-  const a = Buffer.from(given);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
 export async function POST(request: Request) {
-  if (!authorised(request)) {
+  const limited = await tooManyAttempts(request);
+  if (limited) return limited;
+  if (!secretMatches(request.headers.get("x-webhook-secret"), process.env.N8N_WEBHOOK_SECRET)) {
     return Response.json({ ok: false }, { status: 401 });
   }
   const result = await drainOutbox();
