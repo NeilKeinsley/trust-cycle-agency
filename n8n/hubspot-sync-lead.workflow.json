@@ -1,0 +1,308 @@
+{
+  "name": "HubSpot - sync lead",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "name": "From lead intake",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Turns one normalised lead (from \"Normalise and score\" in the lead intake workflow)\n// into HubSpot request bodies. Field map: docs/HUBSPOT_PLAN.md.\nconst PIPELINE_ID = '2630364862'; // TCA new business\nconst STAGE_NEW_LEAD = '4456833770';\nconst SERVICE_LABELS = {\n  brand: 'Brand and identity',\n  website: 'Website design and build',\n  marketing: 'Marketing and ads',\n  seo: 'SEO and content',\n  social: 'Social media',\n  unsure: 'Not sure yet',\n};\n\nconst l = $input.first().json;\nconst email = String(l.email ?? '').trim().toLowerCase();\nconst leadId = String(l.id ?? '').trim();\nif (!email) throw new Error('Lead has no email, nothing to sync');\nif (!leadId) throw new Error('Lead has no id, cannot upsert the deal');\n\n// Only send values the visitor gave: an empty string would wipe what HubSpot already holds.\nconst put = (o, key, value) => {\n  if (value === undefined || value === null) return;\n  const s = String(value).trim();\n  if (s !== '') o[key] = s;\n};\n\nconst [first, ...rest] = String(l.name ?? '').trim().split(/\\s+/);\nconst services = String(l.services ?? '').split(',').map((s) => s.trim()).filter(Boolean);\nconst receivedMs = Date.parse(l.receivedAtUtc);\n\nconst contact = { email };\nput(contact, 'firstname', first);\nput(contact, 'lastname', rest.join(' '));\nput(contact, 'phone', l.phone);\nput(contact, 'company', l.company);\nput(contact, 'website', l.website);\nput(contact, 'tca_lead_id', leadId);\nput(contact, 'tca_source', l.source);\nput(contact, 'tca_services', services.join(';')); // multiple checkboxes: semicolons, replaces\nput(contact, 'tca_budget', l.budget);\nput(contact, 'tca_timeline', l.timeline);\nput(contact, 'tca_goals', l.goals);\nput(contact, 'tca_lead_score', l.score);\nput(contact, 'tca_lead_bucket', l.bucket);\nput(contact, 'tca_consent', l.consent);\nif (!Number.isNaN(receivedMs)) contact.tca_received_at = String(receivedMs);\n\nconst who = String(l.company ?? '').trim() || String(l.name ?? '').trim().replace(/\\s+/g, ' ') || email;\nconst what = services.map((s) => SERVICE_LABELS[s] ?? s).join(', ') || 'New enquiry';\nconst deal = { dealname: (who + ' - ' + what).slice(0, 200), pipeline: PIPELINE_ID };\nput(deal, 'tca_lead_id', leadId);\nput(deal, 'tca_source', l.source);\nput(deal, 'tca_budget', l.budget);\nput(deal, 'tca_timeline', l.timeline);\nput(deal, 'tca_lead_score', l.score);\nput(deal, 'tca_lead_bucket', l.bucket);\n// A brief that continues a quiz updates the quiz's deal: leave its stage alone,\n// in case someone has already moved it. A new submission starts at \"New lead\".\nif (l.continuesQuiz !== true) deal.dealstage = STAGE_NEW_LEAD;\n\nreturn [{\n  json: {\n    email,\n    leadId,\n    contactBody: { inputs: [{ idProperty: 'email', id: email, properties: contact }] },\n    dealBody: { inputs: [{ idProperty: 'tca_lead_id', id: leadId, properties: deal }] },\n  },\n}];"
+      },
+      "name": "Build HubSpot payloads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/batch/upsert",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.contactBody) }}",
+        "options": {}
+      },
+      "name": "Upsert contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $json.results[0].id }}?properties=lifecyclestage,hs_lead_status",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {}
+      },
+      "name": "Read lifecycle stage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c0ffee00-0001-4000-8000-000000000001",
+              "leftValue": "={{ !$json.properties.hs_lead_status }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "No lead status yet?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $json.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: Object.assign({ hs_lead_status: 'NEW' }, $json.properties.lifecyclestage ? {} : { lifecyclestage: 'lead' }) }) }}",
+        "options": {}
+      },
+      "name": "Set lead status: New",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        -140
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/deals/batch/upsert",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Build HubSpot payloads').item.json.dealBody) }}",
+        "options": {}
+      },
+      "name": "Upsert deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        120
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.hubapi.com/crm/v4/objects/deals/{{ $json.results[0].id }}/associations/default/contacts/{{ $('Read lifecycle stage').item.json.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {}
+      },
+      "name": "Link deal to contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        120
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// One line for the execution log: what was written where.\nconst c = $('Read lifecycle stage').first().json;\nconst d = $('Upsert deal').first().json.results?.[0] ?? {};\nreturn [{ json: {\n  contactId: c.id,\n  dealId: d.id,\n  dealStage: d.properties?.dealstage ?? null,\n  leadStatusWasEmpty: !c.properties?.hs_lead_status,\n  lifecycleStage: c.properties?.lifecyclestage ?? null,\n} }];"
+      },
+      "name": "Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## HubSpot: sync one lead\nCalled by **Trust Cycle: lead intake** without waiting, so a HubSpot failure never blocks a lead. Sheets stays the record.\n\n- Contact: upsert on email. HubSpot sets lifecycle stage \"lead\" itself on create; lead status is set to New only when empty, so a returning visitor keeps theirs.\n- Deal: upsert on `tca_lead_id`. A brief that continues a quiz updates the quiz's deal and keeps its stage.\n- Every HTTP node retries 3 times. A final failure runs the error workflow (Discord alert).\n- Field map: `docs/HUBSPOT_PLAN.md`.",
+        "height": 300,
+        "width": 560
+      },
+      "name": "About",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -400
+      ]
+    }
+  ],
+  "connections": {
+    "From lead intake": {
+      "main": [
+        [
+          {
+            "node": "Build HubSpot payloads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build HubSpot payloads": {
+      "main": [
+        [
+          {
+            "node": "Upsert contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert contact": {
+      "main": [
+        [
+          {
+            "node": "Read lifecycle stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read lifecycle stage": {
+      "main": [
+        [
+          {
+            "node": "No lead status yet?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Upsert deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No lead status yet?": {
+      "main": [
+        [
+          {
+            "node": "Set lead status: New",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Upsert deal": {
+      "main": [
+        [
+          {
+            "node": "Link deal to contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Link deal to contact": {
+      "main": [
+        [
+          {
+            "node": "Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "KrdIYoVefLBu3SnS",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {}
+}

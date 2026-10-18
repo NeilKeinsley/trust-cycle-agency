@@ -222,6 +222,50 @@
           "name": "Resend API key"
         }
       }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b7e1c2d3-0002-4000-8000-00000000c0a2",
+              "name": "continuesQuiz",
+              "value": "={{ $('Lead webhook').item.json.body.continuesQuiz === true }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "name": "Add HubSpot flags",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        32,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "PASTE_HUBSPOT_SYNC_WORKFLOW_ID",
+          "mode": "id"
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "name": "Sync to HubSpot",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        272,
+        592
+      ]
     }
   ],
   "connections": {
@@ -264,6 +308,11 @@
             "node": "Auto-reply (Resend)",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Add HubSpot flags",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -280,6 +329,17 @@
         [
           {
             "node": "Append new lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add HubSpot flags": {
+      "main": [
+        [
+          {
+            "node": "Sync to HubSpot",
             "type": "main",
             "index": 0
           }

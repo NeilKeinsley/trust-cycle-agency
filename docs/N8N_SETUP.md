@@ -70,6 +70,7 @@ Both sheet writes use plain text (RAW), so a name like `=1+1` or a phone like `+
    - **Append new lead:** select the same credential and replace `PASTE_YOUR_GOOGLE_SHEET_ID` in the URL with the ID from your sheet's URL (the part between `/d/` and `/edit`).
    - **Notify Discord:** paste the Discord webhook URL.
    - **Auto-reply (Resend):** this node is imported **disabled**. Resend's test sender (`onboarding@resend.dev`) only delivers to your own Resend account address. It can't email real visitors until you verify a sending domain (with SPF and DKIM). Enable the node only after that.
+   - **Sync to HubSpot:** import `n8n/hubspot-sync-lead.workflow.json` first (it needs the HubSpot service key credential, see `docs/HUBSPOT_PLAN.md`), publish it, then choose it in this node in place of `PASTE_HUBSPOT_SYNC_WORKFLOW_ID`. To run without HubSpot, disable **Add HubSpot flags** and **Sync to HubSpot**.
 3. In **Trust Cycle: pipeline errors**, paste the Discord webhook URL.
 4. In the lead workflow, open **Settings → Error workflow** and choose **Trust Cycle: pipeline errors**.
 5. **Save** both workflows, then **Publish** the lead workflow (n8n 2.x replaced the Active toggle with Publish). An error workflow only fires once it is published too.
