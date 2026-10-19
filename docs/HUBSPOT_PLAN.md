@@ -100,7 +100,8 @@ Covers: Calendly, meetings, deal stage automation.
 | T5 poller sees both again | Search finds both meetings (RESCHEDULED, CANCELED); Decide: nothing to do (no duplicates) |
 
 - Test pins removed afterwards. Build 2's stage alert also posted "moved to Call booked" and "moved to Contacted" during T1 and T4: the duplicate the go-live change removes.
-- **Left before go-live:** the site change (`utm_content` = lead id in the scheduler URL) with the outbox-retry work, staging test, production deploy, publishing the three workflows, removing Call booked from build 2's stage trigger, and one real booking.
+- **Site change done (commits `2316b0b` outbox retry + claim fix, `8594fef` build 3), on staging since 2026-10-19:** the scheduler URL carries `utm_content=<lead id>`. Checked on a local production build with the live Calendly link: after a quiz, the iframe URL held `utm_content` equal to the id the quiz sent to `/api/lead`. Staging has no `NEXT_PUBLIC_CALENDLY_URL` and isn't wired to n8n, so it can't show the scheduler; it only confirms the new code deploys.
+- **Left before go-live:** production deploy (merge to `main`, Neil's yes), publishing the three workflows, removing Call booked from build 2's stage trigger, and one real booking.
 
 **Decided 2026-10-19 (Neil):**
 - Match by lead id, checked against the Calendly email.
