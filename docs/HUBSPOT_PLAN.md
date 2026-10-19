@@ -40,10 +40,73 @@ Covers: Slack, HubSpot workflows, CRM events, notifications, conditional logic, 
 
 ### Build 3: Calendly booking → HubSpot meeting
 Covers: Calendly, meetings, deal stage automation.
-- **Calendly's free plan has no webhooks** (they need a paid plan); its REST API does work on free with a personal access token. Without paying, the site relays the booking instead: the embed already gets Calendly's `calendly.event_scheduled` message → the site POSTs the invitee URI and lead id to a new `/api/booking` route → the route checks the booking really exists through the Calendly API → n8n logs a HubSpot meeting on the contact and deal, moves the deal to "Call booked", and posts to Slack.
-- **Cancellations** can't be pushed without webhooks: build 5's daily job reads cancelled events from the Calendly API and moves the deal back.
-- **Site change:** a new API route (zod, rate limit, probe entry) and a production deploy, which needs Neil's yes.
-- **Edge:** a booking can arrive before an outboxed lead reaches HubSpot. The route retries, and the contact upsert on email covers it.
+**Constraint:** Calendly's free plan has no webhooks. The embed's `calendly.event_scheduled` message gives the page only two URIs (the event and the invitee), so the site relays those and n8n reads the real details from Calendly's API with Neil's token. Calendly's help pages disagree on whether that read API works on the free plan (`docs/BACKEND_PLAN.md` says it does), so step 0 is one test call.
+
+**Flow**
+1. **Browser** (`calendly-embed.tsx`): the iframe URL gains `utm_content=<lead id>` (a random UUID, not contact data, so the "no contact details in URLs" rule holds). Calendly stores it on the booking. On `calendly.event_scheduled` the page POSTs only the invitee URI to `/api/booking`.
+2. **Site route `/api/booking`**: zod (the URI must match `https://api.calendly.com/scheduled_events/<uuid>/invitees/<uuid>`), the lead form's rate limit, a 4 KB body cap. It forwards to n8n `/webhook/calendly-booking` with the site's existing webhook secret and answers 202. The site holds no Calendly token.
+3. **n8n "Calendly - booking to HubSpot"**:
+   - Read the invitee, then the event, from Calendly's API. This is the real check: a forged URI fails here. It gives the email, name, status, start and end time, join link, and the lead id from `utm_content`.
+   - Find the deal by `tca_lead_id`, but **only if that deal's contact email matches the Calendly email**. Otherwise upsert the contact by email and use their newest open TCA deal.
+   - Create a HubSpot **meeting** (title, start/end, join link, outcome Scheduled), skipping it if one already exists for this invitee URI. Link it to the contact and deal.
+   - Move the deal to **Call booked**, but only from New lead or Contacted (never backwards from Proposal sent). Build 2's stage workflow then posts to Slack by itself.
+4. **Cancellations** (no webhooks on free): build 5's daily job reads cancelled events and updates the meeting.
+
+**Security:** `/api/booking` gets a `probe.site.json` entry and `calendly-booking` a `probe.n8n.json` entry. The Calendly token is created with **only `scheduled_events:read`** and stored as an n8n credential. A forged call can at most make n8n look up a URI that Calendly refuses.
+
+**Tests:** n8n first with pinned data, then the site change on staging (push `headless-wp-proof`), then one real booking on production with Neil's yes. Test bookings are real calls in Neil's calendar, so cancel them afterwards.
+
+**Neil's steps:** create the Calendly token (read-only scope) and paste it into an n8n credential.
+
+#### Research check (2026-10-19), against primary sources
+| Assumption | Verdict | Source |
+|---|---|---|
+| Calendly's read API works on the free plan | **Confirmed.** "GET and POST requests … on any subscription plan"; only webhooks and the Scheduling API need a paid plan. The account is on Free (trial ended 2026-10-12) | Calendly help, API overview |
+| Invitee has email, name, status, event URI, `tracking.utm_content`, `rescheduled`, `cancellation` | **Confirmed** in Calendly's OpenAPI spec (`Invitee`, `InviteeTracking`) | `developer.calendly.com/openapi/calendly-api.yaml` |
+| Event has `start_time`, `end_time`, `status`, `location.join_url` (Google Meet), `event_memberships` | **Confirmed** (`Event`, `GoogleConference`) | same spec |
+| Reading an invitee or event needs only `scheduled_events:read` | **Confirmed**. Listing events needs a `user` or `organization` URI; `/users/me` needs `users:read` | same spec |
+| A `utm_content` value on the scheduling link is saved on the booking | **Confirmed** (5 UTM fields plus `salesforce_uuid`; values under 255 characters; custom parameters not supported) | Calendly help, "source track your embed with UTM parameters" |
+| The embed's `calendly.event_scheduled` message carries the event and invitee URIs | **Not documented by Calendly.** Its embed page lists the event names but no payload; only third-party code and forum posts describe the two URIs | Calendly help, advanced embed; react-calendly |
+| n8n has a credential for a Calendly token | **Confirmed:** "Calendly Personal Access Token API" (`calendlyApi`), Bearer header. Its connection test calls `/users/me`, so it fails without `users:read` | n8n source, `CalendlyApi.credentials.ts` |
+| HubSpot meeting fields | **Confirmed:** `hs_timestamp` (required), `hs_meeting_title`, `hs_meeting_body`, `hs_meeting_external_url`, `hs_meeting_location`, `hs_meeting_start_time`, `hs_meeting_end_time`, `hs_meeting_outcome` (SCHEDULED, COMPLETED, RESCHEDULED, NO_SHOW, CANCELED), PATCH to update. Meeting → contact association type 200 | HubSpot meetings guide |
+| HubSpot meeting scope | **Unclear:** the guide lists only `crm.objects.contacts.read/write` (the service key has both). The first create call proves it | HubSpot meetings guide |
+| Reschedules | In Calendly a reschedule cancels the old invitee (`rescheduled: true`) and creates a new one, so it must not be treated as a cancellation | Calendly spec (`rescheduled`, `old_invitee`, `new_invitee`) |
+
+**What changes:** the only undocumented link is the browser message the relay depends on.
+
+#### Chosen design: n8n polls Calendly (Neil, 2026-10-19). This replaces the relay flow above.
+- **n8n "Calendly - bookings to HubSpot"**, on a schedule (every 5 minutes):
+  - List active upcoming events and recently cancelled ones (`GET /scheduled_events?user=…&status=…&min_start_time=…`), then read each event's invitees.
+  - **New active invitee** (no HubSpot meeting holds its URI yet): match the deal by `tracking.utm_content` = `tca_lead_id`, kept only if that deal's contact email matches the invitee email; otherwise upsert the contact by email and use their newest open TCA deal. Create a meeting (outcome SCHEDULED, Meet link, the invitee URI in a custom meeting property for de-duplication), link it to the contact and deal, move the deal to Call booked (only from New lead or Contacted), and post "Call booked: name, date and time" to Slack.
+  - **Cancelled invitee** whose meeting is still SCHEDULED: if `rescheduled` is true, set the outcome to RESCHEDULED and leave the deal (the new booking arrives as a new invitee). Otherwise set it to CANCELED, move the deal from Call booked back to Contacted, and post to Slack.
+  - Successful runs aren't saved, failed ones are (keeps Postgres small on Railway).
+- **Build 2 change:** remove Call booked from the stage-changed trigger, so Slack gets one richer message instead of two.
+- **Site change:** only `calendly.ts` / `calendly-embed.tsx` add `utm_content=<lead id>` to the scheduler URL. No new route. Ships with the outbox-retry work.
+- **No new public endpoint**, so no new probe entry. The Calendly token stays in n8n.
+- **Token verified (2026-10-19):** one token, "n8n - TCA booking check (read only)", scopes `scheduled_events:read` and `users:read` only, stored in the n8n credential "Calendly - TCA read" (type Calendly Personal Access Token API). `/users/me` and `/scheduled_events?user=…` both answered 200 on the free plan. User `https://api.calendly.com/users/87acb485-26ba-4e58-9c6a-d1324d735782`, organization `https://api.calendly.com/organizations/19271054-078f-4637-9c11-ca0b70ce2bc4`, Calendly timezone Asia/Shanghai (UTC+8, same offset as the sheet's Asia/Manila). One past booking exists: "Intro call", 2026-09-29, cancelled (a ready sample for the cancellation path).
+
+#### Build 3 status (2026-10-19): n8n side built and tested, unpublished
+- **HubSpot:** meeting property `tca_calendly_invitee` (group TCA intake), created by the setup workflow (it now covers contacts, deals and meetings).
+- **n8n (all unpublished):** "Calendly - poll bookings" (`6xJKCDh1ECktdBlj`), "Calendly - booking to HubSpot" (`jVSrhZCskUA1QzvI`), "Calendly - cancellation to HubSpot" (`TJITbs8CB2JfwxAu`). Files: `n8n/calendly-poll-bookings.workflow.json` (sub-workflow IDs as `PASTE_…` placeholders), `n8n/calendly-booking-to-hubspot.workflow.json`, `n8n/calendly-cancellation-to-hubspot.workflow.json`.
+- **Tests** (deal "HubSpot Live Test - SEO and content", `355450371795`):
+
+| Test | Result |
+|---|---|
+| Poller against real Calendly (window widened to 2026-09-01) | Read the 29 Sept "Intro call" (cancelled, invitee = Neil's own email, no lead id, https Meet link); HubSpot search found no meeting; Decide: nothing to do |
+| T1 new booking, correct lead id | Meeting `408404463319` created (so the service key can create meetings), matched by lead id, linked, deal New lead → Call booked, Slack "Call booked" card in #leads |
+| T2 reschedule of T1 | Meeting → RESCHEDULED; deal and Slack untouched |
+| T3 new booking carrying another contact's lead id | Lead id ignored; matched to the person's own deal ("newest open deal"); meeting `408399089338`; stage left at Call booked |
+| T4 real cancellation of T3 | Meeting → CANCELED, deal Call booked → Contacted, Slack "Call cancelled" card |
+| T5 poller sees both again | Search finds both meetings (RESCHEDULED, CANCELED); Decide: nothing to do (no duplicates) |
+
+- Test pins removed afterwards. Build 2's stage alert also posted "moved to Call booked" and "moved to Contacted" during T1 and T4: the duplicate the go-live change removes.
+- **Left before go-live:** the site change (`utm_content` = lead id in the scheduler URL) with the outbox-retry work, staging test, production deploy, publishing the three workflows, removing Call booked from build 2's stage trigger, and one real booking.
+
+**Decided 2026-10-19 (Neil):**
+- Match by lead id, checked against the Calendly email.
+- On cancel: mark the meeting Cancelled, post to Slack, **and** move the deal from Call booked back to Contacted (build 5).
+- The uncommitted outbox-retry work (`src/lib/lead-outbox.ts`, `src/app/api/lead/replay/route.ts`, `src/instrumentation.ts`, the `docs/N8N_SETUP.md` paragraph) ships with build 3, after a review and test of its own.
+- The Slack "Call booked" alert shows the booked date and time.
 
 ### Build 4: Gmail follow-ups by deal stage
 Covers: Gmail, workflows on deal events, engagement logging.
@@ -103,6 +166,11 @@ The properties are created by the importable n8n workflow `n8n/hubspot-setup-pro
 | `tca_budget`, `tca_timeline`, `tca_lead_score`, `tca_lead_bucket`, `tca_source` (custom) | Same as on the contact |
 | `amount` | Left empty. A budget band is not a deal value, and the site makes no invented figures |
 | Association | Deal → contact (default association) |
+
+### Meeting: custom property (group "TCA intake", build 3)
+| Internal name | Type | Value |
+|---|---|---|
+| `tca_calendly_invitee` | Single-line text | Calendly invitee URI of the booking that created the meeting; the poller's de-duplication key |
 
 ### Pipeline "TCA new business" (pipeline ID `2630364862`)
 HubSpot stores stages by ID, so n8n writes these IDs, not the names.

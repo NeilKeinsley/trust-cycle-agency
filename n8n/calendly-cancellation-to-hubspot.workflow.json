@@ -1,0 +1,370 @@
+{
+  "name": "Calendly - cancellation to HubSpot",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "name": "From poller",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/meetings/{{ $json.meetingId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: { hs_meeting_outcome: $json.rescheduled ? 'RESCHEDULED' : 'CANCELED' } }) }}",
+        "options": {}
+      },
+      "name": "Update meeting",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ca1e0d10-0000-4000-8000-000000005440",
+              "leftValue": "={{ $('From poller').item.json.rescheduled !== true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Real cancellation?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.hubapi.com/crm/v4/objects/meetings/{{ $('From poller').item.json.meetingId }}/associations/deals?limit=10",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {}
+      },
+      "name": "Meeting deals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        -20
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/deals/batch/read",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: ['pipeline', 'dealstage', 'dealname', 'tca_lead_bucket'], inputs: ($json.results || []).map(r => ({ id: String(r.toObjectId) })) }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Read deals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        -20
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const PORTAL = '247728856';\nconst PIPELINE = '2630364862';\nconst STAGE = { NEW: '4456833770', CONTACTED: '4456833771', CALL: '4456833772', PROPOSAL: '4456833773', WON: '4456833775', LOST: '4456833776' };\nconst CHANNEL = { HOT: 'C0CB16L6UD6', LEADS: 'C0CAAG03B1A' };\nconst esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst when = (iso) => {\n  const d = new Date(iso);\n  if (Number.isNaN(d.getTime())) return String(iso ?? '');\n  return new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Manila', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);\n};\nconst hhmm = (iso) => {\n  const d = new Date(iso);\n  if (Number.isNaN(d.getTime())) return '';\n  return new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);\n};\n\n// A real cancellation (not a reschedule): which TCA deal to move back, and the Slack card.\nconst b = $('From poller').first().json;\nconst read = $('Read deals').first().json;\nconst deals = (read.statusCode === 200 || read.statusCode === 207) ? (read.body?.results ?? []) : [];\nconst deal = deals.find((d) => d.properties?.pipeline === PIPELINE) ?? null;\nconst moveBack = Boolean(deal) && deal.properties.dealstage === STAGE.CALL;\nconst url = 'https://app-na2.hubspot.com/contacts/' + PORTAL + (deal ? '/record/0-3/' + deal.id : '/objects/0-47/views/all/list');\nconst lines = [\n  ':x: *Call cancelled:* ' + esc(b.name || b.email) + ' (' + esc(b.email) + ')',\n  '*Was:* ' + esc(when(b.start)) + ' (Manila time)',\n  deal ? '*Deal:* ' + esc(deal.properties.dealname) + (moveBack ? ' · moved back to Contacted' : ' · stage unchanged') : '_No TCA deal linked to the meeting_',\n];\nreturn [{ json: {\n  dealId: deal ? String(deal.id) : null,\n  moveBack,\n  slack: {\n    channel: deal?.properties?.tca_lead_bucket === 'Hot' ? CHANNEL.HOT : CHANNEL.LEADS,\n    text: 'Call cancelled: ' + esc(b.name || b.email),\n    blocks: [{ type: 'section', text: { type: 'mrkdwn', text: lines.join('\\n') } }, { type: 'actions', elements: [{ type: 'button', text: { type: 'plain_text', text: 'Open in HubSpot' }, url, action_id: 'open_record' }] }],\n    unfurl_links: false,\n  },\n} }];"
+      },
+      "name": "Cancel plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        -20
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.slack) }}",
+        "options": {}
+      },
+      "name": "Post to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        -140
+      ],
+      "credentials": {
+        "slackApi": {
+          "name": "Slack - TCA Lead Alerts"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nif (r.ok === false) throw new Error('Slack API error: ' + r.error);\nreturn $input.all();"
+      },
+      "name": "Slack said ok?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        -140
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ca1e0d10-0000-4000-8000-000000006320",
+              "leftValue": "={{ $('Cancel plan').item.json.moveBack }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Move back?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1320,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $('Cancel plan').item.json.dealId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: { dealstage: '4456833771' } }) }}",
+        "options": {}
+      },
+      "name": "Set stage: Contacted",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        80
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "content": "## Calendly: cancellation → HubSpot\nCalled by **Calendly - poll bookings** for a booking whose HubSpot meeting is still SCHEDULED but is cancelled in Calendly.\n\n- Reschedule (`rescheduled: true`): outcome RESCHEDULED, nothing else (the new time arrives as a new booking).\n- Real cancellation: outcome CANCELED, Slack note, and the deal moves from Call booked back to Contacted (only from Call booked).",
+        "height": 260,
+        "width": 620
+      },
+      "name": "About",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -380
+      ]
+    }
+  ],
+  "connections": {
+    "From poller": {
+      "main": [
+        [
+          {
+            "node": "Update meeting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update meeting": {
+      "main": [
+        [
+          {
+            "node": "Real cancellation?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Real cancellation?": {
+      "main": [
+        [
+          {
+            "node": "Meeting deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meeting deals": {
+      "main": [
+        [
+          {
+            "node": "Read deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read deals": {
+      "main": [
+        [
+          {
+            "node": "Cancel plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cancel plan": {
+      "main": [
+        [
+          {
+            "node": "Post to Slack",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Move back?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Slack": {
+      "main": [
+        [
+          {
+            "node": "Slack said ok?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Move back?": {
+      "main": [
+        [
+          {
+            "node": "Set stage: Contacted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "KrdIYoVefLBu3SnS",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {}
+}

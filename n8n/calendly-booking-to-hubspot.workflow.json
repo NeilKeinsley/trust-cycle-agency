@@ -1,0 +1,466 @@
+{
+  "name": "Calendly - booking to HubSpot",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "name": "From poller",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/batch/upsert",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ inputs: [{ idProperty: 'email', id: $json.email, properties: { email: $json.email } }] }) }}",
+        "options": {}
+      },
+      "name": "Upsert contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.hubapi.com/crm/v4/objects/contacts/{{ $json.results[0].id }}/associations/deals?limit=100",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {}
+      },
+      "name": "Contact deals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/deals/batch/read",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: ['pipeline', 'dealstage', 'dealname', 'tca_lead_id', 'tca_lead_bucket', 'createdate'], inputs: ($json.results || []).map(r => ({ id: String(r.toObjectId) })) }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Read deals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const PORTAL = '247728856';\nconst PIPELINE = '2630364862';\nconst STAGE = { NEW: '4456833770', CONTACTED: '4456833771', CALL: '4456833772', PROPOSAL: '4456833773', WON: '4456833775', LOST: '4456833776' };\nconst CHANNEL = { HOT: 'C0CB16L6UD6', LEADS: 'C0CAAG03B1A' };\nconst esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst when = (iso) => {\n  const d = new Date(iso);\n  if (Number.isNaN(d.getTime())) return String(iso ?? '');\n  return new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Manila', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);\n};\nconst hhmm = (iso) => {\n  const d = new Date(iso);\n  if (Number.isNaN(d.getTime())) return '';\n  return new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);\n};\n\n// One active Calendly booking → which HubSpot contact and deal it belongs to.\n// The lead id from the booking (utm_content) only counts if that deal is linked to\n// the contact with the booking's email: anyone could type a lead id into a URL.\nconst b = $('From poller').first().json;\nconst contactId = String($('Upsert contact').first().json.results[0].id);\nconst read = $('Read deals').first().json;\nconst deals = (read.statusCode === 200 || read.statusCode === 207) ? (read.body?.results ?? []) : [];\n\nconst open = deals.filter((d) => d.properties?.pipeline === PIPELINE && ![STAGE.WON, STAGE.LOST].includes(d.properties?.dealstage));\nlet deal = b.leadId ? open.find((d) => d.properties?.tca_lead_id === b.leadId) : null;\nlet matchedBy = deal ? 'lead id' : '';\nif (!deal && open.length) {\n  deal = [...open].sort((x, y) => Date.parse(y.properties.createdate) - Date.parse(x.properties.createdate))[0];\n  matchedBy = 'newest open deal';\n}\n\nconst props = {\n  hs_timestamp: b.start,\n  hs_meeting_title: (b.eventName || 'Call') + ' with ' + (b.name || b.email),\n  hs_meeting_body: 'Booked through Calendly from the website. Matched to the deal by ' + (matchedBy || 'nothing: no open TCA deal, logged on the contact') + '.',\n  hs_meeting_start_time: b.start,\n  hs_meeting_end_time: b.end,\n  hs_meeting_outcome: 'SCHEDULED',\n  tca_calendly_invitee: b.inviteeUri,\n};\nif (b.joinUrl) { props.hs_meeting_location = b.joinUrl; props.hs_meeting_external_url = b.joinUrl; }\n\nreturn [{ json: {\n  contactId,\n  dealId: deal ? String(deal.id) : null,\n  dealName: deal?.properties?.dealname ?? null,\n  dealStage: deal?.properties?.dealstage ?? null,\n  bucket: deal?.properties?.tca_lead_bucket ?? null,\n  matchedBy: matchedBy || 'no open deal',\n  moveToCallBooked: Boolean(deal) && [STAGE.NEW, STAGE.CONTACTED].includes(deal.properties.dealstage),\n  meetingBody: {\n    properties: props,\n    associations: [{ to: { id: contactId }, types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 200 }] }],\n  },\n} }];"
+      },
+      "name": "Pick deal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/meetings",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.meetingBody) }}",
+        "options": {}
+      },
+      "name": "Create meeting",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const PORTAL = '247728856';\nconst PIPELINE = '2630364862';\nconst STAGE = { NEW: '4456833770', CONTACTED: '4456833771', CALL: '4456833772', PROPOSAL: '4456833773', WON: '4456833775', LOST: '4456833776' };\nconst CHANNEL = { HOT: 'C0CB16L6UD6', LEADS: 'C0CAAG03B1A' };\nconst esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst when = (iso) => {\n  const d = new Date(iso);\n  if (Number.isNaN(d.getTime())) return String(iso ?? '');\n  return new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Manila', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);\n};\nconst hhmm = (iso) => {\n  const d = new Date(iso);\n  if (Number.isNaN(d.getTime())) return '';\n  return new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);\n};\n\n// \"Call booked\" card: one message from here instead of build 2's stage alert.\nconst b = $('From poller').first().json;\nconst p = $('Pick deal').first().json;\nconst url = p.dealId\n  ? 'https://app-na2.hubspot.com/contacts/' + PORTAL + '/record/0-3/' + p.dealId\n  : 'https://app-na2.hubspot.com/contacts/' + PORTAL + '/record/0-1/' + p.contactId;\nconst lines = [\n  ':date: *Call booked:* ' + esc(b.name || b.email) + ' (' + esc(b.email) + ')',\n  '*When:* ' + esc(when(b.start)) + ' to ' + esc(hhmm(b.end)) + ' (Manila time)',\n  p.dealId ? '*Deal:* ' + esc(p.dealName) + (p.moveToCallBooked ? ' · moved to Call booked' : '') : '_No open TCA deal: logged on the contact_',\n];\nconst buttons = [{ type: 'button', text: { type: 'plain_text', text: 'Open in HubSpot' }, url, action_id: 'open_record' }];\nif (b.joinUrl) buttons.push({ type: 'button', text: { type: 'plain_text', text: 'Google Meet link' }, url: b.joinUrl, action_id: 'open_meet' });\nreturn [{ json: {\n  channel: p.bucket === 'Hot' ? CHANNEL.HOT : CHANNEL.LEADS,\n  text: 'Call booked: ' + esc(b.name || b.email) + ', ' + esc(when(b.start)),\n  blocks: [{ type: 'section', text: { type: 'mrkdwn', text: lines.join('\\n') } }, { type: 'actions', elements: buttons }],\n  unfurl_links: false,\n} }];"
+      },
+      "name": "Slack message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        -140
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "name": "Post to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        -140
+      ],
+      "credentials": {
+        "slackApi": {
+          "name": "Slack - TCA Lead Alerts"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nif (r.ok === false) throw new Error('Slack API error: ' + r.error);\nreturn $input.all();"
+      },
+      "name": "Slack said ok?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        -140
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ca1e0d10-0000-4000-8000-000000006320",
+              "leftValue": "={{ Boolean($('Pick deal').item.json.dealId) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Deal found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1320,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.hubapi.com/crm/v4/objects/meetings/{{ $('Create meeting').item.json.id }}/associations/default/deals/{{ $('Pick deal').item.json.dealId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {}
+      },
+      "name": "Link meeting to deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        100
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ca1e0d10-0000-4000-8000-000000006760",
+              "leftValue": "={{ $('Pick deal').item.json.moveToCallBooked }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Move to Call booked?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1760,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $('Pick deal').item.json.dealId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: { dealstage: '4456833772' } }) }}",
+        "options": {}
+      },
+      "name": "Set stage: Call booked",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1980,
+        80
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "content": "## Calendly: booking → HubSpot\nCalled by **Calendly - poll bookings** for one new, active booking.\n\n- Upsert the contact by the booking email, read their deals.\n- Deal: the one whose `tca_lead_id` equals the booking's `utm_content`, only if it belongs to this contact; else their newest open TCA deal; else none.\n- Create a meeting (SCHEDULED, Meet link, `tca_calendly_invitee` = invitee URI) on the contact, link it to the deal, move the deal to Call booked from New lead or Contacted only.\n- Post \"Call booked\" with the time to #hot-leads or #leads.",
+        "height": 300,
+        "width": 620
+      },
+      "name": "About",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -420
+      ]
+    }
+  ],
+  "connections": {
+    "From poller": {
+      "main": [
+        [
+          {
+            "node": "Upsert contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert contact": {
+      "main": [
+        [
+          {
+            "node": "Contact deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contact deals": {
+      "main": [
+        [
+          {
+            "node": "Read deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read deals": {
+      "main": [
+        [
+          {
+            "node": "Pick deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick deal": {
+      "main": [
+        [
+          {
+            "node": "Create meeting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create meeting": {
+      "main": [
+        [
+          {
+            "node": "Slack message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Deal found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack message": {
+      "main": [
+        [
+          {
+            "node": "Post to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Slack": {
+      "main": [
+        [
+          {
+            "node": "Slack said ok?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deal found?": {
+      "main": [
+        [
+          {
+            "node": "Link meeting to deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Link meeting to deal": {
+      "main": [
+        [
+          {
+            "node": "Move to Call booked?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Move to Call booked?": {
+      "main": [
+        [
+          {
+            "node": "Set stage: Call booked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "KrdIYoVefLBu3SnS",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {}
+}

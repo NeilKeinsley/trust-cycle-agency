@@ -1,0 +1,383 @@
+{
+  "name": "Calendly - poll bookings",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "name": "Every 5 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -100
+      ]
+    },
+    {
+      "parameters": {},
+      "name": "Run now",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Look at bookings whose start is no more than a day in the past: new ones are always\n// in the future, and a cancellation of a call that already happened changes nothing.\nconst minStart = new Date(Date.now() - 24 * 3600 * 1000).toISOString();\nreturn [{ json: { minStart } }];"
+      },
+      "name": "Time window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.calendly.com/scheduled_events?user=https%3A%2F%2Fapi.calendly.com%2Fusers%2F87acb485-26ba-4e58-9c6a-d1324d735782&min_start_time={{ encodeURIComponent($json.minStart) }}&count=100&sort=start_time:asc",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "calendlyApi",
+        "options": {}
+      },
+      "name": "List events",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "calendlyApi": {
+          "name": "Calendly - TCA read"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// One item per Calendly event (Calendly returns at most 100 per page; plenty here).\nreturn ($input.first().json.collection ?? []).map((e) => ({ json: {\n  eventUri: e.uri,\n  status: e.status,\n  name: e.name,\n  start: e.start_time,\n  end: e.end_time,\n  joinUrl: typeof e.location?.join_url === 'string' && e.location.join_url.startsWith('https://') ? e.location.join_url : null,\n} }));"
+      },
+      "name": "One item per event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.eventUri }}/invitees?count=100",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "calendlyApi",
+        "options": {}
+      },
+      "name": "List invitees",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        0
+      ],
+      "credentials": {
+        "calendlyApi": {
+          "name": "Calendly - TCA read"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Event + invitee → one booking. utm_content carries the website lead id (a UUID).\nconst UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst events = $('One item per event').all();\nconst out = [];\n$input.all().forEach((r, i) => {\n  const e = events[i].json;\n  for (const inv of r.json.collection ?? []) {\n    const utm = String(inv.tracking?.utm_content ?? '').trim();\n    out.push({ json: {\n      inviteeUri: inv.uri,\n      inviteeStatus: inv.status,\n      rescheduled: inv.rescheduled === true,\n      email: String(inv.email ?? '').trim().toLowerCase(),\n      name: String(inv.name ?? '').trim(),\n      leadId: UUID.test(utm) ? utm.toLowerCase() : null,\n      eventUri: e.eventUri,\n      eventStatus: e.status,\n      eventName: e.name,\n      start: e.start,\n      end: e.end,\n      joinUrl: e.joinUrl,\n    } });\n  }\n});\nreturn out;"
+      },
+      "name": "Bookings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/meetings/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ filterGroups: [{ filters: [{ propertyName: 'tca_calendly_invitee', operator: 'EQ', value: $json.inviteeUri }] }], properties: ['hs_meeting_outcome'], limit: 1 }) }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 300
+            }
+          }
+        }
+      },
+      "name": "Find meeting",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Compare Calendly with HubSpot: only new bookings and fresh cancellations go on.\nconst bookings = $('Bookings').all();\nconst out = [];\n$input.all().forEach((r, i) => {\n  const b = bookings[i].json;\n  const m = (r.json.results ?? [])[0];\n  const cancelled = b.inviteeStatus === 'canceled' || b.eventStatus === 'canceled';\n  if (!cancelled && !m && b.email) out.push({ json: { ...b, action: 'create' } });\n  else if (cancelled && m && m.properties?.hs_meeting_outcome === 'SCHEDULED') out.push({ json: { ...b, action: 'cancel', meetingId: String(m.id) } });\n});\nreturn out;"
+      },
+      "name": "Decide",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ca1e0d10-0000-4000-8000-000000006760",
+              "leftValue": "={{ $json.action === 'create' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "New booking?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1760,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "PASTE_CALENDLY_BOOKING_CREATED_WORKFLOW_ID",
+          "mode": "id",
+          "cachedResultName": "Calendly - booking to HubSpot"
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "name": "Log booking",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1980,
+        -100
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "PASTE_CALENDLY_BOOKING_CANCELLED_WORKFLOW_ID",
+          "mode": "id",
+          "cachedResultName": "Calendly - cancellation to HubSpot"
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "name": "Log cancellation",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1980,
+        100
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Calendly: poll bookings\nCalendly's free plan has no webhooks, so this checks every 5 minutes (documented API only).\n\n- Lists events of Neil's Calendly user starting from 24 hours ago, then their invitees.\n- A booking with no HubSpot meeting yet (`tca_calendly_invitee`) → **Calendly - booking to HubSpot**.\n- A cancelled booking whose meeting is still SCHEDULED → **Calendly - cancellation to HubSpot**.\n- Quiet runs are not saved (Settings), failures are.\n- Plan: `docs/HUBSPOT_PLAN.md`, build 3.",
+        "height": 320,
+        "width": 620
+      },
+      "name": "About",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -460
+      ]
+    }
+  ],
+  "connections": {
+    "Every 5 minutes": {
+      "main": [
+        [
+          {
+            "node": "Time window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run now": {
+      "main": [
+        [
+          {
+            "node": "Time window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Time window": {
+      "main": [
+        [
+          {
+            "node": "List events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List events": {
+      "main": [
+        [
+          {
+            "node": "One item per event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One item per event": {
+      "main": [
+        [
+          {
+            "node": "List invitees",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List invitees": {
+      "main": [
+        [
+          {
+            "node": "Bookings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bookings": {
+      "main": [
+        [
+          {
+            "node": "Find meeting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find meeting": {
+      "main": [
+        [
+          {
+            "node": "Decide",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decide": {
+      "main": [
+        [
+          {
+            "node": "New booking?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New booking?": {
+      "main": [
+        [
+          {
+            "node": "Log booking",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log cancellation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "KrdIYoVefLBu3SnS",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": true
+  },
+  "pinData": {}
+}

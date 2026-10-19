@@ -124,6 +124,8 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
   const [booking, setBooking] = useState<"idle" | "open" | "booked">("idle");
+  /** Id of the brief just sent, for the scheduler (refs can't be read during render). */
+  const [bookingLeadId, setBookingLeadId] = useState<string | null>(null);
   const bookingHeadingRef = useRef<HTMLHeadingElement | null>(null);
 
   const stepRefs = useRef<Array<HTMLDivElement | null>>([null, null, null, null, null]);
@@ -315,6 +317,7 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
       // The API returns { ok: true } even when n8n forwarding failed, so any
       // 2xx here is a genuine success from the visitor's point of view.
       if (res.ok) {
+        setBookingLeadId(submissionIdRef.current);
         setStatus("success");
         clearDraftStorage();
         return;
@@ -417,6 +420,7 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
                     name={draft.name}
                     email={draft.email}
                     tone="light"
+                    leadId={bookingLeadId}
                     onScheduled={() => setBooking("booked")}
                   />
                 </div>

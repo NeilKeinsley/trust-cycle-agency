@@ -176,6 +176,8 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [booked, setBooked] = useState(false);
+  /** Id of the lead just sent, for the scheduler (refs can't be read during render). */
+  const [bookingLeadId, setBookingLeadId] = useState<string | null>(null);
   // Time trap: when the modal became interactive, and a stable id for this
   // submission attempt (reused across retries of the same attempt).
   const openedAtRef = useRef<number | null>(null);
@@ -326,6 +328,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
       // The API returns { ok: true } even when n8n forwarding failed, so any
       // 2xx here is a genuine success from the visitor's point of view.
       if (res.ok) {
+        setBookingLeadId(submissionIdRef.current);
         setSubmitting(false);
         setStep(5);
         return;
@@ -837,6 +840,7 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
                         name={name}
                         email={email}
                         tone="dark"
+                        leadId={bookingLeadId}
                         onScheduled={() => setBooked(true)}
                       />
                     </div>

@@ -36,6 +36,7 @@ export function CalendlyEmbed({
   name,
   email,
   tone,
+  leadId,
   onScheduled,
 }: {
   bookingUrl: string;
@@ -43,12 +44,14 @@ export function CalendlyEmbed({
   name: string;
   email: string;
   tone: Tone;
+  /** Submission id of the lead this booking follows (see calendlyEmbedUrl). */
+  leadId?: string | null;
   onScheduled: () => void;
 }) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const scheduledRef = useRef(false);
   const onScheduledRef = useRef(onScheduled);
-  const [src] = useState(() => calendlyEmbedUrl(bookingUrl, source));
+  const [src] = useState(() => calendlyEmbedUrl(bookingUrl, source, leadId));
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
