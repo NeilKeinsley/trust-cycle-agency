@@ -202,7 +202,7 @@ Method: `web-security-check` loop (repo scan, outside-in scans of site, staging 
 
 | # | Finding | Severity | Fix | Proof |
 |---|---|---|---|---|
-| 1 | Drafts had no opt-out line, while the form's consent copy promised "the unsubscribe link in any email" and `/privacy` "an unsubscribe option" | Medium (consent accuracy) | Every draft ends with "Reply "unsubscribe" …"; consent copy (quiz, brief) and `/privacy` now say reply "unsubscribe" | Local draft test; live workflow republished with the line; site copy built (deploy pending Neil's yes) |
+| 1 | Drafts had no opt-out line, while the form's consent copy promised "the unsubscribe link in any email" and `/privacy` "an unsubscribe option" | Medium (consent accuracy) | Every draft ends with "Reply "unsubscribe" …"; consent copy (quiz, brief) and `/privacy` now say reply "unsubscribe" | Local draft test; live workflow republished with the line; site copy live on production 2026-10-20 (main 7a4bbbc), verified in the served pages and bundles |
 | 2 | Calendly poller read every event type on the account: any other booking would become a HubSpot contact + Slack post | Medium (privacy/scope) | Filter to the Intro call event type in code (the API has no such filter) | Local test (other event type dropped); live poller republished |
 | 3 | Discord lead notice rendered visitor text as markdown: a name written as `[text](url)` could appear as a disguised link | Low/Medium | Name, email and phone shown as inline code, backticks neutralised | Hostile live lead: posted as code |
 | 4 | Slack signature compared with `===` (Slack recommends an HMAC compare) | Low | Constant-time comparison in the IF expression | Local near-miss tests; probe 4/4 (forged refused); real Claim click worked |
