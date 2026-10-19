@@ -119,6 +119,17 @@ Covers: Gmail, workflows on deal events, engagement logging.
 - **HubSpot's native inbox connection** logs the sent emails to the contact's timeline (shows the native integration next to the API one).
 - **Gotcha:** a Google OAuth app left in "Testing" issues refresh tokens that expire after 7 days. Move the consent screen to Production (personal use, unverified) before relying on it.
 
+**Decided 2026-10-19 (Neil):**
+- Three drafts: **first reply** (deal created), **call prep** (stage becomes Call booked, with the meeting time and Meet link), **nudge** (still in Proposal sent after 3 days).
+- Drafts land in Neil's own Gmail (lienkeinsley). Signed "Neil, Trust Cycle Agency (a portfolio project)", because the agency is fictional.
+- Sent mail is logged by HubSpot's connected inbox (BCC logging address as fallback if the test account doesn't allow it).
+
+**Design:**
+- One HubSpot workflow "TCA: Gmail drafts" (deal created, or stage becomes Call booked / Proposal sent; Proposal sent waits 3 days and re-checks the stage) → "Send a webhook" to n8n `/webhook/hubspot-gmail-draft?template=…` with the `HS_secret` header.
+- n8n "Gmail - deal drafts": checks the secret → reads deal + contact (+ latest meeting for call prep) → skips if the new deal property `tca_drafts_made` already lists the template → creates the Gmail draft → adds a deal note "Draft ready in Gmail" → records the template in `tca_drafts_made`.
+- Gmail credential: n8n's Gmail OAuth2 credential with **Custom Scopes = `https://www.googleapis.com/auth/gmail.compose` only** (its default list includes full mailbox access, `https://mail.google.com/`; checked in n8n's `GmailOAuth2Api.credentials.ts`). OAuth client in Google Cloud project `strategic-hull-494501-q9` (the Sheets service account can't act on a personal Gmail).
+- New webhook → entry in `security/probe.n8n.json` (wrong secret → 403).
+
 ### Build 5: Stale-deal sweeper + weekly pipeline snapshot
 Covers: Sheets, scheduled automation, reliability.
 - **Daily (09:00 Manila):** search open deals in "TCA new business" untouched for 3+ days → create a HubSpot task on the deal → DM the owner in Slack. Also picks up Calendly cancellations (build 3).

@@ -26,6 +26,7 @@ const COLS: { title: string; links: { label: string; href: string }[] }[] = [
       // A real link: every other "Start a project" CTA is a button that opens
       // the quiz, which crawlers can't follow.
       { label: "Start a project", href: "/start" },
+      { label: "Privacy", href: "/privacy" },
     ],
   },
   {
