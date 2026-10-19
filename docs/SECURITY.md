@@ -96,7 +96,7 @@ HubSpot: one service key ("n8n - TCA lead pipeline"), stored only in n8n. HubSpo
 - WordPress database and uploads have no backup.
 - `main` has no branch rule: a force-push would deploy straight to production.
 - Keep n8n on the current release and redeploy the WordPress image monthly so both pick up security fixes. On 2026-10-20 n8n was 2.42.4 (no published advisories) and the latest stable 2.43.8.
-- n8n's Content-Security-Policy is sent report-only, so it enforces nothing. n8n's default policy is enforced (nonce-based), so a Railway variable is overriding it: remove `N8N_CONTENT_SECURITY_POLICY_REPORT_ONLY` (or clear it) and check the editor still loads.
+- n8n's Content-Security-Policy is sent report-only, so it enforces nothing. The 2026-10-09 review accepted this as "n8n's default, needs a proxy"; that was wrong. n8n's own docs say its default policy is enforced (nonce-based), so a Railway variable is overriding it: remove `N8N_CONTENT_SECURITY_POLICY_REPORT_ONLY` (or clear it) and check the editor still loads.
 - Set `N8N_BLOCK_ENV_ACCESS_IN_NODE=true` on n8n: no workflow reads environment variables (checked 2026-10-20), and it stops a Code node from reading the database password or encryption key.
 - Trim the HubSpot service key to what the builds use: keep contacts, deals and owners read/write, and the contacts/deals schema scopes for the setup workflow. Remove tickets (4 scopes), companies (3), `forms` and `crm.lists.write`.
 
