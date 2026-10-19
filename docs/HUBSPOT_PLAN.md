@@ -130,7 +130,7 @@ Covers: Gmail, workflows on deal events, engagement logging.
 - Gmail credential: n8n's Gmail OAuth2 credential with **Custom Scopes = `https://www.googleapis.com/auth/gmail.compose` only** (its default list includes full mailbox access, `https://mail.google.com/`; checked in n8n's `GmailOAuth2Api.credentials.ts`). OAuth client in Google Cloud project `strategic-hull-494501-q9` (the Sheets service account can't act on a personal Gmail).
 - New webhook → entry in `security/probe.n8n.json` (wrong secret → 403).
 
-#### Build 4 status (2026-10-19): built and tested, unpublished
+#### Build 4 status (2026-10-19): LIVE
 - **Changed from the design above:** three small HubSpot workflows instead of one with branches (each is a clone of a build 2 workflow, so the secret-header setup came across intact; HubSpot can't clone an unpublished draft, so all three were cloned from build 2's published ones).
 - **Google:** OAuth client in project `strategic-hull-494501-q9`, consent screen In production (needed a home page and privacy policy URL, so `/privacy` was added and deployed), scope `gmail.compose` only. n8n credential "Gmail - TCA drafts" (`JbuVMwUKnAoQpsOJ`). HubSpot connected inbox: Neil's Gmail, connected 2026-10-19.
 - **HubSpot:** deal property `tca_drafts_made` (multiple checkboxes: first-reply, call-prep, proposal-nudge), created by the setup workflow. Workflows, all **unpublished**: "TCA: new deal to Gmail draft" (`5154765547`, deal created → 1 minute → `?template=first-reply`), "TCA: call booked to Gmail draft" (`5154767568`, stage becomes Call booked → `?template=call-prep`), "TCA: proposal nudge to Gmail draft" (`5154771678`, stage becomes Proposal sent → 3 days → `?template=proposal-nudge`).
@@ -147,7 +147,14 @@ Covers: Gmail, workflows on deal events, engagement logging.
 | T6 nudge, deal pinned in Proposal sent | Draft "Following up on the proposal"; all three templates recorded |
 
 - Locally (before import): a non-ASCII first name survives (UTF-8 subject and body), and an email carrying `\r\nBcc:` is refused.
-- **Left before go-live:** publish the n8n workflow and the three HubSpot workflows (Neil's yes), run `probe.n8n.json` (new entry: wrong secret → 403), one real quiz through the site → first-reply draft, then move that deal to Call booked and Proposal sent (nudge delay shortened for the test), delete the test drafts in Gmail.
+- **Live (2026-10-19, Neil's yes):** n8n workflow and the three HubSpot workflows published. `security/probe.n8n.json` 4 of 4 (the Gmail drafts webhook refuses missing, empty, wrong and oversized secrets).
+- **Real test on production** (quiz "Gmail Live Test", gmail.livetest@example.com, deal `355701192418`):
+  - First reply: HubSpot called n8n 66 s after the lead arrived (execution 136); draft "Next steps for your website design and build project".
+  - Call prep: Neil booked from the site's scheduler; the poller matched the booking by lead id, created meeting `408374052559` and moved the deal to Call booked; HubSpot then called n8n (execution 140); draft "Before our call on Wed 21 Oct".
+  - Nudge: deal moved to Proposal sent by hand, with the delay set to 1 minute for the test (execution 142); draft "Following up on the proposal". The delay was set back to 3 days and republished.
+  - Each draft added a "Gmail draft ready" note on the deal timeline; `tca_drafts_made` ended as call-prep;first-reply;proposal-nudge.
+- **Cleanup:** the test row was deleted from the Leads sheet. The HubSpot deal, contact and Slack cards stay as sample data. Neil deletes the test drafts in Gmail (6: 3 pinned tests to hubspot.livetest@example.com, 3 live to gmail.livetest@example.com) and cancels the test booking.
+- **To switch Gmail drafts off:** unpublish the three "… to Gmail draft" HubSpot workflows; nothing else depends on them.
 
 ### Build 5: Stale-deal sweeper + weekly pipeline snapshot
 Covers: Sheets, scheduled automation, reliability.
