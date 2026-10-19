@@ -161,6 +161,12 @@ Covers: Sheets, scheduled automation, reliability.
 - **Daily (09:00 Manila):** search open deals in "TCA new business" untouched for 3+ days → create a HubSpot task on the deal → DM the owner in Slack. Also picks up Calendly cancellations (build 3).
 - **Weekly (Monday):** append every open deal (date, deal, stage, owner, score, bucket) to a "Pipeline snapshot" tab in the Leads sheet (atomic append, as the intake does).
 
+**Decided 2026-10-19 (Neil):**
+- Stale is per stage, measured as time in the current stage (not "last activity": n8n's own notes count as activity and would hide a stuck deal): New lead 1 day, Contacted 3 days, Call booked 1 day after the meeting's start (a call still ahead is never stale), Proposal sent 7 days (build 4's nudge comes at 3).
+- Reminders: one daily digest in #leads, owners @-mentioned, unclaimed deals flagged; nothing posted when nothing is stale. Plus one HubSpot task per stale deal, never a second while the last sweeper task is open.
+- Sweeper: weekdays 09:00 Manila. Snapshot: Mondays 08:00 Manila, to a new "Pipeline snapshot" tab; a re-run in the same week adds nothing.
+- No new public endpoint (scheduled workflows only), so no probe entry.
+
 ### After the builds
 - A case study page on `/work` that honestly says it's a demo and shows the real flow, plus a 60 to 90 second Loom for each build and the Upwork proposal text.
 - **Trial renewal:** the test account was created 2026-10-19, so its 90-day trial ends around 2027-01-17. Renew from 2026-12-18 (Test Accounts → Actions → Renew trials), or the native workflows from builds 2 and 4 stop.

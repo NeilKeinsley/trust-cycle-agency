@@ -1,0 +1,541 @@
+{
+  "name": "HubSpot - stale deal sweep",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1-5"
+            }
+          ]
+        }
+      },
+      "name": "Weekdays 09:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -100
+      ]
+    },
+    {
+      "parameters": {},
+      "name": "Run now",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Days a deal may sit in a stage before it counts as stale (docs/HUBSPOT_PLAN.md, build 5).\n// Tests pin this node: limits of 0 and onlyDealIds keep test tasks on test deals.\nreturn [{ json: { limits: { NEW: 1, CONTACTED: 3, CALL: 1, PROPOSAL: 7 }, onlyDealIds: [] } }];"
+      },
+      "name": "Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/deals/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ filterGroups: [{ filters: [{ propertyName: 'pipeline', operator: 'EQ', value: '2630364862' }, { propertyName: 'dealstage', operator: 'IN', values: ['4456833770', '4456833771', '4456833772', '4456833773'] }] }], properties: ['dealname', 'dealstage', 'pipeline', 'hubspot_owner_id', 'tca_lead_score', 'tca_lead_bucket', 'createdate', 'hs_v2_date_entered_current_stage'], sorts: [{ propertyName: 'createdate', direction: 'ASCENDING' }], limit: 100 }) }}",
+        "options": {}
+      },
+      "name": "Find open deals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.hubapi.com/crm/v3/owners/?limit=100",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {}
+      },
+      "name": "List owners",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// One item per open TCA deal (the search returns up to 100; plenty for this pipeline).\nconst cfg = $('Config').first().json;\nconst only = (cfg.onlyDealIds ?? []).map(String);\nreturn ($input.first().json.results ?? [])\n  .filter((d) => !only.length || only.includes(String(d.id)))\n  .map((d) => ({ json: { dealId: String(d.id), properties: d.properties } }));"
+      },
+      "name": "One item per deal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $json.dealId }}?associations=tasks,meetings",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {}
+      },
+      "name": "Deal tasks and meetings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/tasks/batch/read",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: ['hs_task_subject', 'hs_task_status'], inputs: ($('Deal tasks and meetings').item.json.associations?.tasks?.results || []).map(r => ({ id: String(r.id) })) }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Read tasks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/meetings/batch/read",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: ['hs_meeting_outcome', 'hs_meeting_start_time'], inputs: ($('Deal tasks and meetings').item.json.associations?.meetings?.results || []).map(r => ({ id: String(r.id) })) }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Read meetings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const PORTAL = '247728856';\nconst PIPELINE = '2630364862';\nconst STAGE = { NEW: '4456833770', CONTACTED: '4456833771', CALL: '4456833772', PROPOSAL: '4456833773' };\nconst STAGE_NAME = { '4456833770': 'New lead', '4456833771': 'Contacted', '4456833772': 'Call booked', '4456833773': 'Proposal sent', '4456833775': 'Closed Won', '4456833776': 'Closed Lost' };\nconst DAY = 24 * 3600 * 1000;\nconst dealUrl = (id) => 'https://app-na2.hubspot.com/contacts/' + PORTAL + '/record/0-3/' + id;\nconst entered = (p) => Date.parse(p.hs_v2_date_entered_current_stage || p.createdate);\n\n// Which deals are stale, whether each needs a new task, and who owns it.\nconst cfg = $('Config').first().json;\nconst limitFor = { [STAGE.NEW]: cfg.limits.NEW, [STAGE.CONTACTED]: cfg.limits.CONTACTED, [STAGE.CALL]: cfg.limits.CALL, [STAGE.PROPOSAL]: cfg.limits.PROPOSAL };\nconst owners = {};\nfor (const o of $('List owners').first().json.results ?? []) owners[String(o.id)] = { email: o.email, name: [o.firstName, o.lastName].filter(Boolean).join(' ') || o.email };\nconst deals = $('One item per deal').all();\nconst details = $('Deal tasks and meetings').all();\nconst tasks = $('Read tasks').all();\nconst meetings = $('Read meetings').all();\nconst ok = (r) => r.statusCode === 200 || r.statusCode === 207;\nconst now = Date.now();\n\nconst stale = [];\ndeals.forEach((d, i) => {\n  const p = d.json.properties;\n  const stage = p.dealstage;\n  const limitDays = limitFor[stage];\n  if (limitDays === undefined) return;\n  let since = entered(p);\n  let basis = 'in ' + STAGE_NAME[stage];\n  if (stage === STAGE.CALL) {\n    // A booked call only goes stale a day after it starts. No meeting: count from the stage change.\n    const ms = (ok(meetings[i].json) ? meetings[i].json.body.results : [])\n      .filter((m) => m.properties?.hs_meeting_outcome !== 'CANCELED' && m.properties?.hs_meeting_outcome !== 'RESCHEDULED')\n      .map((m) => Date.parse(m.properties.hs_meeting_start_time))\n      .filter((t) => !Number.isNaN(t));\n    if (ms.length) { since = Math.max(...ms); basis = 'since the booked call'; }\n  }\n  const days = Math.floor((now - since) / DAY);\n  if (Number.isNaN(days) || now - since < limitDays * DAY) return;\n  const openTask = (ok(tasks[i].json) ? tasks[i].json.body.results : [])\n    .some((t) => String(t.properties?.hs_task_subject ?? '').startsWith('[TCA sweep]') && t.properties?.hs_task_status !== 'COMPLETED');\n  const ownerId = p.hubspot_owner_id ? String(p.hubspot_owner_id) : null;\n  stale.push({\n    dealId: d.json.dealId,\n    dealName: p.dealname,\n    stageName: STAGE_NAME[stage],\n    days,\n    limitDays,\n    basis,\n    ownerId,\n    ownerEmail: ownerId ? owners[ownerId]?.email ?? null : null,\n    ownerName: ownerId ? owners[ownerId]?.name ?? 'owner ' + ownerId : null,\n    needsTask: !openTask,\n  });\n});\nif (!stale.length) return [];\nreturn [{ json: { stale } }];"
+      },
+      "name": "Decide",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        0
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// One HubSpot task per stale deal without an open sweeper task.\nconst out = [];\nfor (const s of $('Decide').first().json.stale.filter((x) => x.needsTask)) {\n  const properties = {\n    hs_task_subject: '[TCA sweep] Follow up: ' + s.dealName,\n    hs_task_body: s.days + ' days ' + s.basis + ' (limit ' + s.limitDays + '). Created by the n8n stale-deal sweep; complete this task once the deal has moved on.',\n    hs_timestamp: new Date().toISOString(),\n    hs_task_status: 'NOT_STARTED',\n    hs_task_priority: 'MEDIUM',\n    hs_task_type: 'TODO',\n  };\n  if (s.ownerId) properties.hubspot_owner_id = s.ownerId;\n  out.push({ json: { body: { properties, associations: [{ to: { id: s.dealId }, types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 216 }] }] } } });\n}\nreturn out;"
+      },
+      "name": "Task items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        -140
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/tasks",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "name": "Create task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        -140
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Owners to @-mention. Always at least one item, so the digest still runs when every deal is unclaimed.\nconst emails = [...new Set($('Decide').first().json.stale.map((s) => s.ownerEmail).filter(Boolean))];\nreturn (emails.length ? emails : ['nobody@invalid.example']).map((email) => ({ json: { email } }));"
+      },
+      "name": "Owner items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://slack.com/api/users.lookupByEmail?email={{ encodeURIComponent($json.email) }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "options": {}
+      },
+      "name": "Find Slack user",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        120
+      ],
+      "credentials": {
+        "slackApi": {
+          "name": "Slack - TCA Lead Alerts"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const PORTAL = '247728856';\nconst PIPELINE = '2630364862';\nconst STAGE = { NEW: '4456833770', CONTACTED: '4456833771', CALL: '4456833772', PROPOSAL: '4456833773' };\nconst STAGE_NAME = { '4456833770': 'New lead', '4456833771': 'Contacted', '4456833772': 'Call booked', '4456833773': 'Proposal sent', '4456833775': 'Closed Won', '4456833776': 'Closed Lost' };\nconst DAY = 24 * 3600 * 1000;\nconst dealUrl = (id) => 'https://app-na2.hubspot.com/contacts/' + PORTAL + '/record/0-3/' + id;\nconst entered = (p) => Date.parse(p.hs_v2_date_entered_current_stage || p.createdate);\n\n// One Slack digest for #leads. Deal names come from visitors: escape them.\nconst esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst stale = $('Decide').first().json.stale;\nconst ids = {};\nconst owners = $('Owner items').all();\n$input.all().forEach((r, i) => { if (r.json.ok && r.json.user?.id) ids[owners[i].json.email] = r.json.user.id; });\nconst lines = stale.map((s) => {\n  const who = s.ownerEmail ? (ids[s.ownerEmail] ? '<@' + ids[s.ownerEmail] + '>' : esc(s.ownerName)) : '_unclaimed_';\n  return '• <' + dealUrl(s.dealId) + '|' + esc(s.dealName) + '>: ' + s.days + ' days ' + esc(s.basis) + ' (limit ' + s.limitDays + ') · ' + who + (s.needsTask ? ' · task created' : ' · task already open');\n});\nconst text = ':hourglass_flowing_sand: *Stale deals: ' + stale.length + '*\\n' + lines.join('\\n');\nreturn [{ json: { channel: 'C0CAAG03B1A', text: 'Stale deals: ' + stale.length, blocks: [{ type: 'section', text: { type: 'mrkdwn', text: text.slice(0, 2900) } }], unfurl_links: false } }];"
+      },
+      "name": "Build digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "name": "Post digest",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        120
+      ],
+      "credentials": {
+        "slackApi": {
+          "name": "Slack - TCA Lead Alerts"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nif (r.ok === false) throw new Error('Slack API error: ' + r.error);\nreturn $input.all();"
+      },
+      "name": "Slack said ok?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2860,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## HubSpot: stale deal sweep (build 5)\nWeekdays 09:00 Manila. Open deals in **TCA new business** past their stage limit: New lead 1 day, Contacted 3, Call booked 1 day after the call starts, Proposal sent 7 (time in the current stage, `hs_v2_date_entered_current_stage`).\n\n- Each stale deal gets a HubSpot task `[TCA sweep] Follow up: …`, unless a sweeper task for it is still open.\n- One digest in #leads, owners @-mentioned, unclaimed flagged. Nothing posted when nothing is stale.\n- Tests pin **Config** (limits 0, `onlyDealIds`).\n- Plan: `docs/HUBSPOT_PLAN.md`, build 5.",
+        "height": 330,
+        "width": 660
+      },
+      "name": "About",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -480
+      ]
+    }
+  ],
+  "connections": {
+    "Weekdays 09:00": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run now": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Find open deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find open deals": {
+      "main": [
+        [
+          {
+            "node": "List owners",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List owners": {
+      "main": [
+        [
+          {
+            "node": "One item per deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One item per deal": {
+      "main": [
+        [
+          {
+            "node": "Deal tasks and meetings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deal tasks and meetings": {
+      "main": [
+        [
+          {
+            "node": "Read tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read tasks": {
+      "main": [
+        [
+          {
+            "node": "Read meetings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read meetings": {
+      "main": [
+        [
+          {
+            "node": "Decide",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decide": {
+      "main": [
+        [
+          {
+            "node": "Task items",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Owner items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Task items": {
+      "main": [
+        [
+          {
+            "node": "Create task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Owner items": {
+      "main": [
+        [
+          {
+            "node": "Find Slack user",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Slack user": {
+      "main": [
+        [
+          {
+            "node": "Build digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build digest": {
+      "main": [
+        [
+          {
+            "node": "Post digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post digest": {
+      "main": [
+        [
+          {
+            "node": "Slack said ok?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "KrdIYoVefLBu3SnS",
+    "timezone": "Asia/Manila"
+  },
+  "pinData": {}
+}
