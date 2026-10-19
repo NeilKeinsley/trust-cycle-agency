@@ -64,7 +64,7 @@
           "conditions": [
             {
               "id": "5a1ac000-0000-4000-8000-000000000660",
-              "leftValue": "={{ $json.fresh && $json.signature === 'v0=' + $json.expected }}",
+              "leftValue": "={{ (() => { const a = String($json.signature ?? ''), b = 'v0=' + $json.expected; let d = a.length ^ b.length; for (let i = 0; i < b.length; i++) d |= (a.charCodeAt(i) || 0) ^ b.charCodeAt(i); return $json.fresh === true && d === 0; })() }}",
               "rightValue": "",
               "operator": {
                 "type": "boolean",

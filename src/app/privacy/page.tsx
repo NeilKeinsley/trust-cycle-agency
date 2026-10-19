@@ -93,10 +93,11 @@ const SECTIONS: { title: string; body: ReactNode }[] = [
     title: "Your choices",
     body: (
       <p>
-        Every email we send has an unsubscribe option, and you can reply STOP
-        to any text. To see, correct or delete what we hold about you, reply to
-        any email you received from us and say so. It will be removed from
-        every place listed above.
+        Every email we send says how to opt out: reply &quot;unsubscribe&quot;
+        and you won&apos;t hear from us again. You can also reply STOP to any
+        text. To see, correct or delete what we hold about you, reply to any
+        email you received from us and say so. It will be removed from every
+        place listed above.
       </p>
     ),
   },
@@ -109,7 +110,7 @@ export default function PrivacyPage() {
         <h1 className="max-w-2xl text-[length:var(--fs-h2)] leading-[1.02]">
           Privacy
         </h1>
-        <p className="mt-4 text-sm text-muted">Last updated 19 October 2026</p>
+        <p className="mt-4 text-sm text-muted">Last updated 20 October 2026</p>
       </Reveal>
 
       <div className="mt-12 grid max-w-2xl gap-10">

@@ -714,8 +714,8 @@ export function LeadQuizProvider({ children }: { children: ReactNode }) {
                           />
                           <span className="text-[0.8125rem] text-on-dark-muted">
                             {phone.trim()
-                              ? `I agree to receive emails and text messages from ${SITE_NAME} about this project, sent to the email address and phone number above. Message and data rates may apply. Reply STOP to any text or use the unsubscribe link in any email to opt out.`
-                              : `I agree to receive emails from ${SITE_NAME} about this project, sent to the email address above. Use the unsubscribe link in any email to opt out.`}
+                              ? `I agree to receive emails and text messages from ${SITE_NAME} about this project, sent to the email address and phone number above. Message and data rates may apply. Reply STOP to any text, or reply "unsubscribe" to any email, to opt out.`
+                              : `I agree to receive emails from ${SITE_NAME} about this project, sent to the email address above. Reply "unsubscribe" to any email to opt out.`}
                           </span>
                         </label>
                         {fieldErrors.consent && (

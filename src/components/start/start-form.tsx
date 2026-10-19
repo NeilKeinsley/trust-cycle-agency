@@ -833,8 +833,8 @@ export function StartForm({ initialDraft }: { initialDraft: Draft }) {
                         <span className="text-sm text-foreground/90">
                           I agree to receive emails and text messages from {SITE_NAME} about this
                           project, sent to the email address and phone number I gave above. Message
-                          and data rates may apply. Reply STOP to any text or use the unsubscribe
-                          link in any email to opt out.
+                          and data rates may apply. Reply STOP to any text, or reply
+                          &quot;unsubscribe&quot; to any email, to opt out.
                         </span>
                       </label>
                       {errors.consent && (

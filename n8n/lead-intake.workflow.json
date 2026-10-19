@@ -181,7 +181,7 @@
         "url": "PASTE_YOUR_DISCORD_WEBHOOK_URL",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ allowed_mentions: { parse: [] }, content: `${$json.bucket === 'Hot' ? '🔥 ' : ''}**${$('Lead webhook').item.json.body.continuesQuiz ? 'Brief added, now' : 'New'} ${$json.bucket} lead** (score ${$json.score}/15)\\n**${$json.name}** <${$json.email}>${$json.phone ? '\\nPhone: ' + $json.phone : ''}\\nServices: ${$json.services}\\nBudget: ${$json.budget} · Timeline: ${$json.timeline}\\nSource: ${$json.source}` }) }}",
+        "jsonBody": "={{ JSON.stringify({ allowed_mentions: { parse: [] }, content: `${$json.bucket === 'Hot' ? '🔥 ' : ''}**${$('Lead webhook').item.json.body.continuesQuiz ? 'Brief added, now' : 'New'} ${$json.bucket} lead** (score ${$json.score}/15)\\n\\`${String($json.name ?? '').replace(/\\x60/g, \"'\")}\\` · \\`${String($json.email ?? '').replace(/\\x60/g, \"'\")}\\`${$json.phone ? '\\nPhone: \\x60' + String($json.phone).replace(/\\x60/g, \"'\") + '\\x60' : ''}\\nServices: ${$json.services}\\nBudget: ${$json.budget} · Timeline: ${$json.timeline}\\nSource: ${$json.source}` }) }}",
         "options": {}
       },
       "id": "a1c0f7b2-0005-4000-8000-000000000005",

@@ -8,7 +8,7 @@ This is an automated and checklist-based review against the OWASP Top 10:2025. I
 
 | Asset | Where it lives | Main threats |
 |---|---|---|
-| Leads' contact details | In transit through `/api/lead` to n8n, then the Google Sheet; briefly on the outbox volume when n8n is down | Form flooding, injected content reaching the sheet or Discord, a leaked webhook secret |
+| Leads' contact details | In transit through `/api/lead` to n8n, then the Google Sheet, HubSpot, Slack, Discord and Gmail drafts; briefly on the outbox volume when n8n is down | Form flooding, injected content reaching the sheet, Slack, Discord or an email header, a leaked webhook secret, an over-scoped integration key |
 | The public pages (and their standing in search) | Static pages built from WordPress content | Script injected through content, a hijacked dependency, defacement through the CMS |
 | WordPress admin | `wordpress-cms` service | Password guessing, a stolen editor or administrator session, plugin upload as a path to the server |
 | n8n | Separate Railway project | An unpatched n8n (it has had critical flaws), the public editor |
@@ -61,11 +61,20 @@ HubSpot and Slack (build 2, `docs/HUBSPOT_PLAN.md`), each webhook with its own s
 | Endpoint | Who calls it | Check | Wrong secret gets |
 |---|---|---|---|
 | `/webhook/hubspot-deal-events` | HubSpot workflows ("Send a webhook") | `x-tca-hubspot-secret` header; the value lives in HubSpot's secret store (`HS_secret`) and the n8n credential "Hubspot Secret", never in a workflow | 403 |
-| `/webhook/slack-claim` | Slack's Claim button | Slack's HMAC-SHA256 signature over the raw body, 5-minute replay window. The signing secret is in the encrypted Crypto credential "Slack Signing Secret" (Crypto node v2), never in a workflow | 401 |
+| `/webhook/slack-claim` | Slack's Claim button | Slack's HMAC-SHA256 signature over the raw body, 5-minute replay window, compared in constant time (Slack's guidance; 2026-10-20). The signing secret is in the encrypted Crypto credential "Slack Signing Secret" (Crypto node v2), never in a workflow | 401 |
+| `/webhook/hubspot-gmail-draft` | HubSpot "… to Gmail draft" workflows | Same `x-tca-hubspot-secret` header | 403 |
 
-The Slack bot token is limited to `chat:write`, `users:read`, `users:read.email`, and its n8n credential may only call `slack.com`. Slack message text built from visitor input is escaped (`&`, `<`, `>`). The first signing secret was pasted into a workflow field and saved, so it sits in that workflow's history: it was regenerated in Slack straight away, which made that copy useless.
+The Slack bot token is limited to `chat:write`, `users:read`, `users:read.email`, and its n8n credential may only call `slack.com`. Slack message text built from visitor input is escaped (`&`, `<`, `>`); deal names go in Block Kit `plain_text` headers. The first signing secret was pasted into a workflow field and saved, so it sits in that workflow's history: it was regenerated in Slack straight away, which made that copy useless.
 
-Gmail drafts (build 4): `/webhook/hubspot-gmail-draft` uses the same `x-tca-hubspot-secret` check (403). The Gmail credential "Gmail - TCA drafts" is an OAuth client in Google Cloud project `strategic-hull-494501-q9` with **only `gmail.compose`**: it can create drafts but can't read the mailbox (n8n's default list includes `https://mail.google.com/`, full access, so the custom scope matters). The consent screen is published (In production), so the token doesn't expire after 7 days; Google required the `/privacy` page for that. n8n only creates drafts, never sends. Visitor fields are checked before they reach a mail header (strict email pattern, CR/LF stripped, subject RFC 2047-encoded), so a crafted name or email can't add headers such as `Bcc`.
+Discord: the lead notice shows the visitor's name, email and phone as inline code, so a name written as a markdown link can't show up as a disguised link (2026-10-20).
+
+Gmail drafts (build 4): the credential "Gmail - TCA drafts" is an OAuth client in Google Cloud project `strategic-hull-494501-q9` with **only `gmail.compose`** (n8n's default list includes `https://mail.google.com/`, full access, so the custom scope matters). Google classes `gmail.compose` as Restricted: it can manage drafts **and send**, but it can't read the inbox. Proven 2026-10-20: with this credential, listing inbox messages gets 403 `PERMISSION_DENIED`, listing drafts works. n8n only ever calls `drafts.create`; nothing is sent automatically. The consent screen is published (In production), so the token doesn't expire after 7 days; Google required the `/privacy` page for that. An unverified app with a Restricted scope has a 100-user lifetime cap: fine for one owner account. Visitor fields are checked before they reach a mail header (strict email pattern, CR/LF stripped, subject RFC 2047-encoded), so a crafted name or email can't add headers such as `Bcc`. Every draft ends with the opt-out line the consent copy and `/privacy` promise.
+
+Calendly (build 3): the poller reads only the "Intro call" event type, so bookings for any other event type on the same Calendly account never become HubSpot contacts or Slack posts (2026-10-20). The Calendly token has `scheduled_events:read` and `users:read` only.
+
+HubSpot: one service key ("n8n - TCA lead pipeline"), stored only in n8n. HubSpot → n8n calls never carry it.
+
+**Hostile end-to-end test (2026-10-20, production):** one real quiz whose name was `=HYPERLINK("https://evil.example","Hostile") [Open HubSpot](https://evil.example) <b>Test</b> @everyone`. Sheet: stored as text (`'=HYPERLINK…`), no formula. Discord: posted as inline code. Slack: header plain text, HTML escaped in the contact field. Gmail: draft created, headers clean. HubSpot: name stored as text. Test row deleted.
 
 ## Risks accepted on purpose
 
@@ -77,13 +86,19 @@ Gmail drafts (build 4): `/webhook/hubspot-gmail-draft` uses the same `x-tca-hubs
 | Dev-only npm advisories (in the ESLint tooling) | They run on a developer machine during linting, not in the deployed app; the only "fix" npm offers is a breaking downgrade | A non-breaking fix is published |
 | No WAF or DDoS shield beyond Railway's edge | No custom domain to put Cloudflare in front of. The app-level rate limit and static pages cover ordinary abuse | A custom domain is attached |
 | The n8n editor is reachable from the internet | It serves several projects and is protected by a login with 2FA | n8n is moved behind a private network or an IP allow-list |
+| n8n sends no HSTS header | n8n has no setting for it (checked against its security env-var docs, 2026-10-20) and Railway's edge doesn't add one. Railway redirects plain HTTP to HTTPS | A custom domain or proxy that can add the header |
+| The n8n public API is switched on | No API keys exist (checked 2026-10-20), so nothing can use it | An API key is created: give it the narrowest scopes and an expiry |
+| The Calendly poller can make a duplicate meeting if a manual run starts in the same second as a scheduled one | Scheduled runs are 5 minutes apart and take seconds, so they can't overlap; the risk is only a person pressing "Execute" on the published workflow | Never run it by hand while published (noted in `docs/HUBSPOT_PLAN.md`) |
 
 ## Open items (need the owner)
 
 - Switch on two-factor for the WordPress administrator (Users > Profile, after the deploy).
 - WordPress database and uploads have no backup.
 - `main` has no branch rule: a force-push would deploy straight to production.
-- Keep n8n on the current release and redeploy the WordPress image monthly so both pick up security fixes.
+- Keep n8n on the current release and redeploy the WordPress image monthly so both pick up security fixes. On 2026-10-20 n8n was 2.42.4 (no published advisories) and the latest stable 2.43.8.
+- n8n's Content-Security-Policy is sent report-only, so it enforces nothing. n8n's default policy is enforced (nonce-based), so a Railway variable is overriding it: remove `N8N_CONTENT_SECURITY_POLICY_REPORT_ONLY` (or clear it) and check the editor still loads.
+- Set `N8N_BLOCK_ENV_ACCESS_IN_NODE=true` on n8n: no workflow reads environment variables (checked 2026-10-20), and it stops a Code node from reading the database password or encryption key.
+- Trim the HubSpot service key to what the builds use: keep contacts, deals and owners read/write, and the contacts/deals schema scopes for the setup workflow. Remove tickets (4 scopes), companies (3), `forms` and `crm.lists.write`.
 
 ## How to re-test
 

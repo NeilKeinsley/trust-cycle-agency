@@ -197,6 +197,21 @@ Covers: Sheets, scheduled automation, reliability.
 | 4 | Gmail drafts: first reply, call prep, proposal nudge (drafts only) | HubSpot workflows "… to Gmail draft" ×3; n8n "Gmail - deal drafts" |
 | 5 | Stale-deal tasks + daily #leads digest; weekly pipeline snapshot to Sheets | n8n "HubSpot - stale deal sweep", "Sheets - weekly pipeline snapshot" |
 
+### Full bug and security sweep (2026-10-20)
+Method: `web-security-check` loop (repo scan, outside-in scans of site, staging and n8n, abuse probes, live least-privilege checks, a hostile end-to-end lead), a drift check of every live n8n workflow against the repo, a line-by-line review of every Code node, and each build's API assumptions checked against primary docs (HubSpot associations and webhook retries, Gmail scopes, Slack signing, Calendly OpenAPI, n8n security variables). Full record: `docs/SECURITY.md`. Reusable procedure: `docs/HUBSPOT_SOP.md`.
+
+| # | Finding | Severity | Fix | Proof |
+|---|---|---|---|---|
+| 1 | Drafts had no opt-out line, while the form's consent copy promised "the unsubscribe link in any email" and `/privacy` "an unsubscribe option" | Medium (consent accuracy) | Every draft ends with "Reply "unsubscribe" …"; consent copy (quiz, brief) and `/privacy` now say reply "unsubscribe" | Local draft test; live workflow republished with the line; site copy built (deploy pending Neil's yes) |
+| 2 | Calendly poller read every event type on the account: any other booking would become a HubSpot contact + Slack post | Medium (privacy/scope) | Filter to the Intro call event type in code (the API has no such filter) | Local test (other event type dropped); live poller republished |
+| 3 | Discord lead notice rendered visitor text as markdown: a name written as `[text](url)` could appear as a disguised link | Low/Medium | Name, email and phone shown as inline code, backticks neutralised | Hostile live lead: posted as code |
+| 4 | Slack signature compared with `===` (Slack recommends an HMAC compare) | Low | Constant-time comparison in the IF expression | Local near-miss tests; probe 4/4 (forged refused); real Claim click worked |
+| 5 | HubSpot service key holds unused scopes (tickets, companies, forms, lists) | Low/Medium (least privilege) | Recommended to Neil (live key) | Scopes read from the key page |
+| 6 | n8n CSP report-only, no HSTS, public API on, 2.42.4 (latest 2.43.8), Code nodes can read env | Medium/Low | HSTS and public API accepted with reasons; CSP enforcement, env block and update recommended (shared server) | `sec-snap` n8n; n8n docs; API keys = 0; no workflow uses env |
+| 7 | `docs/SECURITY.md` said the Gmail scope "can't read the mailbox" without saying it can send | Info (accuracy) | Corrected | Gmail inbox read = 403, drafts = 200 |
+
+Clean: repo scan (0 high/medium, no secrets in history), site and staging scans (only the accepted CSP note), site probe 7/7, n8n probe 4/4, no logic drift between live workflows and the repo, every live workflow has the error workflow set.
+
 **Next (from "After the builds"):** the honest demo case study on `/work`, a short Loom per build, the Upwork proposal text. Renew the HubSpot test account's trials from 2026-12-18.
 
 ### After the builds

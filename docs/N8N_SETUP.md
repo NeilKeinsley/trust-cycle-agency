@@ -107,4 +107,4 @@ Submit the quiz on the live site using test details. Then check:
   ```
 
   It answers `{"found":N,"sent":N,"remaining":N}`. Replays are safe because n8n upserts on `id`.
-- **Discord:** both Discord nodes send `allowed_mentions: { parse: [] }`, so a visitor who types `@everyone` as their name can't ping your server. The Sheets and Discord nodes retry 3 times, 2 seconds apart, before the error workflow fires.
+- **Discord:** both Discord nodes send `allowed_mentions: { parse: [] }`, so a visitor who types `@everyone` as their name can't ping your server. The lead notice also shows the visitor's name, email and phone as inline code (backticks in them turned into `'`), so a name like `[Open HubSpot](https://…)` appears as plain text instead of a disguised link (2026-10-20). The Sheets and Discord nodes retry 3 times, 2 seconds apart, before the error workflow fires.

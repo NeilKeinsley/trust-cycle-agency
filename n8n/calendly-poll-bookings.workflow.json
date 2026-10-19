@@ -68,7 +68,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// One item per Calendly event (Calendly returns at most 100 per page; plenty here).\nreturn ($input.first().json.collection ?? []).map((e) => ({ json: {\n  eventUri: e.uri,\n  status: e.status,\n  name: e.name,\n  start: e.start_time,\n  end: e.end_time,\n  joinUrl: typeof e.location?.join_url === 'string' && e.location.join_url.startsWith('https://') ? e.location.join_url : null,\n} }));"
+        "jsCode": "// One item per Calendly event (Calendly returns at most 100 per page; plenty here).\n// Only the website's \"Intro call\" event type: any other booking on this Calendly\n// account (another event type) must not become a HubSpot contact or a Slack post.\n// The API has no event-type filter on /scheduled_events, so it is done here.\nconst INTRO_CALL = 'https://api.calendly.com/event_types/0a382850-7c06-4589-b886-da3451ce3ca0';\nreturn ($input.first().json.collection ?? []).filter((e) => e.event_type === INTRO_CALL).map((e) => ({ json: {\n  eventUri: e.uri,\n  status: e.status,\n  name: e.name,\n  start: e.start_time,\n  end: e.end_time,\n  joinUrl: typeof e.location?.join_url === 'string' && e.location.join_url.startsWith('https://') ? e.location.join_url : null,\n} }));"
       },
       "name": "One item per event",
       "type": "n8n-nodes-base.code",
