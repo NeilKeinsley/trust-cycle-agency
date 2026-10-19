@@ -167,6 +167,26 @@ Covers: Sheets, scheduled automation, reliability.
 - Sweeper: weekdays 09:00 Manila. Snapshot: Mondays 08:00 Manila, to a new "Pipeline snapshot" tab; a re-run in the same week adds nothing.
 - No new public endpoint (scheduled workflows only), so no probe entry.
 
+#### Build 5 status (2026-10-19): built and tested, unpublished
+- **n8n (unpublished):** "HubSpot - stale deal sweep" (`ii8jCiHh3PPloMRF`, cron `0 9 * * 1-5`) and "Sheets - weekly pipeline snapshot" (`AVSjEVK1LumzGFvf`, cron `0 8 * * 1`), both with workflow timezone Asia/Manila. Files: `n8n/hubspot-stale-deal-sweep.workflow.json`, `n8n/sheets-pipeline-snapshot.workflow.json`.
+- **Sheet:** new tab "Pipeline snapshot" in the Leads sheet, headers `snapshotDate | dealId | deal | stage | owner | score | bucket | daysInStage | created`.
+- **Confirmed on this account:** `hs_v2_date_entered_current_stage` is set on every deal (the "time in stage" source); the service key can create tasks (task → deal association 216); HubSpot owner email → Slack `users.lookupByEmail` gives the @-mention.
+- **Sweeper tasks** are named `[TCA sweep] Follow up: {deal}`, due 17:00 Manila on the sweep day (or an hour after creation if that has passed), assigned to the deal owner.
+- **Tests** (Config pinned to the two test deals "HubSpot Live Test" `355450371795` and "Gmail Live Test" `355701192418`):
+
+| Test | Result |
+|---|---|
+| T1 limits 0 | Both stale; 2 tasks created; digest in #leads with the owner @-mentioned and the other deal "unclaimed" |
+| T2 same again | "task already open" for both; no task created |
+| T3 one task completed in HubSpot | A new task for that deal only |
+| T4 real limits (1/3/1/7) | Nothing stale (both changed stage today); stopped at Decide, nothing posted |
+| S1 snapshot | 7 rows appended (`A2:I8`), stage names and owner names, written RAW |
+| S2 same week again | Stopped at Rows; nothing added |
+
+- First run found a bug: the per-deal step read the owners list instead of the deal search (it now reads "Find open deals"). Also changed after T2: tasks were due at the moment of creation, so HubSpot showed them overdue straight away.
+- **Cleanup:** the 7 snapshot test rows were deleted (the tab keeps its header); the 3 test tasks were completed. The three test digests stay in #leads.
+- **Left before go-live:** publish both workflows (Neil's yes). The first real sweep runs the next weekday at 09:00 Manila, the first snapshot next Monday at 08:00.
+
 ### After the builds
 - A case study page on `/work` that honestly says it's a demo and shows the real flow, plus a 60 to 90 second Loom for each build and the Upwork proposal text.
 - **Trial renewal:** the test account was created 2026-10-19, so its 90-day trial ends around 2027-01-17. Renew from 2026-12-18 (Test Accounts → Actions → Renew trials), or the native workflows from builds 2 and 4 stop.

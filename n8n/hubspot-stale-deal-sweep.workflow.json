@@ -95,7 +95,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// One item per open TCA deal (the search returns up to 100; plenty for this pipeline).\nconst cfg = $('Config').first().json;\nconst only = (cfg.onlyDealIds ?? []).map(String);\nreturn ($input.first().json.results ?? [])\n  .filter((d) => !only.length || only.includes(String(d.id)))\n  .map((d) => ({ json: { dealId: String(d.id), properties: d.properties } }));"
+        "jsCode": "// One item per open TCA deal (the search returns up to 100; plenty for this pipeline).\nconst cfg = $('Config').first().json;\nconst only = (cfg.onlyDealIds ?? []).map(String);\nreturn ($('Find open deals').first().json.results ?? [])\n  .filter((d) => !only.length || only.includes(String(d.id)))\n  .map((d) => ({ json: { dealId: String(d.id), properties: d.properties } }));"
       },
       "name": "One item per deal",
       "type": "n8n-nodes-base.code",
@@ -212,7 +212,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// One HubSpot task per stale deal without an open sweeper task.\nconst out = [];\nfor (const s of $('Decide').first().json.stale.filter((x) => x.needsTask)) {\n  const properties = {\n    hs_task_subject: '[TCA sweep] Follow up: ' + s.dealName,\n    hs_task_body: s.days + ' days ' + s.basis + ' (limit ' + s.limitDays + '). Created by the n8n stale-deal sweep; complete this task once the deal has moved on.',\n    hs_timestamp: new Date().toISOString(),\n    hs_task_status: 'NOT_STARTED',\n    hs_task_priority: 'MEDIUM',\n    hs_task_type: 'TODO',\n  };\n  if (s.ownerId) properties.hubspot_owner_id = s.ownerId;\n  out.push({ json: { body: { properties, associations: [{ to: { id: s.dealId }, types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 216 }] }] } } });\n}\nreturn out;"
+        "jsCode": "// One HubSpot task per stale deal without an open sweeper task, due 17:00 Manila (09:00 UTC) on the day of the sweep.\nconst today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());\nconst due = Math.max(Date.parse(today + 'T09:00:00Z'), Date.now() + 3600 * 1000);\nconst out = [];\nfor (const s of $('Decide').first().json.stale.filter((x) => x.needsTask)) {\n  const properties = {\n    hs_task_subject: '[TCA sweep] Follow up: ' + s.dealName,\n    hs_task_body: s.days + ' days ' + s.basis + ' (limit ' + s.limitDays + '). Created by the n8n stale-deal sweep; complete this task once the deal has moved on.',\n    hs_timestamp: new Date(due).toISOString(),\n    hs_task_status: 'NOT_STARTED',\n    hs_task_priority: 'MEDIUM',\n    hs_task_type: 'TODO',\n  };\n  if (s.ownerId) properties.hubspot_owner_id = s.ownerId;\n  out.push({ json: { body: { properties, associations: [{ to: { id: s.dealId }, types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 216 }] }] } } });\n}\nreturn out;"
       },
       "name": "Task items",
       "type": "n8n-nodes-base.code",
