@@ -7,8 +7,9 @@ import { secretMatches, tooManyAttempts } from "@/lib/webhook-auth";
  *
  *   curl -X POST https://<site>/api/lead/replay -H "x-webhook-secret: <secret>"
  *
- * The outbox also drains on its own after the next successful lead, so this
- * is for replaying right away (for example, after fixing n8n).
+ * The outbox also drains on its own after the next successful lead and on a
+ * background retry (every 2 to 30 minutes), so this is for replaying right
+ * away (for example, after fixing n8n).
  */
 export async function POST(request: Request) {
   const limited = await tooManyAttempts(request);

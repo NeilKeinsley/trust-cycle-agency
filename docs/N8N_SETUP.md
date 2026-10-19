@@ -100,7 +100,7 @@ Submit the quiz on the live site using test details. Then check:
 - **Cost:** n8n and Postgres run on Railway usage billing (always on). Watch the project's **Usage** page for the first week.
 - **Updates:** the template pins `n8nio/n8n` (latest). Redeploying pulls newer versions, so check n8n's release notes before redeploying.
 - **Backups:** Postgres holds your credentials and executions. Enable Railway volume backups if the demo matters.
-- **Fallback:** if n8n is down or rejects a lead, `/api/lead` still answers the visitor with success and writes the lead to the outbox (`LEAD_OUTBOX_DIR`, one JSON file per submission ID). The outbox drains automatically after the next lead that n8n accepts. To replay right away, for example after fixing n8n:
+- **Fallback:** if n8n is down or rejects a lead, `/api/lead` still answers the visitor with success and writes the lead to the outbox (`LEAD_OUTBOX_DIR`, one JSON file per submission ID). The outbox drains automatically after the next lead that n8n accepts, and a background retry in the site server (`startOutboxRetry`, started from `src/instrumentation.ts`) tries again every 2 minutes, backing off to every 30 minutes while n8n stays down. So n8n can be switched off to save cost: leads queue while it is off and arrive on their own within 30 minutes of it coming back. To replay right away, for example after fixing n8n:
 
   ```bash
   curl -X POST https://trust-cycle-agency-production.up.railway.app/api/lead/replay -H "x-webhook-secret: <secret>"
