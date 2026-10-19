@@ -167,8 +167,8 @@ Covers: Sheets, scheduled automation, reliability.
 - Sweeper: weekdays 09:00 Manila. Snapshot: Mondays 08:00 Manila, to a new "Pipeline snapshot" tab; a re-run in the same week adds nothing.
 - No new public endpoint (scheduled workflows only), so no probe entry.
 
-#### Build 5 status (2026-10-19): built and tested, unpublished
-- **n8n (unpublished):** "HubSpot - stale deal sweep" (`ii8jCiHh3PPloMRF`, cron `0 9 * * 1-5`) and "Sheets - weekly pipeline snapshot" (`AVSjEVK1LumzGFvf`, cron `0 8 * * 1`), both with workflow timezone Asia/Manila. Files: `n8n/hubspot-stale-deal-sweep.workflow.json`, `n8n/sheets-pipeline-snapshot.workflow.json`.
+#### Build 5 status (2026-10-19): LIVE
+- **n8n (published 2026-10-19 at Neil's yes):** "HubSpot - stale deal sweep" (`ii8jCiHh3PPloMRF`, cron `0 9 * * 1-5`) and "Sheets - weekly pipeline snapshot" (`AVSjEVK1LumzGFvf`, cron `0 8 * * 1`), both with workflow timezone Asia/Manila. Files: `n8n/hubspot-stale-deal-sweep.workflow.json`, `n8n/sheets-pipeline-snapshot.workflow.json`.
 - **Sheet:** new tab "Pipeline snapshot" in the Leads sheet, headers `snapshotDate | dealId | deal | stage | owner | score | bucket | daysInStage | created`.
 - **Confirmed on this account:** `hs_v2_date_entered_current_stage` is set on every deal (the "time in stage" source); the service key can create tasks (task → deal association 216); HubSpot owner email → Slack `users.lookupByEmail` gives the @-mention.
 - **Sweeper tasks** are named `[TCA sweep] Follow up: {deal}`, due 17:00 Manila on the sweep day (or an hour after creation if that has passed), assigned to the deal owner.
@@ -185,7 +185,19 @@ Covers: Sheets, scheduled automation, reliability.
 
 - First run found a bug: the per-deal step read the owners list instead of the deal search (it now reads "Find open deals"). Also changed after T2: tasks were due at the moment of creation, so HubSpot showed them overdue straight away.
 - **Cleanup:** the 7 snapshot test rows were deleted (the tab keeps its header); the 3 test tasks were completed. The three test digests stay in #leads.
-- **Left before go-live:** publish both workflows (Neil's yes). The first real sweep runs the next weekday at 09:00 Manila, the first snapshot next Monday at 08:00.
+- **Live (2026-10-19):** both workflows published, no pins, timezone Asia/Manila. The first real sweep runs Tuesday 2026-10-20 at 09:00 Manila. The New lead test deals entered that stage on 2026-10-19, so that sweep should already flag them (tasks + one digest). The first snapshot runs Monday 2026-10-26 at 08:00 (this Monday's 08:00 had passed when it went live).
+- **To switch off:** unpublish either workflow in n8n; nothing else depends on them. Completing a `[TCA sweep]` task lets the next sweep create a new one if the deal is still stuck.
+
+### All five builds: live
+| Build | What runs | Where |
+|---|---|---|
+| 1 | Website lead → HubSpot contact + deal | n8n "HubSpot - sync lead" (called by the lead intake) |
+| 2 | Slack alerts by bucket, Claim button sets the owner, stage-change alerts | HubSpot workflows "TCA: new deal to Slack", "TCA: deal stage changed to Slack"; n8n "Slack - deal alerts", "Slack - claim button" |
+| 3 | Calendly booking → HubSpot meeting, deal to Call booked; cancel → back to Contacted | n8n "Calendly - poll bookings" (every 5 min) + booking and cancellation sub-workflows |
+| 4 | Gmail drafts: first reply, call prep, proposal nudge (drafts only) | HubSpot workflows "… to Gmail draft" ×3; n8n "Gmail - deal drafts" |
+| 5 | Stale-deal tasks + daily #leads digest; weekly pipeline snapshot to Sheets | n8n "HubSpot - stale deal sweep", "Sheets - weekly pipeline snapshot" |
+
+**Next (from "After the builds"):** the honest demo case study on `/work`, a short Loom per build, the Upwork proposal text. Renew the HubSpot test account's trials from 2026-12-18.
 
 ### After the builds
 - A case study page on `/work` that honestly says it's a demo and shows the real flow, plus a 60 to 90 second Loom for each build and the Upwork proposal text.
