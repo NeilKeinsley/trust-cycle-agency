@@ -28,7 +28,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.hubapi.com/crm/v3/objects/contacts/batch/upsert",
+        "url": "https://api.hubapi.com/crm/objects/2026-09/contacts/batch/upsert",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,
@@ -55,7 +55,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $json.results[0].id }}?properties=lifecyclestage,hs_lead_status",
+        "url": "=https://api.hubapi.com/crm/objects/2026-09/contacts/{{ $json.results[0].id }}?properties=lifecyclestage,hs_lead_status",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "options": {}
@@ -112,7 +112,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $json.id }}",
+        "url": "=https://api.hubapi.com/crm/objects/2026-09/contacts/{{ $json.id }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,
@@ -139,7 +139,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.hubapi.com/crm/v3/objects/deals/batch/upsert",
+        "url": "https://api.hubapi.com/crm/objects/2026-09/deals/batch/upsert",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,
@@ -166,7 +166,7 @@
     {
       "parameters": {
         "method": "PUT",
-        "url": "=https://api.hubapi.com/crm/v4/objects/deals/{{ $json.results[0].id }}/associations/default/contacts/{{ $('Read lifecycle stage').item.json.id }}",
+        "url": "=https://api.hubapi.com/crm/objects/2026-09/deals/{{ $json.results[0].id }}/associations/default/contacts/{{ $('Read lifecycle stage').item.json.id }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "options": {}

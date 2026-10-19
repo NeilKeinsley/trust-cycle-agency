@@ -26,7 +26,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://api.hubapi.com/crm/v3/properties/{{ $json.objectType }}/groups",
+        "url": "=https://api.hubapi.com/crm/properties/2026-09/{{ $json.objectType }}/groups",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,
@@ -76,7 +76,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://api.hubapi.com/crm/v3/properties/{{ $json.objectType }}",
+        "url": "=https://api.hubapi.com/crm/properties/2026-09/{{ $json.objectType }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,

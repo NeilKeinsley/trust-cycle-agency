@@ -189,7 +189,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "=https://api.hubapi.com/crm/v3/owners/?email={{ encodeURIComponent($json.user.profile.email) }}&limit=1",
+        "url": "=https://api.hubapi.com/crm/owners/2026-09?email={{ encodeURIComponent($json.user.profile.email) }}&limit=1",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "options": {}
@@ -246,7 +246,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $('Read Slack request').item.json.dealId }}",
+        "url": "=https://api.hubapi.com/crm/objects/2026-09/deals/{{ $('Read Slack request').item.json.dealId }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,

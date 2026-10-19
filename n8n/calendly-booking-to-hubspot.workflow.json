@@ -16,7 +16,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.hubapi.com/crm/v3/objects/contacts/batch/upsert",
+        "url": "https://api.hubapi.com/crm/objects/2026-09/contacts/batch/upsert",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,
@@ -43,7 +43,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "=https://api.hubapi.com/crm/v4/objects/contacts/{{ $json.results[0].id }}/associations/deals?limit=100",
+        "url": "=https://api.hubapi.com/crm/objects/2026-09/contacts/{{ $json.results[0].id }}?associations=deals",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "options": {}
@@ -67,12 +67,12 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.hubapi.com/crm/v3/objects/deals/batch/read",
+        "url": "https://api.hubapi.com/crm/objects/2026-09/deals/batch/read",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ properties: ['pipeline', 'dealstage', 'dealname', 'tca_lead_id', 'tca_lead_bucket', 'createdate'], inputs: ($json.results || []).map(r => ({ id: String(r.toObjectId) })) }) }}",
+        "jsonBody": "={{ JSON.stringify({ properties: ['pipeline', 'dealstage', 'dealname', 'tca_lead_id', 'tca_lead_bucket', 'createdate', 'hubspot_owner_id'], inputs: ($json.associations?.deals?.results || []).map(r => ({ id: String(r.id) })) }) }}",
         "options": {
           "response": {
             "response": {
@@ -100,7 +100,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const PORTAL = '247728856';\nconst PIPELINE = '2630364862';\nconst STAGE = { NEW: '4456833770', CONTACTED: '4456833771', CALL: '4456833772', PROPOSAL: '4456833773', WON: '4456833775', LOST: '4456833776' };\nconst CHANNEL = { HOT: 'C0CB16L6UD6', LEADS: 'C0CAAG03B1A' };\nconst esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst when = (iso) => {\n  const d = new Date(iso);\n  if (Number.isNaN(d.getTime())) return String(iso ?? '');\n  return new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Manila', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);\n};\nconst hhmm = (iso) => {\n  const d = new Date(iso);\n  if (Number.isNaN(d.getTime())) return '';\n  return new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);\n};\n\n// One active Calendly booking → which HubSpot contact and deal it belongs to.\n// The lead id from the booking (utm_content) only counts if that deal is linked to\n// the contact with the booking's email: anyone could type a lead id into a URL.\nconst b = $('From poller').first().json;\nconst contactId = String($('Upsert contact').first().json.results[0].id);\nconst read = $('Read deals').first().json;\nconst deals = (read.statusCode === 200 || read.statusCode === 207) ? (read.body?.results ?? []) : [];\n\nconst open = deals.filter((d) => d.properties?.pipeline === PIPELINE && ![STAGE.WON, STAGE.LOST].includes(d.properties?.dealstage));\nlet deal = b.leadId ? open.find((d) => d.properties?.tca_lead_id === b.leadId) : null;\nlet matchedBy = deal ? 'lead id' : '';\nif (!deal && open.length) {\n  deal = [...open].sort((x, y) => Date.parse(y.properties.createdate) - Date.parse(x.properties.createdate))[0];\n  matchedBy = 'newest open deal';\n}\n\nconst props = {\n  hs_timestamp: b.start,\n  hs_meeting_title: (b.eventName || 'Call') + ' with ' + (b.name || b.email),\n  hs_meeting_body: 'Booked through Calendly from the website. Matched to the deal by ' + (matchedBy || 'nothing: no open TCA deal, logged on the contact') + '.',\n  hs_meeting_start_time: b.start,\n  hs_meeting_end_time: b.end,\n  hs_meeting_outcome: 'SCHEDULED',\n  tca_calendly_invitee: b.inviteeUri,\n};\nif (b.joinUrl) { props.hs_meeting_location = b.joinUrl; props.hs_meeting_external_url = b.joinUrl; }\n\nreturn [{ json: {\n  contactId,\n  dealId: deal ? String(deal.id) : null,\n  dealName: deal?.properties?.dealname ?? null,\n  dealStage: deal?.properties?.dealstage ?? null,\n  bucket: deal?.properties?.tca_lead_bucket ?? null,\n  matchedBy: matchedBy || 'no open deal',\n  moveToCallBooked: Boolean(deal) && [STAGE.NEW, STAGE.CONTACTED].includes(deal.properties.dealstage),\n  meetingBody: {\n    properties: props,\n    associations: [{ to: { id: contactId }, types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 200 }] }],\n  },\n} }];"
+        "jsCode": "const PORTAL = '247728856';\nconst PIPELINE = '2630364862';\nconst STAGE = { NEW: '4456833770', CONTACTED: '4456833771', CALL: '4456833772', PROPOSAL: '4456833773', WON: '4456833775', LOST: '4456833776' };\nconst CHANNEL = { HOT: 'C0CB16L6UD6', LEADS: 'C0CAAG03B1A' };\nconst esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst when = (iso) => {\n  const d = new Date(iso);\n  if (Number.isNaN(d.getTime())) return String(iso ?? '');\n  return new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Manila', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);\n};\nconst hhmm = (iso) => {\n  const d = new Date(iso);\n  if (Number.isNaN(d.getTime())) return '';\n  return new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);\n};\n\n// One active Calendly booking → which HubSpot contact and deal it belongs to.\n// The lead id from the booking (utm_content) only counts if that deal is linked to\n// the contact with the booking's email: anyone could type a lead id into a URL.\nconst b = $('From poller').first().json;\nconst contactId = String($('Upsert contact').first().json.results[0].id);\nconst read = $('Read deals').first().json;\nconst deals = (read.statusCode === 200 || read.statusCode === 207) ? (read.body?.results ?? []) : [];\n\nconst open = deals.filter((d) => d.properties?.pipeline === PIPELINE && ![STAGE.WON, STAGE.LOST].includes(d.properties?.dealstage));\nlet deal = b.leadId ? open.find((d) => d.properties?.tca_lead_id === b.leadId) : null;\nlet matchedBy = deal ? 'lead id' : '';\nif (!deal && open.length) {\n  deal = [...open].sort((x, y) => Date.parse(y.properties.createdate) - Date.parse(x.properties.createdate))[0];\n  matchedBy = 'newest open deal';\n}\n\n// HubSpot's 2026-09 API requires an owner on a new meeting: the deal's owner, else the account owner (Neil).\nconst DEFAULT_OWNER = '101409351';\nconst props = {\n  hubspot_owner_id: String(deal?.properties?.hubspot_owner_id || DEFAULT_OWNER),\n  hs_timestamp: b.start,\n  hs_meeting_title: (b.eventName || 'Call') + ' with ' + (b.name || b.email),\n  hs_meeting_body: 'Booked through Calendly from the website. Matched to the deal by ' + (matchedBy || 'nothing: no open TCA deal, logged on the contact') + '.',\n  hs_meeting_start_time: b.start,\n  hs_meeting_end_time: b.end,\n  hs_meeting_outcome: 'SCHEDULED',\n  tca_calendly_invitee: b.inviteeUri,\n};\nif (b.joinUrl) { props.hs_meeting_location = b.joinUrl; props.hs_meeting_external_url = b.joinUrl; }\n\nreturn [{ json: {\n  contactId,\n  dealId: deal ? String(deal.id) : null,\n  dealName: deal?.properties?.dealname ?? null,\n  dealStage: deal?.properties?.dealstage ?? null,\n  bucket: deal?.properties?.tca_lead_bucket ?? null,\n  matchedBy: matchedBy || 'no open deal',\n  moveToCallBooked: Boolean(deal) && [STAGE.NEW, STAGE.CONTACTED].includes(deal.properties.dealstage),\n  meetingBody: {\n    properties: props,\n    associations: [{ to: { id: contactId }, types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 200 }] }],\n  },\n} }];"
       },
       "name": "Pick deal",
       "type": "n8n-nodes-base.code",
@@ -113,7 +113,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.hubapi.com/crm/v3/objects/meetings",
+        "url": "https://api.hubapi.com/crm/objects/2026-09/meetings",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,
@@ -233,7 +233,7 @@
     {
       "parameters": {
         "method": "PUT",
-        "url": "=https://api.hubapi.com/crm/v4/objects/meetings/{{ $('Create meeting').item.json.id }}/associations/default/deals/{{ $('Pick deal').item.json.dealId }}",
+        "url": "=https://api.hubapi.com/crm/objects/2026-09/meetings/{{ $('Create meeting').item.json.id }}/associations/default/deals/{{ $('Pick deal').item.json.dealId }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "options": {}
@@ -290,7 +290,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $('Pick deal').item.json.dealId }}",
+        "url": "=https://api.hubapi.com/crm/objects/2026-09/deals/{{ $('Pick deal').item.json.dealId }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,

@@ -69,7 +69,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.hubapi.com/crm/v3/objects/deals/search",
+        "url": "https://api.hubapi.com/crm/objects/2026-09/deals/search",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,
@@ -96,7 +96,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "https://api.hubapi.com/crm/v3/owners/?limit=100",
+        "url": "https://api.hubapi.com/crm/owners/2026-09?limit=100",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "options": {}

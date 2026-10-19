@@ -37,7 +37,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $json.dealId }}?properties=dealname,dealstage,pipeline,tca_drafts_made,tca_budget,tca_timeline&associations=contacts,meetings",
+        "url": "=https://api.hubapi.com/crm/objects/2026-09/deals/{{ $json.dealId }}?properties=dealname,dealstage,pipeline,tca_drafts_made,tca_budget,tca_timeline&associations=contacts,meetings",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "options": {}
@@ -61,7 +61,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $json.associations?.contacts?.results?.[0]?.id || 'none' }}?properties=email,firstname,tca_services,tca_budget,tca_timeline,tca_consent",
+        "url": "=https://api.hubapi.com/crm/objects/2026-09/contacts/{{ $json.associations?.contacts?.results?.[0]?.id || 'none' }}?properties=email,firstname,tca_services,tca_budget,tca_timeline,tca_consent",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "options": {
@@ -92,7 +92,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.hubapi.com/crm/v3/objects/meetings/batch/read",
+        "url": "https://api.hubapi.com/crm/objects/2026-09/meetings/batch/read",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,
@@ -195,7 +195,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "url": "https://api.hubapi.com/crm/objects/2026-09/notes",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,
@@ -222,7 +222,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $('Plan draft').item.json.dealId }}",
+        "url": "=https://api.hubapi.com/crm/objects/2026-09/deals/{{ $('Plan draft').item.json.dealId }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,

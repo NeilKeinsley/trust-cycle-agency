@@ -16,7 +16,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "=https://api.hubapi.com/crm/v3/objects/meetings/{{ $json.meetingId }}",
+        "url": "=https://api.hubapi.com/crm/objects/2026-09/meetings/{{ $json.meetingId }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,
@@ -76,7 +76,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "=https://api.hubapi.com/crm/v4/objects/meetings/{{ $('From poller').item.json.meetingId }}/associations/deals?limit=10",
+        "url": "=https://api.hubapi.com/crm/objects/2026-09/meetings/{{ $('From poller').item.json.meetingId }}?associations=deals",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "options": {}
@@ -100,12 +100,12 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.hubapi.com/crm/v3/objects/deals/batch/read",
+        "url": "https://api.hubapi.com/crm/objects/2026-09/deals/batch/read",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ properties: ['pipeline', 'dealstage', 'dealname', 'tca_lead_bucket'], inputs: ($json.results || []).map(r => ({ id: String(r.toObjectId) })) }) }}",
+        "jsonBody": "={{ JSON.stringify({ properties: ['pipeline', 'dealstage', 'dealname', 'tca_lead_bucket'], inputs: ($json.associations?.deals?.results || []).map(r => ({ id: String(r.id) })) }) }}",
         "options": {
           "response": {
             "response": {
@@ -227,7 +227,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $('Cancel plan').item.json.dealId }}",
+        "url": "=https://api.hubapi.com/crm/objects/2026-09/deals/{{ $('Cancel plan').item.json.dealId }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,

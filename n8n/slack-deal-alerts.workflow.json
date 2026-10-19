@@ -37,7 +37,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $json.dealId }}?properties=dealname,dealstage,pipeline,hubspot_owner_id,tca_lead_bucket,tca_lead_score,tca_budget,tca_timeline&associations=contacts",
+        "url": "=https://api.hubapi.com/crm/objects/2026-09/deals/{{ $json.dealId }}?properties=dealname,dealstage,pipeline,hubspot_owner_id,tca_lead_bucket,tca_lead_score,tca_budget,tca_timeline&associations=contacts",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "options": {}
@@ -61,7 +61,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $json.associations?.contacts?.results?.[0]?.id ?? '0' }}?properties=firstname,lastname,email",
+        "url": "=https://api.hubapi.com/crm/objects/2026-09/contacts/{{ $json.associations?.contacts?.results?.[0]?.id ?? '0' }}?properties=firstname,lastname,email",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "options": {}

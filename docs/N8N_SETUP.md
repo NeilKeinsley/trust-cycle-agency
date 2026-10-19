@@ -9,7 +9,17 @@ The workflow design and the scoring rubric are in `BACKEND_PLAN.md`. The importa
 
 ## 1. Create the n8n owner account (you)
 
-Open the editor URL and create the owner account with a strong password. Store it in your password manager. There is no default account; whoever opens the URL first becomes the owner, **so do this right away**.
+Open the editor URL and create the owner account with a strong password. Store it in your password manager. There is no default account; whoever opens the URL first becomes the owner, **so do this right away**. Then switch on two-factor (Settings → Personal).
+
+**Hardening variables on the n8n service (Railway → n8n → Variables), set 2026-10-20:**
+
+| Variable | Value | Why |
+|---|---|---|
+| `N8N_CONTENT_SECURITY_POLICY` | `default` | Enforces n8n's own nonce-based policy. Unset, n8n enforces no CSP at all and only reports |
+| `N8N_CONTENT_SECURITY_POLICY_REPORT_ONLY` | `{}` | Drops the duplicate report-only header |
+| `N8N_BLOCK_ENV_ACCESS_IN_NODE` | `true` | Code nodes and expressions can't read the database password or encryption key (n8n 2.x blocks by default; set it so a default change can't reopen it) |
+
+Changing variables restarts n8n and signs editor sessions out. Afterwards, open a workflow and a Code node and check the browser console shows no policy errors. The image is `n8nio/n8n` with no tag, so each redeploy takes the current release.
 
 ## 2. Create a shared secret (you)
 

@@ -72,7 +72,11 @@ Gmail drafts (build 4): the credential "Gmail - TCA drafts" is an OAuth client i
 
 Calendly (build 3): the poller reads only the "Intro call" event type, so bookings for any other event type on the same Calendly account never become HubSpot contacts or Slack posts (2026-10-20). The Calendly token has `scheduled_events:read` and `users:read` only.
 
-HubSpot: one service key ("n8n - TCA lead pipeline"), stored only in n8n. HubSpot → n8n calls never carry it.
+HubSpot: one service key ("n8n - TCA lead pipeline"), stored only in n8n. HubSpot → n8n calls never carry it. Since 2026-10-20 it holds only what the builds use: `crm.objects.contacts.read/write`, `crm.objects.deals.read/write`, `crm.objects.owners.read`, `crm.schemas.contacts.read/write`, `crm.schemas.deals.read/write` (the schema scopes for the setup workflow), `oauth`. Notes, tasks and meetings work under the contacts scopes. Tickets, companies, forms and lists were removed; every read and write the builds make was re-run with the trimmed key and passed.
+
+HubSpot API version: every call uses the date-based **2026-09** API (`/crm/objects/2026-09/…`, `/crm/owners/2026-09`, `/crm/properties/2026-09/…`) since 2026-10-20. The v4 association calls lost support in March 2027 and v3 in September 2027 (HubSpot's migration page for this key). The 2026-09 meeting create **requires `hubspot_owner_id` and `hs_meeting_start_time`** (v3 didn't): the booking workflow sends the deal's owner, else the account owner.
+
+n8n server (2026-10-20, Railway variables, owner's go-ahead): version **2.43.8** (no published advisories); `N8N_CONTENT_SECURITY_POLICY=default` **enforces** n8n's own nonce policy and `N8N_CONTENT_SECURITY_POLICY_REPORT_ONLY={}` drops the report-only copy (n8n's source: with neither set it enforces nothing, which is what the earlier scans saw); `N8N_BLOCK_ENV_ACCESS_IN_NODE=true` set explicitly (n8n 2.x already blocks unless it is `false`; proven: a Code node reading an env var gets "access to env vars denied"). Editor checked after the change: canvas and code editor work, no policy violations in the console.
 
 **Hostile end-to-end test (2026-10-20, production):** one real quiz whose name was `=HYPERLINK("https://evil.example","Hostile") [Open HubSpot](https://evil.example) <b>Test</b> @everyone`. Sheet: stored as text (`'=HYPERLINK…`), no formula. Discord: posted as inline code. Slack: header plain text, HTML escaped in the contact field. Gmail: draft created, headers clean. HubSpot: name stored as text. Test row deleted.
 
@@ -86,7 +90,10 @@ HubSpot: one service key ("n8n - TCA lead pipeline"), stored only in n8n. HubSpo
 | Dev-only npm advisories (in the ESLint tooling) | They run on a developer machine during linting, not in the deployed app; the only "fix" npm offers is a breaking downgrade | A non-breaking fix is published |
 | No WAF or DDoS shield beyond Railway's edge | No custom domain to put Cloudflare in front of. The app-level rate limit and static pages cover ordinary abuse | A custom domain is attached |
 | The n8n editor is reachable from the internet | It serves several projects and is protected by a login with 2FA | n8n is moved behind a private network or an IP allow-list |
-| n8n sends no HSTS header | n8n has no setting for it (checked against its security env-var docs, 2026-10-20) and Railway's edge doesn't add one. Railway redirects plain HTTP to HTTPS | A custom domain or proxy that can add the header |
+| n8n sends no HSTS header (scanners report it as medium) | It has no effect here: the whole `.app` top-level domain, including `*.up.railway.app`, is on every major browser's HSTS preload list (hstspreload.org: "preloaded", 2026-10-20), so browsers never use plain HTTP for it, and the edge answers HTTP with a 301 to HTTPS. n8n has no setting for the header and Railway's edge doesn't add one | n8n moves to a custom domain outside `.app`: then add HSTS at the proxy |
+| n8n sends no Permissions-Policy header | n8n has no setting for it; the editor uses no camera, microphone or location. It does send `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` and same-origin COOP/CORP (checked 2026-10-20) | n8n adds the setting |
+| n8n's enforced CSP keeps `'unsafe-eval'` | It is n8n's own policy; its editor needs it. Scripts are otherwise limited to a per-request nonce (`'strict-dynamic'`) | n8n ships a policy without it |
+| n8n runs its Code-node task runner in internal mode | n8n's start-up log marks internal mode as deprecated and recommends an external runner for isolation; only the owner can create or edit Code nodes, and env access is blocked | n8n removes internal mode, or other people get editor access: move to an external runner |
 | The n8n public API is switched on | No API keys exist (checked 2026-10-20), so nothing can use it | An API key is created: give it the narrowest scopes and an expiry |
 | The Calendly poller can make a duplicate meeting if a manual run starts in the same second as a scheduled one | Scheduled runs are 5 minutes apart and take seconds, so they can't overlap; the risk is only a person pressing "Execute" on the published workflow | Never run it by hand while published (noted in `docs/HUBSPOT_PLAN.md`) |
 
@@ -95,10 +102,10 @@ HubSpot: one service key ("n8n - TCA lead pipeline"), stored only in n8n. HubSpo
 - Switch on two-factor for the WordPress administrator (Users > Profile, after the deploy).
 - WordPress database and uploads have no backup.
 - `main` has no branch rule: a force-push would deploy straight to production.
-- Keep n8n on the current release and redeploy the WordPress image monthly so both pick up security fixes. On 2026-10-20 n8n was 2.42.4 (no published advisories) and the latest stable 2.43.8.
-- n8n's Content-Security-Policy is sent report-only, so it enforces nothing. The 2026-10-09 review accepted this as "n8n's default, needs a proxy"; that was wrong. n8n's own docs say its default policy is enforced (nonce-based), so a Railway variable is overriding it: remove `N8N_CONTENT_SECURITY_POLICY_REPORT_ONLY` (or clear it) and check the editor still loads.
-- Set `N8N_BLOCK_ENV_ACCESS_IN_NODE=true` on n8n: no workflow reads environment variables (checked 2026-10-20), and it stops a Code node from reading the database password or encryption key.
-- Trim the HubSpot service key to what the builds use: keep contacts, deals and owners read/write, and the contacts/deals schema scopes for the setup workflow. Remove tickets (4 scopes), companies (3), `forms` and `crm.lists.write`.
+- Keep n8n on the current release (its image is `n8nio/n8n` latest: a redeploy updates it) and redeploy the WordPress image monthly so both pick up security fixes.
+- HubSpot API: the builds use the 2026-09 version; HubSpot supports each date version for 18 months, so plan the next move before it ends (HubSpot's Development → Migrations page lists what each key still calls).
+
+Closed 2026-10-20 (were open after the morning sweep): n8n CSP now enforced (the 2026-10-09 acceptance "n8n's default, needs a proxy" was wrong; the setting is an n8n variable); env access blocked explicitly; n8n 2.42.4 → 2.43.8; HubSpot key trimmed to 10 scopes; HubSpot calls moved off the v3/v4 APIs.
 
 ## How to re-test
 

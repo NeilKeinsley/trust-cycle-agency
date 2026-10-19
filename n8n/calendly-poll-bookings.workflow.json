@@ -117,7 +117,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.hubapi.com/crm/v3/objects/meetings/search",
+        "url": "https://api.hubapi.com/crm/objects/2026-09/meetings/search",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,
