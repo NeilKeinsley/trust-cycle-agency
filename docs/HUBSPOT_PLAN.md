@@ -14,6 +14,52 @@ Portfolio build for HubSpot CRM integration and automation work. The website's l
 4. Gmail follow-ups triggered by deal stage, logged to the timeline
 5. Stale-deal sweeper + weekly pipeline snapshot to Sheets
 
+## Plan for builds 2 to 5
+
+**Decided 2026-10-19 (Neil):** a new free Slack workspace; Calendly stays on the free plan with the site relaying bookings; Gmail writes drafts that Neil sends; build order 2, 3, 4, 5.
+
+Same loop for every build: Neil creates any account or app (Claude doesn't create accounts or handle keys) → Claude builds it as importable n8n JSON → test on a copy with live side effects off → go live with Neil's yes → one real test, cleanup → docs, security probe entry, commit. Every new webhook checks a secret or signature, and gets an entry in `security/probe.*.json` in the same commit (AGENTS.md rule).
+
+### Build 2: Slack alerts with a "Claim" button (first native HubSpot workflow)
+Covers: Slack, HubSpot workflows, CRM events, notifications, conditional logic, two-way sync.
+1. **Neil:** create a free Slack workspace "Trust Cycle Agency" with `#leads` and `#hot-leads`, then a Slack app from the manifest Claude provides (bot scopes `chat:write`, `users:read`, `users:read.email`; interactivity on). Bot token and signing secret go into n8n only.
+2. **HubSpot native workflow** "TCA: new deal → n8n": trigger = deal created in "TCA new business"; action = Send a webhook (POST, secret in a header) to n8n. A second one fires on deal stage change.
+3. **n8n "Slack - deal alerts":** checks the header → reads the deal and contact → Hot goes to `#hot-leads`, everything else to `#leads`, as a Block Kit message with a **Claim** button.
+4. **n8n "Slack - claim button":** Slack interactivity URL → checks Slack's signature on the raw body (HMAC-SHA256 of `v0:timestamp:body`, rejects anything older than 5 minutes) → maps the Slack user's email to a HubSpot owner → sets `hubspot_owner_id` on the deal → edits the Slack message to "Claimed by …". Answers Slack within 3 seconds.
+- **Signature check:** the Webhook node's raw-body option plus **Crypto node v2**, which reads the signing secret from an encrypted Crypto credential ("Slack Signing Secret"), so the secret is never stored in the workflow. The Slack API credential's own "Signature Secret" field doesn't help here: only n8n's Slack Trigger reads it, and that node handles Events API payloads, not button clicks (it reads `body.event.type`).
+- **Done when:** a live lead posts to the right channel, Claim sets the owner in HubSpot, and a forged or replayed click is rejected.
+
+#### Build 2 status (2026-10-19): built and tested, HubSpot side not switched on
+- **Slack:** workspace "nk", `#leads` (`C0CAAG03B1A`), `#hot-leads` (`C0CB16L6UD6`), app "TCA Lead Alerts" (`A0CA0K57BQB`, bot "TCA Leads" in both channels).
+- **n8n (published):** "Slack - deal alerts" (`kobZZ3EyBkKEbGuE`, `/webhook/hubspot-deal-events`) and "Slack - claim button" (`952GPC9J7cvzYjXM`, `/webhook/slack-claim`). Files: `n8n/slack-deal-alerts.workflow.json`, `n8n/slack-claim-button.workflow.json`.
+- **HubSpot (unpublished drafts):** "TCA: new deal to Slack" (Deal created, pipeline TCA new business → 1-minute delay → webhook `?event=created`) and "TCA: deal stage changed to Slack" (Deal stage becomes Contacted, Call booked, Proposal sent, Closed Won or Closed Lost, records can repeat runs → webhook `?event=stage`). Both send `hs_object_id` with the `HS_secret` key in the `x-tca-hubspot-secret` header.
+- **Proven:** alert posted for a real deal; HubSpot "Test action" on both workflows reached n8n (200) and posted to Slack; a real Claim click set HubSpot's deal owner and updated the message; forged and replayed Slack requests got 401; wrong HubSpot secrets got 403; `security/probe.n8n.json` 3 of 3.
+- **Gotchas found:** n8n's Code sandbox has no `URLSearchParams` (decode the form by hand); a Slack API call answers HTTP 200 even when it fails (check `ok`); HubSpot's test-value box starts with the text "Test value", which is sent unless cleared; a new HubSpot property-change workflow runs each record only once until "Records can repeat runs" is on.
+- **Live (2026-10-19):** both HubSpot workflows published. One real quiz sent through the live site (`slack.livetest@example.com`, Brand and identity, $50k+, ASAP): intake execution 61 and HubSpot sync 62 succeeded at 01:04:48 UTC, HubSpot's "new deal" workflow called n8n 67 seconds later (alert execution 63), and the card reached **#hot-leads** as "Hot lead … 11/15 (Hot)" with Claim and Open in HubSpot. The test row was deleted from the Leads sheet. The Slack card, the HubSpot contact and deal, and the Discord notice stay as sample data.
+- **To switch Slack alerts off:** unpublish the two HubSpot workflows (Automation → Workflows → the workflow → Unpublish). Leads, Sheets, Discord and the HubSpot sync carry on.
+
+### Build 3: Calendly booking → HubSpot meeting
+Covers: Calendly, meetings, deal stage automation.
+- **Calendly's free plan has no webhooks** (they need a paid plan); its REST API does work on free with a personal access token. Without paying, the site relays the booking instead: the embed already gets Calendly's `calendly.event_scheduled` message → the site POSTs the invitee URI and lead id to a new `/api/booking` route → the route checks the booking really exists through the Calendly API → n8n logs a HubSpot meeting on the contact and deal, moves the deal to "Call booked", and posts to Slack.
+- **Cancellations** can't be pushed without webhooks: build 5's daily job reads cancelled events from the Calendly API and moves the deal back.
+- **Site change:** a new API route (zod, rate limit, probe entry) and a production deploy, which needs Neil's yes.
+- **Edge:** a booking can arrive before an outboxed lead reaches HubSpot. The route retries, and the contact upsert on email covers it.
+
+### Build 4: Gmail follow-ups by deal stage
+Covers: Gmail, workflows on deal events, engagement logging.
+- **HubSpot workflow** on stage change → n8n → **Gmail draft** in Neil's inbox, written for that stage (prep email on "Call booked", nudge after 3 days in "Proposal sent"). Neil reviews and sends; nothing goes to a visitor automatically.
+- **HubSpot's native inbox connection** logs the sent emails to the contact's timeline (shows the native integration next to the API one).
+- **Gotcha:** a Google OAuth app left in "Testing" issues refresh tokens that expire after 7 days. Move the consent screen to Production (personal use, unverified) before relying on it.
+
+### Build 5: Stale-deal sweeper + weekly pipeline snapshot
+Covers: Sheets, scheduled automation, reliability.
+- **Daily (09:00 Manila):** search open deals in "TCA new business" untouched for 3+ days → create a HubSpot task on the deal → DM the owner in Slack. Also picks up Calendly cancellations (build 3).
+- **Weekly (Monday):** append every open deal (date, deal, stage, owner, score, bucket) to a "Pipeline snapshot" tab in the Leads sheet (atomic append, as the intake does).
+
+### After the builds
+- A case study page on `/work` that honestly says it's a demo and shows the real flow, plus a 60 to 90 second Loom for each build and the Upwork proposal text.
+- **Trial renewal:** the test account was created 2026-10-19, so its 90-day trial ends around 2027-01-17. Renew from 2026-12-18 (Test Accounts → Actions → Renew trials), or the native workflows from builds 2 and 4 stop.
+
 ## Build 1 field map
 
 Source: `src/lib/intake.ts` (validation) and the n8n **Normalise and score** node (score, bucket, consent).

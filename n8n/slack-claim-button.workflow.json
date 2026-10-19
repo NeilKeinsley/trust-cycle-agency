@@ -1,0 +1,493 @@
+{
+  "name": "Slack - claim button",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-claim",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "name": "From Slack",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "6b1f3a8e-2f0c-4a57-9d0e-000000000002"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Slack signs v0:{timestamp}:{raw body} with the app's signing secret (HMAC-SHA256).\n// Use the untouched raw body: re-encoding the parsed form changes the bytes.\nconst item = $input.first();\nconst headers = item.json.headers ?? {};\nconst buf = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst raw = buf.toString('utf8');\nconst ts = String(headers['x-slack-request-timestamp'] ?? '');\nconst signature = String(headers['x-slack-signature'] ?? '');\nconst ageSeconds = Math.abs(Date.now() / 1000 - Number(ts));\nconst fresh = /^\\d+$/.test(ts) && ageSeconds < 300; // replay window: 5 minutes\n\nlet payload = {};\n// URLSearchParams doesn't exist in n8n's Code sandbox: decode the form field by hand.\nconst field = raw.split('&').find((p) => p.startsWith('payload='));\ntry { if (field) payload = JSON.parse(decodeURIComponent(field.slice(8).split('+').join(' '))); } catch (e) { payload = {}; }\nconst action = (payload.actions ?? [])[0] ?? {};\n\nreturn [{ json: {\n  basestring: 'v0:' + ts + ':' + raw,\n  signature,\n  fresh,\n  actionId: action.action_id ?? '',\n  dealId: String(action.value ?? ''),\n  slackUserId: payload.user?.id ?? '',\n  responseUrl: payload.response_url ?? '',\n  blocks: payload.message?.blocks ?? [],\n} }];"
+      },
+      "name": "Read Slack request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "action": "hmac",
+        "type": "SHA256",
+        "value": "={{ $json.basestring }}",
+        "dataPropertyName": "expected",
+        "encoding": "hex"
+      },
+      "name": "Sign with Slack secret",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "crypto": {
+          "name": "Slack Signing Secret"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5a1ac000-0000-4000-8000-000000000660",
+              "leftValue": "={{ $json.fresh && $json.signature === 'v0=' + $json.expected }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Signature valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "name": "OK to Slack",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "invalid signature",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "name": "Reject (401)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5a1ac000-0000-4000-8000-000000001100",
+              "leftValue": "={{ $('Read Slack request').item.json.actionId === 'claim_deal' && /^\\d+$/.test($('Read Slack request').item.json.dealId) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Claim click?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://slack.com/api/users.info?user={{ $('Read Slack request').item.json.slackUserId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "options": {}
+      },
+      "name": "Who clicked",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        -100
+      ],
+      "credentials": {
+        "slackApi": {
+          "name": "Slack - TCA Lead Alerts"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nif (r.ok === false) throw new Error('Slack API error: ' + r.error);\nreturn $input.all();"
+      },
+      "name": "Slack said ok?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.hubapi.com/crm/v3/owners/?email={{ encodeURIComponent($json.user.profile.email) }}&limit=1",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {}
+      },
+      "name": "Find HubSpot owner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        -100
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5a1ac000-0000-4000-8000-000000001980",
+              "leftValue": "={{ ($json.results ?? []).length > 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Owner found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1980,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $('Read Slack request').item.json.dealId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: { hubspot_owner_id: $json.results[0].id } }) }}",
+        "options": {}
+      },
+      "name": "Set deal owner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        -200
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Swap the Claim button for \"Claimed by\", keep everything else in the message.\nconst s = $('Read Slack request').first().json;\nconst ownerId = $('Find HubSpot owner').first().json.results?.[0]?.id;\nconst blocks = (s.blocks ?? []).map((b) =>\n  b.type === 'actions' ? { ...b, elements: (b.elements ?? []).filter((e) => e.action_id !== 'claim_deal') } : b,\n).filter((b) => b.type !== 'context');\nblocks.push({ type: 'context', elements: [{ type: 'mrkdwn', text: 'Claimed by <@' + s.slackUserId + '> · HubSpot owner set' }] });\nreturn [{ json: { replace_original: true, text: 'Claimed by <@' + s.slackUserId + '>', blocks, ownerId } }];"
+      },
+      "name": "Build claimed message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Read Slack request').item.json.responseUrl }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ replace_original: true, text: $json.text, blocks: $json.blocks }) }}",
+        "options": {}
+      },
+      "name": "Update Slack message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        -200
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Read Slack request').item.json.responseUrl }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ response_type: 'ephemeral', replace_original: false, text: 'No HubSpot user has the email on your Slack profile, so the deal was not assigned. Ask an admin to add you in HubSpot.' }) }}",
+        "options": {}
+      },
+      "name": "Tell clicker: no HubSpot user",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        20
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "content": "## Slack: claim button\nSlack's interactivity URL. Checks Slack's signature on the raw body (HMAC-SHA256 of `v0:timestamp:body`, 5-minute replay window) and answers **401** if it's wrong, **200** within Slack's 3 seconds if it's right.\n\n- Claim: Slack user's email → HubSpot owner → `hubspot_owner_id` on the deal → message shows \"Claimed by\".\n- The signing secret lives in the encrypted Crypto credential **Slack Signing Secret**, never in the workflow.\n- Plan: `docs/HUBSPOT_PLAN.md`, build 2.",
+        "height": 300,
+        "width": 600
+      },
+      "name": "About",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -420
+      ]
+    }
+  ],
+  "connections": {
+    "From Slack": {
+      "main": [
+        [
+          {
+            "node": "Read Slack request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Slack request": {
+      "main": [
+        [
+          {
+            "node": "Sign with Slack secret",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign with Slack secret": {
+      "main": [
+        [
+          {
+            "node": "Signature valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signature valid?": {
+      "main": [
+        [
+          {
+            "node": "OK to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reject (401)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OK to Slack": {
+      "main": [
+        [
+          {
+            "node": "Claim click?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claim click?": {
+      "main": [
+        [
+          {
+            "node": "Who clicked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Who clicked": {
+      "main": [
+        [
+          {
+            "node": "Slack said ok?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack said ok?": {
+      "main": [
+        [
+          {
+            "node": "Find HubSpot owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find HubSpot owner": {
+      "main": [
+        [
+          {
+            "node": "Owner found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Owner found?": {
+      "main": [
+        [
+          {
+            "node": "Set deal owner",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tell clicker: no HubSpot user",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set deal owner": {
+      "main": [
+        [
+          {
+            "node": "Build claimed message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build claimed message": {
+      "main": [
+        [
+          {
+            "node": "Update Slack message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "KrdIYoVefLBu3SnS"
+  },
+  "pinData": {}
+}

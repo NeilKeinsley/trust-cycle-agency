@@ -56,6 +56,15 @@ Trust boundaries: browser → site (nothing from the browser is trusted) · site
 ### n8n (see `docs/N8N_SETUP.md`)
 Webhook requires the shared-secret header · sheet cells written RAW (no formula injection) · Discord mentions suppressed · error workflow alerts on failure · owner 2FA on · the version is not disclosed to visitors.
 
+HubSpot and Slack (build 2, `docs/HUBSPOT_PLAN.md`), each webhook with its own secret, so no single leak opens the others:
+
+| Endpoint | Who calls it | Check | Wrong secret gets |
+|---|---|---|---|
+| `/webhook/hubspot-deal-events` | HubSpot workflows ("Send a webhook") | `x-tca-hubspot-secret` header; the value lives in HubSpot's secret store (`HS_secret`) and the n8n credential "Hubspot Secret", never in a workflow | 403 |
+| `/webhook/slack-claim` | Slack's Claim button | Slack's HMAC-SHA256 signature over the raw body, 5-minute replay window. The signing secret is in the encrypted Crypto credential "Slack Signing Secret" (Crypto node v2), never in a workflow | 401 |
+
+The Slack bot token is limited to `chat:write`, `users:read`, `users:read.email`, and its n8n credential may only call `slack.com`. Slack message text built from visitor input is escaped (`&`, `<`, `>`). The first signing secret was pasted into a workflow field and saved, so it sits in that workflow's history: it was regenerated in Slack straight away, which made that copy useless.
+
 ## Risks accepted on purpose
 
 | Risk | Why | Revisit when |

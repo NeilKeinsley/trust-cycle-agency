@@ -1,0 +1,234 @@
+{
+  "name": "Slack - deal alerts",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hubspot-deal-events",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "name": "From HubSpot workflow",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "6b1f3a8e-2f0c-4a57-9d0e-000000000001",
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "Hubspot Secret"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// HubSpot's \"Send a webhook\" action posts the enrolled deal. Accept the shapes it uses\n// (objectId at the top, or hs_object_id inside properties) and the event type from the URL.\nconst body = $input.first().json.body ?? {};\nconst query = $input.first().json.query ?? {};\nconst p = body.properties ?? {};\nconst raw = body.objectId ?? body.hs_object_id ?? p.hs_object_id?.value ?? p.hs_object_id;\nconst dealId = String(raw ?? '').trim();\nif (!/^\\d+$/.test(dealId)) throw new Error('No deal id in the HubSpot webhook body');\nconst event = query.event === 'stage' ? 'stage' : 'created';\nreturn [{ json: { dealId, event } }];"
+      },
+      "name": "Find deal id",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $json.dealId }}?properties=dealname,dealstage,pipeline,hubspot_owner_id,tca_lead_bucket,tca_lead_score,tca_budget,tca_timeline&associations=contacts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {}
+      },
+      "name": "Read deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $json.associations?.contacts?.results?.[0]?.id ?? '0' }}?properties=firstname,lastname,email",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {}
+      },
+      "name": "Read contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Block Kit message for #leads / #hot-leads.\nconst PORTAL = '247728856';\nconst STAGES = {\n  '4456833770': 'New lead',\n  '4456833771': 'Contacted',\n  '4456833772': 'Call booked',\n  '4456833773': 'Proposal sent',\n  '4456833775': 'Closed won',\n  '4456833776': 'Closed lost',\n};\nconst LABELS = {\n  'under-5k': 'Under $5k', '5k-15k': '$5k to $15k', '15k-50k': '$15k to $50k', '50k-plus': '$50k+', unsure: 'Not sure yet',\n  asap: 'As soon as possible', '1-3-months': '1 to 3 months', '3-plus-months': '3+ months', exploring: 'Just exploring',\n};\nconst { event, dealId } = $('Find deal id').first().json;\nconst deal = $('Read deal').first().json;\nconst d = deal.properties ?? {};\nconst contact = $('Read contact').first().json.properties ?? {};\n\n// Slack mrkdwn: escape the three control characters in anything a visitor typed.\nconst esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst who = [contact.firstname, contact.lastname].filter(Boolean).join(' ') || 'Unknown contact';\nconst stage = STAGES[d.dealstage] ?? d.dealstage ?? 'Unknown stage';\nconst hot = d.tca_lead_bucket === 'Hot';\nconst url = 'https://app-na2.hubspot.com/contacts/' + PORTAL + '/record/0-3/' + dealId;\nconst claimed = Boolean(d.hubspot_owner_id);\n\nconst blocks = [];\nif (event === 'stage') {\n  blocks.push({ type: 'section', text: { type: 'mrkdwn', text: '*' + esc(d.dealname) + '* moved to *' + esc(stage) + '*' } });\n  blocks.push({ type: 'actions', elements: [{ type: 'button', text: { type: 'plain_text', text: 'Open in HubSpot' }, url, action_id: 'open_deal' }] });\n} else {\n  blocks.push({ type: 'header', text: { type: 'plain_text', text: (hot ? 'Hot lead: ' : 'New lead: ') + String(d.dealname ?? who).slice(0, 140) } });\n  blocks.push({\n    type: 'section',\n    fields: [\n      { type: 'mrkdwn', text: '*Contact*\\n' + esc(who) + (contact.email ? '\\n' + esc(contact.email) : '') },\n      { type: 'mrkdwn', text: '*Score*\\n' + esc(d.tca_lead_score ?? '?') + '/15 (' + esc(d.tca_lead_bucket ?? 'unscored') + ')' },\n      { type: 'mrkdwn', text: '*Budget*\\n' + esc(LABELS[d.tca_budget] ?? d.tca_budget ?? '-') },\n      { type: 'mrkdwn', text: '*Timeline*\\n' + esc(LABELS[d.tca_timeline] ?? d.tca_timeline ?? '-') },\n    ],\n  });\n  const actions = [{ type: 'button', text: { type: 'plain_text', text: 'Open in HubSpot' }, url, action_id: 'open_deal' }];\n  if (!claimed) actions.unshift({ type: 'button', style: 'primary', text: { type: 'plain_text', text: 'Claim' }, action_id: 'claim_deal', value: dealId });\n  blocks.push({ type: 'actions', elements: actions });\n  blocks.push({ type: 'context', elements: [{ type: 'mrkdwn', text: 'Stage: ' + esc(stage) + (claimed ? ' · already has an owner' : ' · unclaimed') } ] });\n}\n\nreturn [{ json: {\n  channel: hot ? 'C0CB16L6UD6' : 'C0CAAG03B1A',\n  text: (event === 'stage' ? 'Deal moved: ' : hot ? 'Hot lead: ' : 'New lead: ') + esc(d.dealname ?? who),\n  blocks,\n  unfurl_links: false,\n} }];"
+      },
+      "name": "Build Slack message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "name": "Post to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        0
+      ],
+      "credentials": {
+        "slackApi": {
+          "name": "Slack - TCA Lead Alerts"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nif (r.ok === false) throw new Error('Slack API error: ' + r.error);\nreturn $input.all();"
+      },
+      "name": "Slack said ok?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Slack: deal alerts\nCalled by two HubSpot workflows (\"Send a webhook\", secret in the `x-tca-hubspot-secret` header): **deal created** in TCA new business (`?event=created`) and **deal stage changed** (`?event=stage`).\n\n- Hot deals go to #hot-leads, everything else to #leads.\n- New-deal messages get a **Claim** button, handled by \"Slack - claim button\".\n- Plan: `docs/HUBSPOT_PLAN.md`, build 2.",
+        "height": 260,
+        "width": 600
+      },
+      "name": "About",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -360
+      ]
+    }
+  ],
+  "connections": {
+    "From HubSpot workflow": {
+      "main": [
+        [
+          {
+            "node": "Find deal id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find deal id": {
+      "main": [
+        [
+          {
+            "node": "Read deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read deal": {
+      "main": [
+        [
+          {
+            "node": "Read contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read contact": {
+      "main": [
+        [
+          {
+            "node": "Build Slack message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Slack message": {
+      "main": [
+        [
+          {
+            "node": "Post to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Slack": {
+      "main": [
+        [
+          {
+            "node": "Slack said ok?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "KrdIYoVefLBu3SnS"
+  },
+  "pinData": {}
+}

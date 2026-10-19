@@ -6,6 +6,7 @@ Test configs for this project. What they protect and why: `docs/SECURITY.md`. Th
 |---|---|
 | `probe.site.json` | Endpoints of the Next.js site for `sec-probe`: the lead form, the three secret-protected routes, the preview redirect. `--base` points it at a local build, staging or production |
 | `probe.wordpress.json` | The CMS's secret-protected routes and the sign-in throttle check |
+| `probe.n8n.json` | The n8n webhooks: lead intake, HubSpot deal events and the Slack Claim button (signature check). 3 of 3 passed on 2026-10-19 |
 | `hostile-cms.mjs` | Pretends to be a compromised WordPress on port 9400 for 90 seconds and checks the HTML a visitor would get from a local production build on port 3001 |
 
 Rules:
