@@ -65,6 +65,8 @@ HubSpot and Slack (build 2, `docs/HUBSPOT_PLAN.md`), each webhook with its own s
 
 The Slack bot token is limited to `chat:write`, `users:read`, `users:read.email`, and its n8n credential may only call `slack.com`. Slack message text built from visitor input is escaped (`&`, `<`, `>`). The first signing secret was pasted into a workflow field and saved, so it sits in that workflow's history: it was regenerated in Slack straight away, which made that copy useless.
 
+Gmail drafts (build 4): `/webhook/hubspot-gmail-draft` uses the same `x-tca-hubspot-secret` check (403). The Gmail credential "Gmail - TCA drafts" is an OAuth client in Google Cloud project `strategic-hull-494501-q9` with **only `gmail.compose`**: it can create drafts but can't read the mailbox (n8n's default list includes `https://mail.google.com/`, full access, so the custom scope matters). The consent screen is published (In production), so the token doesn't expire after 7 days; Google required the `/privacy` page for that. n8n only creates drafts, never sends. Visitor fields are checked before they reach a mail header (strict email pattern, CR/LF stripped, subject RFC 2047-encoded), so a crafted name or email can't add headers such as `Bcc`.
+
 ## Risks accepted on purpose
 
 | Risk | Why | Revisit when |

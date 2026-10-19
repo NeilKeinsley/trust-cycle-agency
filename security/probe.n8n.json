@@ -3,6 +3,7 @@
   "endpoints": [
     { "name": "Lead intake", "path": "/webhook/lead", "method": "POST", "type": "secret", "secretHeader": "x-webhook-secret" },
     { "name": "HubSpot deal events", "path": "/webhook/hubspot-deal-events?event=created", "method": "POST", "type": "secret", "secretHeader": "x-tca-hubspot-secret" },
-    { "name": "Slack claim button (signature)", "path": "/webhook/slack-claim", "method": "POST", "type": "secret", "secretHeader": "x-slack-signature" }
+    { "name": "Slack claim button (signature)", "path": "/webhook/slack-claim", "method": "POST", "type": "secret", "secretHeader": "x-slack-signature" },
+    { "name": "HubSpot Gmail drafts", "path": "/webhook/hubspot-gmail-draft?template=first-reply", "method": "POST", "type": "secret", "secretHeader": "x-tca-hubspot-secret" }
   ]
 }
