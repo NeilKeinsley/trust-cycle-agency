@@ -1,0 +1,370 @@
+{
+  "name": "Gmail - deal drafts",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hubspot-gmail-draft",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "name": "From HubSpot workflow",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "6b1f3a8e-2f0c-4a57-9d0e-000000000004",
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "Hubspot Secret"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// HubSpot's \"Send a webhook\" action posts the enrolled deal; the template comes from the URL.\nconst TEMPLATES = ['first-reply', 'call-prep', 'proposal-nudge'];\nconst body = $input.first().json.body ?? {};\nconst query = $input.first().json.query ?? {};\nconst p = body.properties ?? {};\nconst raw = body.objectId ?? body.hs_object_id ?? p.hs_object_id?.value ?? p.hs_object_id;\nconst dealId = String(raw ?? '').trim();\nif (!/^\\d+$/.test(dealId)) throw new Error('No deal id in the HubSpot webhook body');\nconst template = String(query.template ?? '');\nif (!TEMPLATES.includes(template)) throw new Error('Unknown draft template: ' + template.slice(0, 40));\nreturn [{ json: { dealId, template } }];"
+      },
+      "name": "Find deal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $json.dealId }}?properties=dealname,dealstage,pipeline,tca_drafts_made,tca_budget,tca_timeline&associations=contacts,meetings",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {}
+      },
+      "name": "Read deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $json.associations?.contacts?.results?.[0]?.id || 'none' }}?properties=email,firstname,tca_services,tca_budget,tca_timeline,tca_consent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Read contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/meetings/batch/read",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: ['hs_meeting_outcome', 'hs_meeting_start_time', 'hs_meeting_location'], inputs: ($('Read deal').item.json.associations?.meetings?.results || []).map(r => ({ id: String(r.id) })) }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Read meetings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Decide whether to draft, and write the email. Contact fields are visitor input:\n// nothing from them reaches a mail header without being checked.\nconst PIPELINE = '2630364862';\nconst STAGE = { NEW: '4456833770', CONTACTED: '4456833771', CALL: '4456833772', PROPOSAL: '4456833773', WON: '4456833775', LOST: '4456833776' };\nconst BOOKING_URL = 'https://calendly.com/lienkeinsley/intro-call';\nconst SIGNATURE = 'Best,\\nNeil\\nTrust Cycle Agency (a portfolio project)';\nconst SERVICES = { brand: 'brand and identity', website: 'website design and build', marketing: 'marketing and ads', seo: 'SEO and content', social: 'social media' };\nconst BUDGET = { 'under-5k': 'under $5k', '5k-15k': '$5k to $15k', '15k-50k': '$15k to $50k', '50k-plus': '$50k+', unsure: 'still to work out' };\nconst TIMELINE = { asap: 'as soon as possible', '1-3-months': 'in 1 to 3 months', '3-plus-months': '3+ months out', exploring: 'just exploring' };\n\nconst { dealId, template } = $('Find deal').first().json;\nconst deal = $('Read deal').first().json;\nconst cRes = $('Read contact').first().json;\nconst mRes = $('Read meetings').first().json;\nconst dp = deal.properties ?? {};\nconst contact = cRes.statusCode === 200 ? cRes.body : null;\nconst cp = contact?.properties ?? {};\nconst made = String(dp.tca_drafts_made ?? '').split(';').filter(Boolean);\n\nconst skip = (reason) => [{ json: { make: false, reason, dealId, template } }];\nif (dp.pipeline !== PIPELINE) return skip('not a TCA new business deal');\nif (made.includes(template)) return skip('draft already made for this deal');\nif ([STAGE.WON, STAGE.LOST].includes(dp.dealstage)) return skip('deal is closed');\nif (template === 'call-prep' && dp.dealstage !== STAGE.CALL) return skip('deal is not in Call booked');\nif (template === 'proposal-nudge' && dp.dealstage !== STAGE.PROPOSAL) return skip('deal is no longer in Proposal sent');\nif (!contact) return skip('no contact on the deal');\nconst to = String(cp.email ?? '').trim().toLowerCase();\nif (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$/.test(to)) return skip('contact has no usable email');\nif (!cp.tca_consent) return skip('no email consent recorded');\n\nconst clean = (s) => String(s ?? '').replace(/[\\r\\n\\t]+/g, ' ').trim();\nconst first = clean(cp.firstname).slice(0, 40) || 'there';\nconst services = String(cp.tca_services ?? '').split(';').map((s) => SERVICES[s]).filter(Boolean);\n\nlet subject = '';\nlet text = '';\nif (template === 'first-reply') {\n  const budget = BUDGET[dp.tca_budget ?? cp.tca_budget];\n  const timeline = TIMELINE[dp.tca_timeline ?? cp.tca_timeline];\n  const facts = [services.length ? '- Services: ' + services.join(', ') : null, budget ? '- Budget: ' + budget : null, timeline ? '- Timeline: ' + timeline : null].filter(Boolean);\n  subject = services.length ? 'Next steps for your ' + services[0] + ' project' : 'Next steps for your project';\n  const next = dp.dealstage === STAGE.CALL\n    ? 'I can see you have already booked a call, so I will send a few questions ahead of it.'\n    : 'The best next step is a free 30-minute intro call, where we go through your goals and see whether we are a good fit. You can pick a time that suits you here:\\n' + BOOKING_URL + '\\n\\nIf you would rather not have a call, just reply to this email with anything you would like to add.';\n  text = 'Hi ' + first + ',\\n\\nThanks for sending over your project details.' + (facts.length ? ' Here is what you told us:\\n' + facts.join('\\n') : '') + '\\n\\n' + next + '\\n\\n' + SIGNATURE;\n} else if (template === 'call-prep') {\n  const meetings = (mRes.statusCode === 200 || mRes.statusCode === 207) ? (mRes.body?.results ?? []) : [];\n  const m = meetings\n    .filter((x) => x.properties?.hs_meeting_outcome === 'SCHEDULED' && Date.parse(x.properties?.hs_meeting_start_time) > Date.now())\n    .sort((a, b) => Date.parse(a.properties.hs_meeting_start_time) - Date.parse(b.properties.hs_meeting_start_time))[0];\n  if (!m) return skip('no upcoming scheduled meeting on the deal');\n  const start = new Date(m.properties.hs_meeting_start_time);\n  const fmt = (o) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Manila', ...o }).format(start);\n  const day = fmt({ weekday: 'short', day: 'numeric', month: 'short' });\n  const loc = String(m.properties.hs_meeting_location ?? '');\n  subject = 'Before our call on ' + day;\n  text = 'Hi ' + first + ',\\n\\nThanks for booking a call. The details:\\n'\n    + 'When: ' + fmt({ weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }) + ' (Manila time, UTC+8)\\n'\n    + 'Where: ' + (loc.startsWith('https://') ? loc : 'the video link in your Calendly confirmation') + '\\n\\n'\n    + 'To make the most of the 30 minutes, it would help to know:\\n'\n    + '1. What made now the right time to look for help?\\n'\n    + '2. Is there a website, brand or campaign you would point to as a good example?\\n'\n    + '3. Who else will be part of the decision?\\n\\n'\n    + 'Short answers are fine, or we can cover them on the call.\\n\\n' + SIGNATURE;\n} else {\n  subject = 'Following up on the proposal';\n  text = 'Hi ' + first + ',\\n\\nI wanted to check whether you have had a chance to look over the proposal. If any part of the scope or timing does not fit, I am happy to adjust it, or to walk through it on a short call.\\n\\n' + SIGNATURE;\n}\n\n// RFC 2822 message, base64url-encoded for Gmail's drafts.create (no Buffer needed).\nconst utf8 = (s) => unescape(encodeURIComponent(s));\nconst B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';\nconst b64 = (bin) => {\n  let out = '';\n  for (let i = 0; i < bin.length; i += 3) {\n    const a = bin.charCodeAt(i), b = bin.charCodeAt(i + 1), c = bin.charCodeAt(i + 2);\n    const n = (a << 16) | ((b || 0) << 8) | (c || 0);\n    out += B64[(n >> 18) & 63] + B64[(n >> 12) & 63] + (i + 1 < bin.length ? B64[(n >> 6) & 63] : '=') + (i + 2 < bin.length ? B64[n & 63] : '=');\n  }\n  return out;\n};\nconst mime = [\n  'To: ' + to,\n  'Subject: =?UTF-8?B?' + b64(utf8(clean(subject))) + '?=',\n  'MIME-Version: 1.0',\n  'Content-Type: text/plain; charset=\"UTF-8\"',\n  'Content-Transfer-Encoding: base64',\n  '',\n  b64(utf8(text)).replace(/.{76}/g, '$&\\r\\n'),\n].join('\\r\\n');\nconst raw = b64(mime).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\n\nconst esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nreturn [{ json: {\n  make: true,\n  dealId,\n  template,\n  to,\n  subject,\n  draftBody: { message: { raw } },\n  noteBody: {\n    properties: {\n      hs_timestamp: new Date().toISOString(),\n      hs_note_body: '<p><strong>Gmail draft ready</strong> (' + esc(template) + ') for ' + esc(to) + ': \"' + esc(subject) + '\". Review and send it from Gmail Drafts.</p>',\n    },\n    associations: [{ to: { id: dealId }, types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 214 }] }],\n  },\n} }];"
+      },
+      "name": "Plan draft",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9a1c4e2b-0000-4000-8000-000000004001",
+              "leftValue": "={{ $json.make }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Make draft?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1540,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/drafts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.draftBody) }}",
+        "options": {}
+      },
+      "name": "Create Gmail draft",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        -20
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "name": "Gmail - TCA drafts"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Plan draft').item.json.noteBody) }}",
+        "options": {}
+      },
+      "name": "Note on deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1980,
+        -20
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $('Plan draft').item.json.dealId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: { tca_drafts_made: ';' + $('Plan draft').item.json.template } }) }}",
+        "options": {}
+      },
+      "name": "Record template",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        -20
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "name": "HubSpot - TCA CRM"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "content": "## Gmail: deal drafts (build 4)\nCalled by the HubSpot workflow **TCA: Gmail drafts** with `?template=first-reply | call-prep | proposal-nudge` and the `x-tca-hubspot-secret` header (credential **Hubspot Secret**).\n\n- Reads the deal, its contact and meetings. Skips closed deals, other pipelines, a stage that moved on, no email or consent, or a template already in `tca_drafts_made`.\n- Creates a **draft only** in Neil's Gmail (credential **Gmail - TCA drafts**, scope `gmail.compose`). Nothing is sent.\n- Adds a note on the deal and appends the template to `tca_drafts_made`.\n- Plan: `docs/HUBSPOT_PLAN.md`, build 4.",
+        "height": 320,
+        "width": 640
+      },
+      "name": "About",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -420
+      ]
+    }
+  ],
+  "connections": {
+    "From HubSpot workflow": {
+      "main": [
+        [
+          {
+            "node": "Find deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find deal": {
+      "main": [
+        [
+          {
+            "node": "Read deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read deal": {
+      "main": [
+        [
+          {
+            "node": "Read contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read contact": {
+      "main": [
+        [
+          {
+            "node": "Read meetings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read meetings": {
+      "main": [
+        [
+          {
+            "node": "Plan draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan draft": {
+      "main": [
+        [
+          {
+            "node": "Make draft?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Make draft?": {
+      "main": [
+        [
+          {
+            "node": "Create Gmail draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Gmail draft": {
+      "main": [
+        [
+          {
+            "node": "Note on deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Note on deal": {
+      "main": [
+        [
+          {
+            "node": "Record template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "KrdIYoVefLBu3SnS"
+  },
+  "pinData": {}
+}
