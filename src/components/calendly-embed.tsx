@@ -4,7 +4,7 @@
  * Inline Calendly scheduler without widget.js (see src/lib/calendly.ts).
  * Mirrors what widget.js did for an inline embed as of 2026-09: the iframe
  * URL carries embed_domain/embed_type, prefill goes in by postMessage
- * (`calendly.prefill`) after load, and the page posts
+ * (`calendly.prefill`) after load and again on Calendly's first message, and the page posts
  * `calendly.event_scheduled` back to us. Height is fixed like widget.js's
  * default (its auto-resize is opt-in, and the `calendly.page_height` values
  * Calendly sent in testing were 26px and 2px). Prefill is not a documented
@@ -51,6 +51,8 @@ export function CalendlyEmbed({
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const scheduledRef = useRef(false);
   const onScheduledRef = useRef(onScheduled);
+  const sendPrefillRef = useRef<() => void>(() => {});
+  const readyPrefillSentRef = useRef(false);
   const [src] = useState(() => calendlyEmbedUrl(bookingUrl, source, leadId));
   const [loaded, setLoaded] = useState(false);
 
@@ -59,11 +61,30 @@ export function CalendlyEmbed({
   }, [onScheduled]);
 
   useEffect(() => {
+    sendPrefillRef.current = () => {
+      const payload = prefillPayload(name, email);
+      if (Object.keys(payload).length === 0) return;
+      iframeRef.current?.contentWindow?.postMessage(
+        { event: "calendly.prefill", payload },
+        CALENDLY_ORIGIN
+      );
+    };
+  }, [name, email]);
+
+  useEffect(() => {
     function onMessage(e: MessageEvent) {
       if (e.origin !== CALENDLY_ORIGIN) return;
       if (e.source !== iframeRef.current?.contentWindow) return;
       const data = e.data as CalendlyMessage | null;
       if (!data || typeof data.event !== "string") return;
+
+      // Calendly's app starts listening well after the iframe's load event
+      // (about 2s later in testing on 2026-10-19, so the load-time sends were
+      // lost). Its first message means it's listening: send the prefill again.
+      if (!readyPrefillSentRef.current) {
+        readyPrefillSentRef.current = true;
+        sendPrefillRef.current();
+      }
 
       if (data.event === "calendly.event_scheduled" && !scheduledRef.current) {
         scheduledRef.current = true;
@@ -76,15 +97,10 @@ export function CalendlyEmbed({
 
   // Same timing as widget.js: right after load, next tick, and 250ms later,
   // in case the page's listener attaches a moment after the load event.
+  // The first message from Calendly triggers one more send (above).
   function handleLoad() {
     setLoaded(true);
-    const payload = prefillPayload(name, email);
-    if (Object.keys(payload).length === 0) return;
-    const send = () =>
-      iframeRef.current?.contentWindow?.postMessage(
-        { event: "calendly.prefill", payload },
-        CALENDLY_ORIGIN
-      );
+    const send = () => sendPrefillRef.current();
     send();
     setTimeout(send, 0);
     setTimeout(send, 250);
