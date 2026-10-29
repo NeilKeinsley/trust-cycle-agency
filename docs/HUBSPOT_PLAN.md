@@ -186,7 +186,9 @@ Covers: Sheets, scheduled automation, reliability.
 - First run found a bug: the per-deal step read the owners list instead of the deal search (it now reads "Find open deals"). Also changed after T2: tasks were due at the moment of creation, so HubSpot showed them overdue straight away.
 - **Cleanup:** the 7 snapshot test rows were deleted (the tab keeps its header); the 3 test tasks were completed. The three test digests stay in #leads.
 - **Live (2026-10-19):** both workflows published, no pins, timezone Asia/Manila. The first real sweep runs Tuesday 2026-10-20 at 09:00 Manila. The New lead test deals entered that stage on 2026-10-19, so that sweep should already flag them (tasks + one digest). The first snapshot runs Monday 2026-10-26 at 08:00 (this Monday's 08:00 had passed when it went live).
-- **To switch off:** unpublish either workflow in n8n; nothing else depends on them. Completing a `[TCA sweep]` task lets the next sweep create a new one if the deal is still stuck.
+- **To switch off:** unpublish either workflow in n8n; nothing else depends on them.
+- **Paused 2026-10-29 (Neil):** the sweep is unpublished in n8n (`ii8jCiHh3PPloMRF`, kept intact): no daily Slack digest and no new `[TCA sweep]` tasks. To turn it back on: open "HubSpot - stale deal sweep" in n8n and press Publish (it runs weekdays 09:00 Manila). The weekly snapshot is still on.
+- **Cleaned 2026-10-29 (Neil):** the 9 test deals the sweep kept flagging (all from the build and security tests, incl. the hostile-name lead), their 9 contacts and 12 `[TCA sweep]` tasks were deleted through the API (HubSpot recycle bin, restorable for 90 days). The pipeline is empty. Completing a `[TCA sweep]` task lets the next sweep create a new one if the deal is still stuck.
 
 ### All five builds: live
 | Build | What runs | Where |
